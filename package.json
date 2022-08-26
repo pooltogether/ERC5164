@@ -1,0 +1,25 @@
+{
+  "name": "@pooltogether/erc5164",
+  "description": "Implementation of the ERC5164 standard to communicate cross chain",
+  "version": "1.0.0",
+  "author": {
+    "name": "PoolTogether Inc.",
+    "url": "https://github.com/pooltogether"
+  },
+  "scripts": {
+    "postinstall": "husky install",
+    "format": "prettier --config .prettierrc --write \"**/*.{ts,js,json,md,sol,yml}\"",
+    "format:file": "prettier --config .prettierrc --write",
+    "lint-staged": "lint-staged",
+    "hint": "solhint --config \"./.solhint.json\" \"{src,test}/**/*.sol\""
+  },
+  "packageManager": "yarn@3.2.3",
+  "devDependencies": {
+    "husky": "8.0.1",
+    "lint-staged": "13.0.3",
+    "prettier": "2.7.1",
+    "prettier-plugin-solidity": "1.0.0-beta.24",
+    "solhint": "3.3.7",
+    "solhint-plugin-prettier": "0.0.5"
+  }
+}

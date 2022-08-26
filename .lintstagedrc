@@ -1,0 +1,8 @@
+{
+  "*.{ts,js,json,md,sol,yml}": [
+    "yarn format"
+  ],
+  "*.{sol}": [
+    "yarn hint"
+  ]
+}
