@@ -10,15 +10,15 @@ import "./ICrossChainReceiver.sol";
  */
 interface ICrossChainRelayer {
   /**
-   * @notice
+   * @notice Call data structure
    * @param target Address that will be called on the receiving chain
    * @param data Data that will be sent to the `target` address
-   * @param value Gas value needed to execute the call on the receiving chain
+   * @param gasLimit Maximum amount of gas needed to execute the call on the receiving chain
    */
   struct Call {
     address target;
     bytes data;
-    uint256 value;
+    uint256 gasLimit;
   }
 
   /**
@@ -27,14 +27,14 @@ interface ICrossChainRelayer {
    * @param sender Address of the sender
    * @param receiver Address of the CrossChainReceiver contract on the receiving chain
    * @param calls Array of calls being relayed
-   * @param gas Amount of gas required for the `calls` to be executed
+   * @param gasLimit Maximum amount of gas required for the `calls` to be executed
    */
   event RelayedCalls(
     uint256 indexed nonce,
     address indexed sender,
     ICrossChainReceiver indexed receiver,
     Call[] calls,
-    uint256 gas
+    uint256 gasLimit
   );
 
   /**
@@ -45,11 +45,11 @@ interface ICrossChainRelayer {
    * @dev May require payment. Some bridges may require payment in the native currency, so the function is payable.
    * @param receiver Address who will receive the calls on the receiving chain
    * @param calls Array of calls being relayed
-   * @param gas Amount of gas required for the `calls` to be executed
+   * @param gasLimit Maximum amount of gas required for the `calls` to be executed
    */
   function relayCalls(
     ICrossChainReceiver receiver,
     Call[] calldata calls,
-    uint256 gas
+    uint256 gasLimit
   ) external payable;
 }
