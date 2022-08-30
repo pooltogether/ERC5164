@@ -1,2 +1,2 @@
-@prb/test/=lib/prb-test/src/
 forge-std/=lib/forge-std/src/
+@eth-optimism=node_modules/@eth-optimism
