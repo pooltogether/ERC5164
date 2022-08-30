@@ -10,15 +10,15 @@ import "./ICrossChainRelayer.sol";
  */
 interface ICrossChainReceiver {
   /**
-   * @notice
+   * @notice Call data structure
    * @param target Address that will be called
    * @param data Data that will be sent to the `target` address
-   * @param value Gas value needed to execute the call
+   * @param gasLimit Maximum amount of gas needed to execute the call
    */
   struct Call {
     address target;
     bytes data;
-    uint256 value;
+    uint256 gasLimit;
   }
 
   /**
