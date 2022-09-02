@@ -37,7 +37,6 @@ contract CrossChainReceiverOptimism is ICrossChainReceiver {
    */
   constructor(IOptimismBridge _bridge) {
     require(address(_bridge) != address(0), "Receiver/bridge-not-zero-address");
-
     bridge = _bridge;
   }
 

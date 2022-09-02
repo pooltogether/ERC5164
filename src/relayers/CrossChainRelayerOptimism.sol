@@ -17,8 +17,8 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /// @notice Address of the Optimism bridge on the origin chain.
   IOptimismBridge public immutable bridge;
 
-  /// @notice Internal nonce enforcing replay protection.
-  uint256 public nonce;
+  /// @notice Internal nonce to uniquely idenfity each batch of calls.
+  uint256 internal nonce;
 
   /* ============ Constructor ============ */
 
@@ -26,9 +26,9 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
    * @notice CrossChainRelayer constructor.
    * @param _bridge Address of the Optimism bridge
    */
-  constructor(address _bridge) {
-    require(_bridge != address(0), "Relayer/bridge-not-zero-address");
-    bridge = IOptimismBridge(_bridge);
+  constructor(IOptimismBridge _bridge) {
+    require(address(_bridge) != address(0), "Relayer/bridge-not-zero-address");
+    bridge = _bridge;
   }
 
   /* ============ External Functions ============ */
@@ -47,7 +47,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     _bridge.sendMessage(
       address(_receiver),
       abi.encodeWithSignature(
-        "receiveCalls(address,uint256,address,{address,bytes,uint256}[])",
+        "receiveCalls(address,uint256,address,(address,bytes,uint256)[])",
         address(this),
         _nonce,
         address(_bridge),
