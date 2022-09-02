@@ -11,16 +11,40 @@
     "format": "prettier --config .prettierrc --write \"**/*.{ts,js,json,md,sol,yml}\"",
     "format:file": "prettier --config .prettierrc --write",
     "lint-staged": "lint-staged",
-    "hint": "solhint --config \"./.solhint.json\" \"{src,test}/**/*.sol\""
+    "hint": "solhint --config \"./.solhint.json\" \"{src,test}/**/*.sol\"",
+    "deploy:goerli": "forge script script/DeployToEthereum.s.sol --rpc-url $GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY -vvvv",
+    "deploy:optimismGoerli": "forge script script/DeployToOptimism.s.sol --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY -vvvv",
+    "bridge:optimism": "forge script script/BridgeToOptimism.s.sol --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv"
   },
   "packageManager": "yarn@3.2.3",
   "devDependencies": {
+    "@ethersproject/abi": "5.7.0",
+    "@ethersproject/bytes": "5.7.0",
+    "@ethersproject/providers": "5.7.0",
+    "@nomicfoundation/hardhat-chai-matchers": "1.0.3",
+    "@nomicfoundation/hardhat-network-helpers": "1.0.4",
+    "@nomicfoundation/hardhat-toolbox": "1.0.2",
+    "@nomiclabs/hardhat-ethers": "2.1.1",
+    "@nomiclabs/hardhat-etherscan": "3.1.0",
+    "@typechain/ethers-v5": "10.1.0",
+    "@typechain/hardhat": "6.1.2",
+    "@types/chai": "4.3.3",
+    "@types/mocha": "9.1.1",
+    "@types/node": "18.7.14",
+    "chai": "4.3.6",
+    "ethers": "5.7.0",
+    "hardhat": "2.10.2",
+    "hardhat-gas-reporter": "1.0.8",
     "husky": "8.0.1",
     "lint-staged": "13.0.3",
     "prettier": "2.7.1",
     "prettier-plugin-solidity": "1.0.0-beta.24",
     "solhint": "3.3.7",
-    "solhint-plugin-prettier": "0.0.5"
+    "solhint-plugin-prettier": "0.0.5",
+    "solidity-coverage": "0.7.21",
+    "ts-node": "10.9.1",
+    "typechain": "8.1.0",
+    "typescript": "4.8.2"
   },
   "dependencies": {
     "@eth-optimism/contracts": "0.5.33"
