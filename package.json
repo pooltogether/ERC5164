@@ -14,7 +14,7 @@
     "hint": "solhint --config \"./.solhint.json\" \"{src,test}/**/*.sol\"",
     "deploy:goerli": "forge script script/DeployToEthereum.s.sol --rpc-url $GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY -vvvv",
     "deploy:optimismGoerli": "forge script script/DeployToOptimism.s.sol --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY -vvvv",
-    "bridge:optimism": "forge script script/BridgeToOptimism.s.sol --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv"
+    "bridge:optimismGoerli": "forge script script/BridgeToOptimismGoerli.s.sol --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv"
   },
   "packageManager": "yarn@3.2.3",
   "devDependencies": {
