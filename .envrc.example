@@ -1,0 +1,14 @@
+# Hot wallet mnemonic phrase
+export HDWALLET_MNEMONIC=""
+
+# Hot wallet private key
+export HDWALLET_PRIVATE_KEY=""
+
+# Fork test RPC URLs
+export GOERLI_RPC_URL=""
+export OPTIMISM_GOERLI_RPC_URL=""
+
+# Used for verifying contracts on Etherscan
+export ETHERSCAN_API_KEY=""
+export OPTIMISM_ETHERSCAN_API_KEY=""
+

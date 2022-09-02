@@ -16,4 +16,5 @@ out/
 !.yarn/sdks
 !.yarn/versions
 
+.envrc
 node_modules
