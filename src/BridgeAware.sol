@@ -34,7 +34,7 @@ abstract contract BridgeAware {
   /* ============ External Functions ============ */
 
   /**
-   * @notice Check which forwarder this contract trust as specified in EIP 2771
+   * @notice Check which forwarder this contract trust as specified in EIP 2771.
    * @param _forwarder Address to check
    */
   function isTrustedForwarder(address _forwarder) public view returns (bool) {
@@ -44,7 +44,7 @@ abstract contract BridgeAware {
   /* ============ Internal Functions ============ */
 
   /**
-   * @notice Retrieve signer address as specified in EIP 2771
+   * @notice Retrieve signer address as specified in EIP 2771.
    * @return _signer Address of the signer
    */
   function _msgSender() internal view returns (address payable _signer) {

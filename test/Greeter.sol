@@ -10,9 +10,10 @@ contract Greeter is BridgeAware {
   string public greeting;
 
   event SetGreeting(
-    address sender, // msg.sender
-    address origin, // tx.origin
-    address xorigin // cross domain origin, if any
+    string greeting,
+    address l1Sender, // _msgSender() which is the L1 bridge
+    address l2Sender, // CrossChainReceiver contract
+    address origin // tx.origin
   );
 
   constructor(address _receiver, string memory _greeting) BridgeAware(_receiver) {
@@ -24,37 +25,9 @@ contract Greeter is BridgeAware {
   }
 
   function setGreeting(string memory _greeting) public {
+    require(isTrustedForwarder(msg.sender), "Greeter/caller-not-receiver");
+
     greeting = _greeting;
-    emit SetGreeting(msg.sender, tx.origin, getXorig());
-  }
-
-  // Get the cross domain origin, if any
-  function getXorig() private view returns (address) {
-    // Get the cross domain messenger's address each time.
-    // This is less resource intensive than writing to storage.
-    address cdmAddr = address(0);
-
-    // Mainnet
-    if (block.chainid == 1) {
-      cdmAddr = 0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1;
-    }
-
-    // Goerli
-    if (block.chainid == 5) {
-      cdmAddr = 0x5086d1eEF304eb5284A0f6720f79403b4e9bE294;
-    }
-
-    // L2 (same address on every network)
-    if (block.chainid == 10 || block.chainid == 420) {
-      cdmAddr = 0x4200000000000000000000000000000000000007;
-    }
-
-    // If this isn't a cross domain message
-    if (msg.sender != cdmAddr) {
-      return address(0);
-    }
-
-    // If it is a cross domain message, find out where it is from
-    return ICrossDomainMessenger(cdmAddr).xDomainMessageSender();
+    emit SetGreeting(_greeting, _msgSender(), msg.sender, tx.origin);
   }
 }
