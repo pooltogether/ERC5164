@@ -26,9 +26,6 @@ contract CrossChainReceiverOptimism is ICrossChainReceiver {
   /// @notice Address of the Optimism bridge on the receiving chain.
   IOptimismBridge public immutable bridge;
 
-  /// @notice Internal nonce enforcing replay protection.
-  uint256 public nonce;
-
   /* ============ Constructor ============ */
 
   /**
@@ -58,7 +55,7 @@ contract CrossChainReceiverOptimism is ICrossChainReceiver {
     for (uint256 _callIndex; _callIndex < _callsLength; _callIndex++) {
       Call memory _call = _calls[_callIndex];
 
-      (bool _success, bytes memory _returnData) = _call.target.call{ gas: _call.gasLimit }(
+      (bool _success, bytes memory _returnData) = _call.target.call(
         abi.encodePacked(_call.data, _caller)
       );
 

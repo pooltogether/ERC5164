@@ -47,7 +47,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     _bridge.sendMessage(
       address(_receiver),
       abi.encodeWithSignature(
-        "receiveCalls(address,uint256,address,(address,bytes,uint256)[])",
+        "receiveCalls(address,uint256,address,(address,bytes)[])",
         address(this),
         _nonce,
         address(_bridge),

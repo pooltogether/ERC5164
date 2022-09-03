@@ -10,9 +10,9 @@ import "../src/relayers/CrossChainRelayerOptimism.sol";
 import "../src/receivers/CrossChainReceiverOptimism.sol";
 
 contract BridgeToOptimismGoerli is Script {
-  address public crossChainRelayerOptimism = 0xDb7bC6e3023C826a9AD2d349C6Ef647D87AfE6Bc;
-  address public crossChainReceiverOptimism = 0x336273E1417506F79F79cB4c766218f0796D1073;
-  address public greeter = 0x9A3E50B6327b3117EbfEDd70ca582b1bEda4762D;
+  address public crossChainRelayerOptimism = 0x1580cD9d86098Ebfe8fFEdAef051AAD7FbfC4198;
+  address public crossChainReceiverOptimism = 0xDa2aF7350d82899123c24d8e94Ec94aBb7bbC357;
+  address public greeter = 0xCF4F1F77ba09E397ee5eF5d6916Bd4F6387ac228;
 
   string public greeterL1Greeting = "Hello from L1";
 
@@ -24,8 +24,7 @@ contract BridgeToOptimismGoerli is Script {
 
     _calls[0] = ICrossChainRelayer.Call({
       target: greeter,
-      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting),
-      gasLimit: 1000000
+      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
     });
 
     _relayer.relayCalls(_receiver, _calls, 1000000);

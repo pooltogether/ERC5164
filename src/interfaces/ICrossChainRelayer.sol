@@ -13,12 +13,10 @@ interface ICrossChainRelayer {
    * @notice Call data structure
    * @param target Address that will be called on the receiving chain
    * @param data Data that will be sent to the `target` address
-   * @param gasLimit Maximum amount of gas needed to execute the call on the receiving chain
    */
   struct Call {
     address target;
     bytes data;
-    uint256 gasLimit;
   }
 
   /**

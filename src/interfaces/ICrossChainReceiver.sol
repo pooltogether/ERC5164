@@ -13,12 +13,10 @@ interface ICrossChainReceiver {
    * @notice Call data structure
    * @param target Address that will be called
    * @param data Data that will be sent to the `target` address
-   * @param gasLimit Maximum amount of gas needed to execute the call
    */
   struct Call {
     address target;
     bytes data;
-    uint256 gasLimit;
   }
 
   /**

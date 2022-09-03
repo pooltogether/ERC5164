@@ -10,7 +10,7 @@ import "../test/Greeter.sol";
 
 contract DeployToOptimism is Script {
   address public l2CrossDomainMessenger = 0x4200000000000000000000000000000000000007;
-  address public crossChainReceiverOptimism = 0x336273E1417506F79F79cB4c766218f0796D1073;
+  address public crossChainReceiverOptimism = 0xDa2aF7350d82899123c24d8e94Ec94aBb7bbC357;
 
   function deployCrossChainReceiverOptimism() public {
     new CrossChainReceiverOptimism(IOptimismBridge(l2CrossDomainMessenger));
