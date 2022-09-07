@@ -4,19 +4,19 @@ pragma solidity 0.8.16;
 
 import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
-import "../src/BridgeAware.sol";
+import "../src/ReceiverAware.sol";
 
-contract Greeter is BridgeAware {
+contract Greeter is ReceiverAware {
   string public greeting;
 
   event SetGreeting(
     string greeting,
-    address l1Sender, // _msgSender() which is the L1 bridge
+    address l1Sender, // _msgSender() is the address who called `relayCalls` on the origin chain
     address l2Sender, // CrossChainReceiver contract
     address origin // tx.origin
   );
 
-  constructor(address _receiver, string memory _greeting) BridgeAware(_receiver) {
+  constructor(address _receiver, string memory _greeting) ReceiverAware(_receiver) {
     greeting = _greeting;
   }
 

@@ -3,15 +3,15 @@
 pragma solidity 0.8.16;
 
 /**
- * @title BridgeAware contract
- * @notice The BridgeAware contract allows contracts on a receiving chain to receive calls from an origin chain.
+ * @title ReceiverAware contract
+ * @notice The ReceiverAware contract allows contracts on a receiving chain to receive calls from an origin chain.
  *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
  *         The `CrossChainReceiver` contract on the receiving chain receives these calls
- *         and then forward them to a BridgeAware contract on the receiving chain.
+ *         and then forward them to a ReceiverAware contract on the receiving chain.
  * @dev This contract implements EIP 2771 (https://eips.ethereum.org/EIPS/eip-2771)
  *      to ensure that calls are sent by a trusted `CrossChainReceiver` contract.
  */
-abstract contract BridgeAware {
+abstract contract ReceiverAware {
   /* ============ Variables ============ */
 
   /**
@@ -23,7 +23,7 @@ abstract contract BridgeAware {
   /* ============ Constructor ============ */
 
   /**
-   * @notice BridgeAware constructor.
+   * @notice ReceiverAware constructor.
    * @param _receiver Address of the `CrossChainRelayer` contract
    */
   constructor(address _receiver) {
