@@ -12,10 +12,23 @@ import "../interfaces/ICrossChainRelayer.sol";
  *         It lives on the origin chain and communicates with the `CrossChainReceiver` contract on the receiving chain.
  */
 contract CrossChainRelayerOptimism is ICrossChainRelayer {
+  /* ============ Custom Errors ============ */
+
+  /**
+   * @notice Custom error emitted if the `gasLimit` passed to `relayCalls`
+   *         is greater than the one provided for free on Optimism.
+   * @param gasLimit Gas limit passed to `relayCalls`
+   * @param maxGasLimit Gas limit provided for free on Optimism
+   */
+  error GasLimitTooHigh(uint256 gasLimit, uint256 maxGasLimit);
+
   /* ============ Variables ============ */
 
   /// @notice Address of the Optimism bridge on the origin chain.
   IOptimismBridge public immutable bridge;
+
+  /// @notice Gas limit provided for free on Optimism.
+  uint256 public immutable maxGasLimit;
 
   /// @notice Internal nonce to uniquely idenfity each batch of calls.
   uint256 internal nonce;
@@ -25,10 +38,14 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /**
    * @notice CrossChainRelayer constructor.
    * @param _bridge Address of the Optimism bridge
+   * @param _maxGasLimit Gas limit provided for free on Optimism
    */
-  constructor(IOptimismBridge _bridge) {
+  constructor(IOptimismBridge _bridge, uint256 _maxGasLimit) {
     require(address(_bridge) != address(0), "Relayer/bridge-not-zero-address");
+    require(_maxGasLimit > 0, "Relayer/max-gas-limit-gt-zero");
+
     bridge = _bridge;
+    maxGasLimit = _maxGasLimit;
   }
 
   /* ============ External Functions ============ */
@@ -39,6 +56,12 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     Call[] calldata _calls,
     uint256 _gasLimit
   ) external payable {
+    uint256 _maxGasLimit = maxGasLimit;
+
+    if (_gasLimit > _maxGasLimit) {
+      revert GasLimitTooHigh(_gasLimit, _maxGasLimit);
+    }
+
     nonce++;
 
     uint256 _nonce = nonce;
@@ -50,7 +73,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
         "receiveCalls(address,uint256,address,(address,bytes)[])",
         address(this),
         _nonce,
-        address(_bridge),
+        msg.sender,
         _calls
       ),
       uint32(_gasLimit)

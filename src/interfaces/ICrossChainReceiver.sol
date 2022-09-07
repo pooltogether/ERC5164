@@ -23,7 +23,7 @@ interface ICrossChainReceiver {
    * @notice Emitted when calls have successfully been received.
    * @param relayer Address of the contract that relayed the calls
    * @param nonce Unique identifier
-   * @param caller Address of the bridge transport layer
+   * @param caller Address of the caller on the origin chain
    * @param calls Array of calls being received
    */
   event ReceivedCalls(
@@ -35,11 +35,11 @@ interface ICrossChainReceiver {
 
   /**
    * @notice Receive calls from the origin chain.
-   * @dev Should authenticate the `caller` as being the bridge transport layer.
+   * @dev Should authenticate that the call has been performed by the bridge transport layer.
    * @dev Must emit the `ReceivedCalls` event when calls are received.
    * @param relayer Address who relayed the call on the origin chain
    * @param nonce Unique identifier
-   * @param caller Address of the bridge transport layer
+   * @param caller Address of the caller on the origin chain
    * @param calls Array of calls being received
    */
   function receiveCalls(

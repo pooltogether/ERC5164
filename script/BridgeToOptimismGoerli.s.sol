@@ -10,7 +10,7 @@ import "../src/relayers/CrossChainRelayerOptimism.sol";
 import "../src/receivers/CrossChainReceiverOptimism.sol";
 
 contract BridgeToOptimismGoerli is Script {
-  address public crossChainRelayerOptimism = 0x1580cD9d86098Ebfe8fFEdAef051AAD7FbfC4198;
+  address public crossChainRelayerOptimism = 0x36D76c1d2379089797D4cE59A0782D3234ecdbAC;
   address public crossChainReceiverOptimism = 0xDa2aF7350d82899123c24d8e94Ec94aBb7bbC357;
   address public greeter = 0xCF4F1F77ba09E397ee5eF5d6916Bd4F6387ac228;
 
