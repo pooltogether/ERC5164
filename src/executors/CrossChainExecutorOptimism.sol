@@ -4,14 +4,14 @@ pragma solidity 0.8.16;
 
 import { ICrossDomainMessenger as IOptimismBridge } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
-import "../interfaces/ICrossChainReceiver.sol";
+import "../interfaces/ICrossChainExecutor.sol";
 
 /**
- * @title CrossChainReceiver contract
- * @notice The CrossChainReceiver contract receives call from the origin chain.
+ * @title CrossChainExecutor contract
+ * @notice The CrossChainExecutor contract executes call from the origin chain.
  *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
  */
-contract CrossChainReceiverOptimism is ICrossChainReceiver {
+contract CrossChainExecutorOptimism is ICrossChainExecutor {
   /* ============ Custom Errors ============ */
 
   /**
@@ -29,18 +29,18 @@ contract CrossChainReceiverOptimism is ICrossChainReceiver {
   /* ============ Constructor ============ */
 
   /**
-   * @notice CrossChainReceiver constructor.
+   * @notice CrossChainExecutor constructor.
    * @param _bridge Address of the Optimism bridge on the receiving chain
    */
   constructor(IOptimismBridge _bridge) {
-    require(address(_bridge) != address(0), "Receiver/bridge-not-zero-address");
+    require(address(_bridge) != address(0), "Executor/bridge-not-zero-address");
     bridge = _bridge;
   }
 
   /* ============ External Functions ============ */
 
-  /// @inheritdoc ICrossChainReceiver
-  function receiveCalls(
+  /// @inheritdoc ICrossChainExecutor
+  function executeCalls(
     ICrossChainRelayer _relayer,
     uint256 _nonce,
     address _caller,
@@ -64,20 +64,20 @@ contract CrossChainReceiverOptimism is ICrossChainReceiver {
       }
     }
 
-    emit ReceivedCalls(_relayer, _nonce, msg.sender, _calls);
+    emit ExecutedCalls(_relayer, _nonce, msg.sender, _calls);
   }
 
   /* ============ Internal Functions ============ */
 
   /**
-   * @notice Check if caller is authorized to call `receiveCalls`.
+   * @notice Check if caller is authorized to call `executeCalls`.
    * @param _bridge Address of the bridge on the receiving chain
    * @param _relayer Address of the relayer on the origin chain
    */
   function _isAuthorized(address _bridge, address _relayer) internal view {
     require(
       msg.sender == _bridge && IOptimismBridge(_bridge).xDomainMessageSender() == _relayer,
-      "Receiver/caller-unauthorized"
+      "Executor/caller-unauthorized"
     );
   }
 }

@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import "./ICrossChainReceiver.sol";
+import "./ICrossChainExecutor.sol";
 
 /**
  * @title CrossChainRelayer interface
@@ -20,33 +20,33 @@ interface ICrossChainRelayer {
   }
 
   /**
-   * @notice Emitted when calls have successfully been relayed to the receiver chain.
+   * @notice Emitted when calls have successfully been relayed to the executor chain.
    * @param nonce Unique identifier
    * @param sender Address of the sender
-   * @param receiver Address of the CrossChainReceiver contract on the receiving chain
+   * @param executor Address of the CrossChainExecutor contract on the receiving chain
    * @param calls Array of calls being relayed
    * @param gasLimit Maximum amount of gas required for the `calls` to be executed
    */
   event RelayedCalls(
     uint256 indexed nonce,
     address indexed sender,
-    ICrossChainReceiver indexed receiver,
+    ICrossChainExecutor indexed executor,
     Call[] calls,
     uint256 gasLimit
   );
 
   /**
    * @notice Relay the calls to the receiving chain.
-   * @dev Must implement `ICrossChainReceiver.receiveCalls` to relay the calls on the receiving chain.
+   * @dev Must implement `ICrossChainExecutor.executeCalls` to relay the calls on the receiving chain.
    * @dev Must increment a `nonce` so that each batch of calls can be uniquely identified.
    * @dev Must emit the `RelayedCalls` event when successfully called.
    * @dev May require payment. Some bridges may require payment in the native currency, so the function is payable.
-   * @param receiver Address who will receive the calls on the receiving chain
+   * @param executor Address who will execute the calls on the receiving chain
    * @param calls Array of calls being relayed
    * @param gasLimit Maximum amount of gas required for the `calls` to be executed
    */
   function relayCalls(
-    ICrossChainReceiver receiver,
+    ICrossChainExecutor executor,
     Call[] calldata calls,
     uint256 gasLimit
   ) external payable;

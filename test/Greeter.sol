@@ -4,19 +4,18 @@ pragma solidity 0.8.16;
 
 import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
-import "../src/ReceiverAware.sol";
+import "../src/ExecutorAware.sol";
 
-contract Greeter is ReceiverAware {
+contract Greeter is ExecutorAware {
   string public greeting;
 
   event SetGreeting(
     string greeting,
     address l1Sender, // _msgSender() is the address who called `relayCalls` on the origin chain
-    address l2Sender, // CrossChainReceiver contract
-    address origin // tx.origin
+    address l2Sender // CrossChainExecutor contract
   );
 
-  constructor(address _receiver, string memory _greeting) ReceiverAware(_receiver) {
+  constructor(address _executor, string memory _greeting) ExecutorAware(_executor) {
     greeting = _greeting;
   }
 
@@ -25,9 +24,9 @@ contract Greeter is ReceiverAware {
   }
 
   function setGreeting(string memory _greeting) public {
-    require(isTrustedForwarder(msg.sender), "Greeter/caller-not-receiver");
+    require(isTrustedForwarder(msg.sender), "Greeter/caller-not-executor");
 
     greeting = _greeting;
-    emit SetGreeting(_greeting, _msgSender(), msg.sender, tx.origin);
+    emit SetGreeting(_greeting, _msgSender(), msg.sender);
   }
 }

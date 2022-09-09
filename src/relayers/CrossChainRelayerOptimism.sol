@@ -9,7 +9,7 @@ import "../interfaces/ICrossChainRelayer.sol";
 /**
  * @title CrossChainRelayer contract
  * @notice The CrossChainRelayer contract allows a user or contract to send messages to another chain.
- *         It lives on the origin chain and communicates with the `CrossChainReceiver` contract on the receiving chain.
+ *         It lives on the origin chain and communicates with the `CrossChainExecutor` contract on the receiving chain.
  */
 contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /* ============ Custom Errors ============ */
@@ -52,7 +52,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
 
   /// @inheritdoc ICrossChainRelayer
   function relayCalls(
-    ICrossChainReceiver _receiver,
+    ICrossChainExecutor _executor,
     Call[] calldata _calls,
     uint256 _gasLimit
   ) external payable {
@@ -68,9 +68,9 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     IOptimismBridge _bridge = bridge;
 
     _bridge.sendMessage(
-      address(_receiver),
+      address(_executor),
       abi.encodeWithSignature(
-        "receiveCalls(address,uint256,address,(address,bytes)[])",
+        "executeCalls(address,uint256,address,(address,bytes)[])",
         address(this),
         _nonce,
         msg.sender,
@@ -79,6 +79,6 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
       uint32(_gasLimit)
     );
 
-    emit RelayedCalls(_nonce, msg.sender, _receiver, _calls, _gasLimit);
+    emit RelayedCalls(_nonce, msg.sender, _executor, _calls, _gasLimit);
   }
 }

@@ -3,32 +3,32 @@
 pragma solidity 0.8.16;
 
 /**
- * @title ReceiverAware contract
- * @notice The ReceiverAware contract allows contracts on a receiving chain to receive calls from an origin chain.
+ * @title ExecutorAware contract
+ * @notice The ExecutorAware contract allows contracts on a receiving chain to execute calls from an origin chain.
  *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
- *         The `CrossChainReceiver` contract on the receiving chain receives these calls
- *         and then forward them to a ReceiverAware contract on the receiving chain.
+ *         The `CrossChainExecutor` contract on the receiving chain executes these calls
+ *         and then forward them to a ExecutorAware contract on the receiving chain.
  * @dev This contract implements EIP 2771 (https://eips.ethereum.org/EIPS/eip-2771)
- *      to ensure that calls are sent by a trusted `CrossChainReceiver` contract.
+ *      to ensure that calls are sent by a trusted `CrossChainExecutor` contract.
  */
-abstract contract ReceiverAware {
+abstract contract ExecutorAware {
   /* ============ Variables ============ */
 
   /**
    * @notice Address of the trusted forwarder contract as specified in EIP 2771.
-   *         In our case, it is the `CrossChainReceiver` contract on the receiving chain.
+   *         In our case, it is the `CrossChainExecutor` contract on the receiving chain.
    */
   address public immutable trustedForwarder;
 
   /* ============ Constructor ============ */
 
   /**
-   * @notice ReceiverAware constructor.
-   * @param _receiver Address of the `CrossChainRelayer` contract
+   * @notice ExecutorAware constructor.
+   * @param _executor Address of the `CrossChainRelayer` contract
    */
-  constructor(address _receiver) {
-    require(_receiver != address(0), "receiver-not-zero-address");
-    trustedForwarder = _receiver;
+  constructor(address _executor) {
+    require(_executor != address(0), "executor-not-zero-address");
+    trustedForwarder = _executor;
   }
 
   /* ============ External Functions ============ */
