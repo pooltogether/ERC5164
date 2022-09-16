@@ -456,10 +456,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@maticnetwork/fx-portal@npm:1.0.5":
+  version: 1.0.5
+  resolution: "@maticnetwork/fx-portal@npm:1.0.5"
+  dependencies:
+    "@openzeppelin/contracts": ^4.2.0
+  checksum: 295b817aa00905d62eccb0f83176c3477800c6fc7f5c1de34c10d4d9a3f0e3587b9cba46e562234df4e3ac0160db45e6fe8fe5e60166328e7bf1c2ec0054eddf
+  languageName: node
+  linkType: hard
+
+"@openzeppelin/contracts@npm:^4.2.0":
+  version: 4.7.3
+  resolution: "@openzeppelin/contracts@npm:4.7.3"
+  checksum: 18382fcacf7cfd652f5dd0e70c08f08ea74eaa8ff11e9f9850639ada70198ae01a3f9493d89a52d724f2db394e9616bf6258017804612ba273167cf657fbb073
+  languageName: node
+  linkType: hard
+
 "@pooltogether/erc5164@workspace:.":
   version: 0.0.0-use.local
   resolution: "@pooltogether/erc5164@workspace:."
   dependencies:
+    "@maticnetwork/fx-portal": 1.0.5
     ethers: 5.7.1
     husky: 8.0.1
     lint-staged: 13.0.3
