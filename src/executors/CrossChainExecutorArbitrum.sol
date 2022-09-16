@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
+import "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 
 import "../interfaces/ICrossChainExecutor.sol";
 
@@ -11,7 +11,7 @@ import "../interfaces/ICrossChainExecutor.sol";
  * @notice The CrossChainExecutor contract executes call from the origin chain.
  *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
  */
-contract CrossChainExecutorOptimism is ICrossChainExecutor {
+contract CrossChainExecutorArbitrum is ICrossChainExecutor {
   /* ============ Custom Errors ============ */
 
   /**
@@ -23,22 +23,8 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
 
   /* ============ Variables ============ */
 
-  /// @notice Address of the Optimism cross domain messenger on the receiving chain.
-  ICrossDomainMessenger public immutable crossDomainMessenger;
-
   /// @notice Address of the relayer contract on the origin chain.
   ICrossChainRelayer public relayer;
-
-  /* ============ Constructor ============ */
-
-  /**
-   * @notice CrossChainExecutor constructor.
-   * @param _crossDomainMessenger Address of the Optimism cross domain messenger
-   */
-  constructor(ICrossDomainMessenger _crossDomainMessenger) {
-    require(address(_crossDomainMessenger) != address(0), "Executor/CDM-not-zero-address");
-    crossDomainMessenger = _crossDomainMessenger;
-  }
 
   /* ============ External Functions ============ */
 
@@ -82,15 +68,13 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
   /* ============ Internal Functions ============ */
 
   /**
-   * @notice Check if caller is authorized to call `executeCalls`.
+   * @notice Check that the message came from the `relayer` on the origin chain.
+   * @dev We check that the sender is the L1 contract's L2 alias.
    * @param _relayer Address of the relayer on the origin chain
    */
   function _isAuthorized(ICrossChainRelayer _relayer) internal view {
-    ICrossDomainMessenger _crossDomainMessenger = crossDomainMessenger;
-
     require(
-      msg.sender == address(_crossDomainMessenger) &&
-        _crossDomainMessenger.xDomainMessageSender() == address(_relayer),
+      msg.sender == AddressAliasHelper.applyL1ToL2Alias(address(_relayer)),
       "Executor/caller-unauthorized"
     );
   }

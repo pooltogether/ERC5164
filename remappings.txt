@@ -2,3 +2,4 @@ forge-std/=lib/forge-std/src/
 solidity-stringutils/=lib/solidity-stringutils/src/
 @eth-optimism=lib/optimism/packages/contracts/
 @maticnetwork/fx-portal/=lib/contracts/
+@arbitrum/nitro-contracts/=lib/nitro/contracts/

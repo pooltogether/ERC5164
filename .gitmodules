@@ -10,3 +10,6 @@
 [submodule "lib/contracts"]
 	path = lib/contracts
 	url = https://github.com/fx-portal/contracts
+[submodule "lib/nitro"]
+	path = lib/nitro
+	url = https://github.com/offchainlabs/nitro
