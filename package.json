@@ -19,6 +19,9 @@
     "set:relayerOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:SetCrossChainRelayer --ffi --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast -vv",
     "deploy:optimismGoerli": "yarn deploy:relayerOptimismGoerli && yarn deploy:executorOptimismGoerli && yarn set:executorOptimismGoerli && yarn set:relayerOptimismGoerli && yarn deploy:greeterOptimismGoerli",
     "bridge:optimismGoerli": "forge script script/bridge/BridgeToOptimismGoerli.s.sol --ffi --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv",
+    "deploy:polygonRelayerGoerli": "forge script script/deploy/DeployRelayer.s.sol:DeployPolygonRelayerToGoerli --rpc-url $GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY -vvvv",
+    "deploy:polygonExecutorMumbai": "forge script script/deploy/DeployExecutor.s.sol:DeployPolygonExecutorToMumbai --rpc-url $MUMBAI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $POLYGONSCAN_API_KEY -vvvv",
+    "bridge:mumbai": "forge script script/bridge/Bridge.s.sol:BridgeToMumbai --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv",
     "test": "forge test -vv"
   },
   "packageManager": "yarn@3.2.3",
