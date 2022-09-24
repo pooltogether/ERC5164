@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import { ICrossDomainMessenger as IOptimismBridge } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
+import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
 import "../interfaces/ICrossChainExecutor.sol";
 
@@ -23,32 +23,32 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
 
   /* ============ Variables ============ */
 
-  /// @notice Address of the Optimism bridge on the receiving chain.
-  IOptimismBridge public immutable bridge;
+  /// @notice Address of the Optimism cross domain messenger on the receiving chain.
+  ICrossDomainMessenger public immutable crossDomainMessenger;
+
+  /// @notice Address of the relayer contract on the origin chain.
+  ICrossChainRelayer public relayer;
 
   /* ============ Constructor ============ */
 
   /**
    * @notice CrossChainExecutor constructor.
-   * @param _bridge Address of the Optimism bridge on the receiving chain
+   * @param _crossDomainMessenger Address of the Optimism cross domain messenger
    */
-  constructor(IOptimismBridge _bridge) {
-    require(address(_bridge) != address(0), "Executor/bridge-not-zero-address");
-    bridge = _bridge;
+  constructor(ICrossDomainMessenger _crossDomainMessenger) {
+    require(address(_crossDomainMessenger) != address(0), "Executor/CDM-not-zero-address");
+    crossDomainMessenger = _crossDomainMessenger;
   }
 
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainExecutor
   function executeCalls(
-    ICrossChainRelayer _relayer,
     uint256 _nonce,
     address _caller,
     Call[] calldata _calls
   ) external {
-    address _bridge = address(bridge);
-
-    _isAuthorized(_bridge, address(_relayer));
+    _isAuthorized();
 
     uint256 _callsLength = _calls.length;
 
@@ -64,19 +64,28 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
       }
     }
 
-    emit ExecutedCalls(_relayer, _nonce, msg.sender, _calls);
+    emit ExecutedCalls(relayer, _nonce, msg.sender, _calls);
+  }
+
+  /**
+   * @notice Set relayer contract address.
+   * @dev Will revert if it has already been set.
+   * @param _relayer Address of the relayer contract
+   */
+  function setRelayer(ICrossChainRelayer _relayer) external {
+    require(address(relayer) == address(0), "Executor/relayer-already-set");
+    relayer = _relayer;
   }
 
   /* ============ Internal Functions ============ */
 
-  /**
-   * @notice Check if caller is authorized to call `executeCalls`.
-   * @param _bridge Address of the bridge on the receiving chain
-   * @param _relayer Address of the relayer on the origin chain
-   */
-  function _isAuthorized(address _bridge, address _relayer) internal view {
+  /// @notice Check if caller is authorized to call `executeCalls`.
+  function _isAuthorized() internal view {
+    ICrossDomainMessenger _crossDomainMessenger = crossDomainMessenger;
+
     require(
-      msg.sender == _bridge && IOptimismBridge(_bridge).xDomainMessageSender() == _relayer,
+      msg.sender == address(_crossDomainMessenger) &&
+        _crossDomainMessenger.xDomainMessageSender() == address(relayer),
       "Executor/caller-unauthorized"
     );
   }

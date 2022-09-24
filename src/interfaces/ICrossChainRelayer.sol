@@ -37,17 +37,11 @@ interface ICrossChainRelayer {
 
   /**
    * @notice Relay the calls to the receiving chain.
-   * @dev Must implement `ICrossChainExecutor.executeCalls` to relay the calls on the receiving chain.
    * @dev Must increment a `nonce` so that each batch of calls can be uniquely identified.
    * @dev Must emit the `RelayedCalls` event when successfully called.
    * @dev May require payment. Some bridges may require payment in the native currency, so the function is payable.
-   * @param executor Address who will execute the calls on the receiving chain
    * @param calls Array of calls being relayed
    * @param gasLimit Maximum amount of gas required for the `calls` to be executed
    */
-  function relayCalls(
-    ICrossChainExecutor executor,
-    Call[] calldata calls,
-    uint256 gasLimit
-  ) external payable;
+  function relayCalls(Call[] calldata calls, uint256 gasLimit) external payable;
 }

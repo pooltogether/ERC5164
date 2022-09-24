@@ -18,7 +18,6 @@ contract BridgeToOptimismGoerli is Script {
 
   function bridgeToOptimism() public {
     CrossChainRelayerOptimism _relayer = CrossChainRelayerOptimism(crossChainRelayerOptimism);
-    CrossChainExecutorOptimism _executor = CrossChainExecutorOptimism(crossChainExecutorOptimism);
 
     ICrossChainRelayer.Call[] memory _calls = new ICrossChainRelayer.Call[](1);
 
@@ -27,7 +26,7 @@ contract BridgeToOptimismGoerli is Script {
       data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
     });
 
-    _relayer.relayCalls(_executor, _calls, 1000000);
+    _relayer.relayCalls(_calls, 1000000);
   }
 
   function run() public {

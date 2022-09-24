@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import { ICrossDomainMessenger as IOptimismBridge } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
+import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
 import "../interfaces/ICrossChainRelayer.sol";
 
@@ -24,8 +24,11 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
 
   /* ============ Variables ============ */
 
-  /// @notice Address of the Optimism bridge on the origin chain.
-  IOptimismBridge public immutable bridge;
+  /// @notice Address of the Optimism cross domain messenger on the origin chain.
+  ICrossDomainMessenger public immutable crossDomainMessenger;
+
+  /// @notice Address of the executor contract on the receiving chain.
+  ICrossChainExecutor public executor;
 
   /// @notice Gas limit provided for free on Optimism.
   uint256 public immutable maxGasLimit;
@@ -37,25 +40,21 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
 
   /**
    * @notice CrossChainRelayer constructor.
-   * @param _bridge Address of the Optimism bridge
+   * @param _crossDomainMessenger Address of the Optimism cross domain messenger
    * @param _maxGasLimit Gas limit provided for free on Optimism
    */
-  constructor(IOptimismBridge _bridge, uint256 _maxGasLimit) {
-    require(address(_bridge) != address(0), "Relayer/bridge-not-zero-address");
+  constructor(ICrossDomainMessenger _crossDomainMessenger, uint256 _maxGasLimit) {
+    require(address(_crossDomainMessenger) != address(0), "Relayer/CDM-not-zero-address");
     require(_maxGasLimit > 0, "Relayer/max-gas-limit-gt-zero");
 
-    bridge = _bridge;
+    crossDomainMessenger = _crossDomainMessenger;
     maxGasLimit = _maxGasLimit;
   }
 
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainRelayer
-  function relayCalls(
-    ICrossChainExecutor _executor,
-    Call[] calldata _calls,
-    uint256 _gasLimit
-  ) external payable {
+  function relayCalls(Call[] calldata _calls, uint256 _gasLimit) external payable {
     uint256 _maxGasLimit = maxGasLimit;
 
     if (_gasLimit > _maxGasLimit) {
@@ -65,13 +64,12 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     nonce++;
 
     uint256 _nonce = nonce;
-    IOptimismBridge _bridge = bridge;
+    ICrossChainExecutor _executor = executor;
 
-    _bridge.sendMessage(
+    crossDomainMessenger.sendMessage(
       address(_executor),
       abi.encodeWithSignature(
-        "executeCalls(address,uint256,address,(address,bytes)[])",
-        address(this),
+        "executeCalls(uint256,address,(address,bytes)[])",
         _nonce,
         msg.sender,
         _calls
@@ -80,5 +78,15 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     );
 
     emit RelayedCalls(_nonce, msg.sender, _executor, _calls, _gasLimit);
+  }
+
+  /**
+   * @notice Set executor contract address.
+   * @dev Will revert if it has already been set.
+   * @param _executor Address of the executor contract on the receiving chain
+   */
+  function setExecutor(ICrossChainExecutor _executor) external {
+    require(address(executor) == address(0), "Relayer/executor-already-set");
+    executor = _executor;
   }
 }

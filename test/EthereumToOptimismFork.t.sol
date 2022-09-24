@@ -91,16 +91,39 @@ contract EthereumToOptimismForkTest is Test {
     deployGreeter();
   }
 
+  function setExecutor() public {
+    vm.selectFork(mainnetFork);
+    relayer.setExecutor(executor);
+  }
+
+  function setRelayer() public {
+    vm.selectFork(optimismFork);
+    executor.setRelayer(relayer);
+  }
+
+  function setAll() public {
+    setExecutor();
+    setRelayer();
+  }
+
   /* ============ Tests ============ */
 
   function testRelayer() public {
     deployRelayer();
-    assertEq(address(relayer.bridge()), proxyOVML1CrossDomainMessenger);
+    deployExecutor();
+    setExecutor();
+
+    assertEq(address(relayer.crossDomainMessenger()), proxyOVML1CrossDomainMessenger);
+    assertEq(address(relayer.executor()), address(executor));
   }
 
   function testExecutor() public {
+    deployRelayer();
     deployExecutor();
-    assertEq(address(executor.bridge()), l2CrossDomainMessenger);
+    setRelayer();
+
+    assertEq(address(executor.crossDomainMessenger()), l2CrossDomainMessenger);
+    assertEq(address(executor.relayer()), address(relayer));
   }
 
   function testGreeter() public {
@@ -112,6 +135,7 @@ contract EthereumToOptimismForkTest is Test {
 
   function testRelayCalls() public {
     deployAll();
+    setAll();
 
     vm.selectFork(mainnetFork);
 
@@ -126,11 +150,12 @@ contract EthereumToOptimismForkTest is Test {
 
     emit RelayedCalls(nonce, address(this), executor, _calls, 200000);
 
-    relayer.relayCalls(executor, _calls, 200000);
+    relayer.relayCalls(_calls, 200000);
   }
 
   function testExecuteCalls() public {
     deployAll();
+    setAll();
 
     vm.selectFork(optimismFork);
 
@@ -157,8 +182,7 @@ contract EthereumToOptimismForkTest is Test {
       address(executor),
       address(relayer),
       abi.encodeWithSignature(
-        "executeCalls(address,uint256,address,(address,bytes)[])",
-        address(relayer),
+        "executeCalls(uint256,address,(address,bytes)[])",
         nonce,
         address(this),
         _calls
@@ -171,6 +195,7 @@ contract EthereumToOptimismForkTest is Test {
 
   function testGasLimitTooHigh() public {
     deployAll();
+    setAll();
 
     vm.selectFork(mainnetFork);
 
@@ -189,11 +214,12 @@ contract EthereumToOptimismForkTest is Test {
       )
     );
 
-    relayer.relayCalls(executor, _calls, 2000000);
+    relayer.relayCalls(_calls, 2000000);
   }
 
   function testIsAuthorized() public {
     deployAll();
+    setAll();
 
     vm.selectFork(optimismFork);
 
@@ -206,11 +232,12 @@ contract EthereumToOptimismForkTest is Test {
 
     vm.expectRevert(bytes("Executor/caller-unauthorized"));
 
-    executor.executeCalls(relayer, nonce, address(this), _calls);
+    executor.executeCalls(nonce, address(this), _calls);
   }
 
   function testSetGreetingError() public {
     deployAll();
+    setAll();
 
     vm.selectFork(optimismFork);
 
