@@ -1,2 +1,3 @@
 forge-std/=lib/forge-std/src/
-@eth-optimism=node_modules/@eth-optimism
+solidity-stringutils/=lib/solidity-stringutils/src/
+@eth-optimism=lib/optimism/packages/contracts/
