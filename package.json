@@ -12,9 +12,13 @@
     "format:file": "prettier --config .prettierrc --write",
     "lint-staged": "lint-staged",
     "hint": "solhint --config \"./.solhint.json\" \"{src,test}/**/*.sol\"",
-    "deploy:goerli": "forge script script/deploy/DeployToGoerli.s.sol --rpc-url $GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY -vvvv",
-    "deploy:optimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY -vvvv",
-    "bridge:optimismGoerli": "forge script script/bridge/BridgeToOptimismGoerli.s.sol --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv",
+    "deploy:relayerOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:DeployCrossChainRelayerToGoerli --rpc-url $GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY -vv",
+    "deploy:executorOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:DeployCrossChainExecutorToOptimismGoerli --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY -vv",
+    "deploy:greeterOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:DeployGreeterToOptimismGoerli --ffi --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY -vv",
+    "set:executorOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:SetCrossChainExecutor --ffi --rpc-url $GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast -vv",
+    "set:relayerOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:SetCrossChainRelayer --ffi --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast -vv",
+    "deploy:optimismGoerli": "yarn deploy:relayerOptimismGoerli && yarn deploy:executorOptimismGoerli && yarn set:executorOptimismGoerli && yarn set:relayerOptimismGoerli && yarn deploy:greeterOptimismGoerli",
+    "bridge:optimismGoerli": "forge script script/bridge/BridgeToOptimismGoerli.s.sol --ffi --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv",
     "test": "forge test -vv"
   },
   "packageManager": "yarn@3.2.3",
@@ -26,8 +30,5 @@
     "prettier-plugin-solidity": "1.0.0-beta.24",
     "solhint": "3.3.7",
     "solhint-plugin-prettier": "0.0.5"
-  },
-  "dependencies": {
-    "@eth-optimism/contracts": "0.5.33"
   }
 }
