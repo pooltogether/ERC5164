@@ -11,10 +11,19 @@
     "format": "prettier --config .prettierrc --write \"**/*.{ts,js,json,md,sol,yml}\"",
     "format:file": "prettier --config .prettierrc --write",
     "lint-staged": "lint-staged",
-    "hint": "solhint --config \"./.solhint.json\" \"{src,test}/**/*.sol\""
+    "hint": "solhint --config \"./.solhint.json\" \"{src,test}/**/*.sol\"",
+    "deploy:relayerOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:DeployCrossChainRelayerToGoerli --rpc-url $GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY -vv",
+    "deploy:executorOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:DeployCrossChainExecutorToOptimismGoerli --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY -vv",
+    "deploy:greeterOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:DeployGreeterToOptimismGoerli --ffi --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY -vv",
+    "set:executorOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:SetCrossChainExecutor --ffi --rpc-url $GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast -vv",
+    "set:relayerOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:SetCrossChainRelayer --ffi --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast -vv",
+    "deploy:optimismGoerli": "yarn deploy:relayerOptimismGoerli && yarn deploy:executorOptimismGoerli && yarn set:executorOptimismGoerli && yarn set:relayerOptimismGoerli && yarn deploy:greeterOptimismGoerli",
+    "bridge:optimismGoerli": "forge script script/bridge/BridgeToOptimismGoerli.s.sol --ffi --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv",
+    "test": "forge test -vv"
   },
   "packageManager": "yarn@3.2.3",
   "devDependencies": {
+    "ethers": "5.7.1",
     "husky": "8.0.1",
     "lint-staged": "13.0.3",
     "prettier": "2.7.1",

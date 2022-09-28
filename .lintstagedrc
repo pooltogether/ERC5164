@@ -2,7 +2,7 @@
   "*.{ts,js,json,md,sol,yml}": [
     "yarn format"
   ],
-  "*.{sol}": [
+  "*.sol": [
     "yarn hint"
   ]
 }
