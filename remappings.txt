@@ -1,4 +1,4 @@
 forge-std/=lib/forge-std/src/
 solidity-stringutils/=lib/solidity-stringutils/src/
 @eth-optimism=lib/optimism/packages/contracts/
-@maticnetwork=node_modules/@maticnetwork
+@maticnetwork/fx-portal/=lib/contracts/

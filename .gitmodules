@@ -7,3 +7,6 @@
 [submodule "lib/optimism"]
 	path = lib/optimism
 	url = https://github.com/ethereum-optimism/optimism
+[submodule "lib/contracts"]
+	path = lib/contracts
+	url = https://github.com/fx-portal/contracts
