@@ -19,6 +19,13 @@
     "set:relayerOptimismGoerli": "forge script script/deploy/DeployToOptimismGoerli.s.sol:SetCrossChainRelayer --ffi --rpc-url $OPTIMISM_GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast -vv",
     "deploy:optimismGoerli": "yarn deploy:relayerOptimismGoerli && yarn deploy:executorOptimismGoerli && yarn set:executorOptimismGoerli && yarn set:relayerOptimismGoerli && yarn deploy:greeterOptimismGoerli",
     "bridge:optimismGoerli": "forge script script/bridge/BridgeToOptimismGoerli.s.sol --ffi --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv",
+    "deploy:relayerPolygonGoerli": "forge script script/deploy/DeployToMumbai.s.sol:DeployCrossChainRelayerToGoerli --rpc-url $GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY -vv",
+    "deploy:executorPolygonGoerli": "forge script script/deploy/DeployToMumbai.s.sol:DeployCrossChainExecutorToMumbai --rpc-url $MUMBAI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $POLYGONSCAN_API_KEY -vv",
+    "deploy:greeterPolygonGoerli": "forge script script/deploy/DeployToMumbai.s.sol:DeployGreeterToMumbai --ffi --rpc-url $MUMBAI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast --verify --etherscan-api-key $POLYGONSCAN_API_KEY -vv",
+    "set:executorPolygonGoerli": "forge script script/deploy/DeployToMumbai.s.sol:SetFxChildTunnel --ffi --rpc-url $GOERLI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast -vv",
+    "set:relayerPolygonGoerli": "forge script script/deploy/DeployToMumbai.s.sol:SetFxRootTunnel --ffi --rpc-url $MUMBAI_RPC_URL  --private-key $HDWALLET_PRIVATE_KEY --broadcast -vv",
+    "deploy:mumbai": "yarn deploy:relayerPolygonGoerli && yarn deploy:executorPolygonGoerli && yarn set:executorPolygonGoerli && yarn set:relayerPolygonGoerli && yarn deploy:greeterPolygonGoerli",
+    "bridge:mumbai": "forge script script/bridge/BridgeToMumbai.s.sol:BridgeToMumbai --ffi --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv",
     "test": "forge test -vv"
   },
   "packageManager": "yarn@3.2.3",
