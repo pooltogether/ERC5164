@@ -6,12 +6,16 @@ import { Script } from "forge-std/Script.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 import "solidity-stringutils/strings.sol";
 
-import { CrossChainExecutorOptimism } from "../../src/executors/CrossChainExecutorOptimism.sol";
 import { CrossChainRelayerOptimism } from "../../src/relayers/CrossChainRelayerOptimism.sol";
+import { CrossChainExecutorOptimism } from "../../src/executors/CrossChainExecutorOptimism.sol";
+
+import { CrossChainRelayerPolygon } from "../../src/relayers/CrossChainRelayerPolygon.sol";
+import { CrossChainExecutorPolygon } from "../../src/executors/CrossChainExecutorPolygon.sol";
+
 import { Greeter } from "../../test/Greeter.sol";
 
-string constant GOERLI_PATH = "/broadcast/DeployToOptimismGoerli.s.sol/5/";
 string constant OP_GOERLI_PATH = "/broadcast/DeployToOptimismGoerli.s.sol/420/";
+string constant MUMBAI_PATH = "/broadcast/DeployToMumbai.s.sol/80001/";
 
 abstract contract DeployedContracts is Script {
   using strings for *;
@@ -79,7 +83,11 @@ abstract contract DeployedContracts is Script {
   function _getCrossChainRelayerOptimism() internal returns (CrossChainRelayerOptimism) {
     return
       CrossChainRelayerOptimism(
-        _getContractAddress("CrossChainRelayerOptimism", GOERLI_PATH, "relayer-not-found")
+        _getContractAddress(
+          "CrossChainRelayerOptimism",
+          "/broadcast/DeployToOptimismGoerli.s.sol/5/",
+          "relayer-not-found"
+        )
       );
   }
 
@@ -92,5 +100,28 @@ abstract contract DeployedContracts is Script {
 
   function _getGreeterOptimism() internal returns (Greeter) {
     return Greeter(_getContractAddress("Greeter", OP_GOERLI_PATH, "greeter-not-found"));
+  }
+
+  /* ============ Polygon ============ */
+  function _getCrossChainRelayerPolygon() internal returns (CrossChainRelayerPolygon) {
+    return
+      CrossChainRelayerPolygon(
+        _getContractAddress(
+          "CrossChainRelayerPolygon",
+          "/broadcast/DeployToMumbai.s.sol/5/",
+          "relayer-not-found"
+        )
+      );
+  }
+
+  function _getCrossChainExecutorPolygon() internal returns (CrossChainExecutorPolygon) {
+    return
+      CrossChainExecutorPolygon(
+        _getContractAddress("CrossChainExecutorPolygon", MUMBAI_PATH, "executor-not-found")
+      );
+  }
+
+  function _getGreeterPolygon() internal returns (Greeter) {
+    return Greeter(_getContractAddress("Greeter", MUMBAI_PATH, "greeter-not-found"));
   }
 }

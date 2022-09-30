@@ -4,7 +4,8 @@ pragma solidity 0.8.16;
 
 import { FxBaseRootTunnel } from "@maticnetwork/fx-portal/contracts/tunnel/FxBaseRootTunnel.sol";
 
-import "../interfaces/ICrossChainRelayer.sol";
+import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
+import { ICrossChainExecutor } from "../interfaces/ICrossChainExecutor.sol";
 
 /**
  * @title CrossChainRelayer contract
@@ -53,11 +54,7 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainRelayer
-  function relayCalls(
-    ICrossChainExecutor _executor,
-    Call[] calldata _calls,
-    uint256 _gasLimit
-  ) external payable {
+  function relayCalls(Call[] calldata _calls, uint256 _gasLimit) external payable {
     uint256 _maxGasLimit = maxGasLimit;
 
     if (_gasLimit > _maxGasLimit) {
@@ -70,7 +67,7 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
 
     _sendMessageToChild(abi.encode(_nonce, msg.sender, _calls));
 
-    emit RelayedCalls(_nonce, msg.sender, _executor, _calls, _gasLimit);
+    emit RelayedCalls(_nonce, msg.sender, ICrossChainExecutor(fxChildTunnel), _calls, _gasLimit);
   }
 
   /* ============ Internal Functions ============ */

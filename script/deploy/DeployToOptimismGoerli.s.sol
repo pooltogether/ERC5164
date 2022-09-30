@@ -6,9 +6,6 @@ import { Script } from "forge-std/Script.sol";
 import { ICrossDomainMessenger as IOptimismBridge } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
-import { ICrossChainExecutor } from "../../src/interfaces/ICrossChainExecutor.sol";
-import { ICrossChainRelayer } from "../../src/interfaces/ICrossChainRelayer.sol";
-
 import { CrossChainExecutorOptimism } from "../../src/executors/CrossChainExecutorOptimism.sol";
 import { CrossChainRelayerOptimism } from "../../src/relayers/CrossChainRelayerOptimism.sol";
 import { Greeter } from "../../test/Greeter.sol";
