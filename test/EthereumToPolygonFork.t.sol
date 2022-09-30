@@ -6,8 +6,10 @@ import "forge-std/Test.sol";
 
 import { ICrossChainRelayer } from "../src/interfaces/ICrossChainRelayer.sol";
 import { ICrossChainExecutor } from "../src/interfaces/ICrossChainExecutor.sol";
+
 import "../src/relayers/CrossChainRelayerPolygon.sol";
 import "../src/executors/CrossChainExecutorPolygon.sol";
+
 import "./Greeter.sol";
 
 contract EthereumToPolygonForkTest is Test {
@@ -49,6 +51,10 @@ contract EthereumToPolygonForkTest is Test {
 
   event FailedRelayedMessage(bytes32 indexed msgHash);
 
+  /* ============ Errors to test ============ */
+
+  error CallFailure(ICrossChainExecutor.Call call, bytes errorData);
+
   /* ============ Setup ============ */
 
   function setUp() public {
@@ -84,28 +90,44 @@ contract EthereumToPolygonForkTest is Test {
     deployRelayer();
     deployExecutor();
     deployGreeter();
+  }
 
+  function setFxChildTunnel() public {
     vm.selectFork(mainnetFork);
     relayer.setFxChildTunnel(address(executor));
+  }
 
+  function setFxRootTunnel() public {
     vm.selectFork(polygonFork);
     executor.setFxRootTunnel(address(relayer));
+  }
+
+  function setAll() public {
+    setFxChildTunnel();
+    setFxRootTunnel();
   }
 
   /* ============ Tests ============ */
 
   function testRelayer() public {
     deployRelayer();
+    deployExecutor();
+    setFxChildTunnel();
 
     assertEq(address(relayer.checkpointManager()), checkpointManager);
     assertEq(address(relayer.fxRoot()), fxRoot);
     assertEq(relayer.maxGasLimit(), maxGasLimit);
+
+    assertEq(relayer.fxChildTunnel(), address(executor));
   }
 
   function testExecutor() public {
     deployExecutor();
+    deployRelayer();
+    setFxRootTunnel();
 
     assertEq(executor.fxChild(), fxChild);
+    assertEq(executor.fxRootTunnel(), address(relayer));
   }
 
   function testGreeter() public {
@@ -129,13 +151,20 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.expectEmit(true, true, true, true, address(relayer));
 
-    emit RelayedCalls(nonce, address(this), ICrossChainExecutor(address(executor)), _calls, 200000);
+    emit RelayedCalls(
+      nonce,
+      address(this),
+      ICrossChainExecutor(relayer.fxChildTunnel()),
+      _calls,
+      200000
+    );
 
-    relayer.relayCalls(ICrossChainExecutor(address(executor)), _calls, 200000);
+    relayer.relayCalls(_calls, 200000);
   }
 
   function testExecuteCalls() public {
     deployAll();
+    setAll();
 
     vm.selectFork(polygonFork);
 
@@ -181,7 +210,29 @@ contract EthereumToPolygonForkTest is Test {
       )
     );
 
-    relayer.relayCalls(ICrossChainExecutor(address(executor)), _calls, 2000000);
+    relayer.relayCalls(_calls, 2000000);
+  }
+
+  function testCallFailure() public {
+    deployAll();
+    setAll();
+
+    vm.selectFork(polygonFork);
+
+    ICrossChainExecutor.Call[] memory _calls = new ICrossChainExecutor.Call[](1);
+
+    _calls[0] = ICrossChainExecutor.Call({
+      target: address(this),
+      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
+    });
+
+    vm.startPrank(fxChild);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(CrossChainExecutorPolygon.CallFailure.selector, _calls[0], bytes(""))
+    );
+
+    executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
   }
 
   function testSetGreetingError() public {
