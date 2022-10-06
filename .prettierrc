@@ -3,7 +3,7 @@
   "tabWidth": 2,
   "overrides": [
     {
-      "files": "*.*.{ts,js}",
+      "files": "*.{ts,js}",
       "options": {
         "parser": "typescript",
         "trailingComma": "all",

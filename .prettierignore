@@ -1,6 +1,8 @@
 broadcast
 cache
+cache_hardhat
 lib
 out
+types
 
 package.json
