@@ -28,7 +28,7 @@
     "bridge:mumbai": "forge script script/bridge/BridgeToMumbai.s.sol:BridgeToMumbai --ffi --rpc-url $GOERLI_RPC_URL --private-key $HDWALLET_PRIVATE_KEY --broadcast -vvvv",
     "test": "forge test -vv",
     "typechain": "typechain --target=ethers-v5 \"./out/**/*.json\" --out-dir \"./types\"",
-    "hardhat:compile": "mkdir -p abis && hardhat --show-stack-traces --max-memory 8192 compile",
+    "hardhat:compile": "hardhat --show-stack-traces --max-memory 8192 compile",
     "fork:startMainnet": "CHAIN_ID=1 hardhat node --no-reset --no-deploy --port 8545 --fork $MAINNET_RPC_URL --fork-block-number 15684520 --fork-ignore-unknown-tx-type true",
     "fork:startArbitrum": "CHAIN_ID=42161 hardhat node --no-reset --no-deploy --port 8546 --fork $ARBITRUM_RPC_URL --fork-block-number 28574320 --fork-ignore-unknown-tx-type true",
     "fork:impersonateMainnet": "CHAIN_ID=1 hardhat --network localhostMainnet fork:impersonate",
@@ -37,16 +37,19 @@
     "fork:distributeArbitrum": "CHAIN_ID=42161 hardhat --network localhostArbitrum fork:distribute",
     "fork:deployRelayerArbitrumMainnet": "CHAIN_ID=1 hardhat --network localhostMainnet fork:deploy-relayer",
     "fork:deployExecutorArbitrumMainnet": "CHAIN_ID=42161 hardhat --network localhostArbitrum fork:deploy-executor",
+    "fork:deployGreeterArbitrumMainnet": "CHAIN_ID=42161 hardhat --network localhostArbitrum fork:deploy-greeter",
     "fork:setExecutorArbitrumMainnet": "CHAIN_ID=1 hardhat --network localhostMainnet fork:set-executor",
     "fork:setRelayerArbitrumMainnet": "CHAIN_ID=42161 hardhat --network localhostArbitrum fork:set-relayer",
+    "fork:relayCallsArbitrumMainnet": "CHAIN_ID=1 hardhat --network localhostMainnet fork:relay-calls",
     "fork:runDeployMainnet": "wait-on tcp:8545 && yarn fork:impersonateMainnet && yarn fork:distributeMainnet && yarn fork:deployRelayerArbitrumMainnet",
-    "fork:runDeployArbitrum": "wait-on tcp:8546 && yarn fork:impersonateArbitrum && yarn fork:distributeArbitrum && yarn fork:deployExecutorArbitrumMainnet",
+    "fork:runDeployArbitrum": "wait-on tcp:8546 && yarn fork:impersonateArbitrum && yarn fork:distributeArbitrum && yarn fork:deployExecutorArbitrumMainnet && yarn fork:deployGreeterArbitrumMainnet",
     "fork:rmLocalhostDeployments": "rm -rf ./deployments/localhostMainnet && rm -rf ./deployments/localhostArbitrum",
     "fork:startArbitrumMainnet": "yarn fork:rmLocalhostDeployments && npm-run-all -p -r fork:startMainnet fork:startArbitrum",
-    "fork:runArbitrumMainnet": "npm-run-all -s fork:runDeployMainnet fork:runDeployArbitrum fork:setExecutorArbitrumMainnet fork:setRelayerArbitrumMainnet"
+    "fork:runRelayCallsArbitrumMainnet": "npm-run-all -s fork:runDeployMainnet fork:runDeployArbitrum fork:setExecutorArbitrumMainnet fork:setRelayerArbitrumMainnet fork:relayCallsArbitrumMainnet"
   },
   "packageManager": "yarn@3.2.3",
   "devDependencies": {
+    "@arbitrum/sdk": "3.0.0",
     "@ethersproject/abi": "5.7.0",
     "@ethersproject/providers": "5.7.1",
     "@nomicfoundation/hardhat-chai-matchers": "1.0.3",
@@ -60,6 +63,7 @@
     "chai": "4.3.6",
     "chalk": "4.1.2",
     "ethers": "5.7.1",
+    "glob": "8.0.3",
     "hardhat": "2.11.2",
     "hardhat-deploy": "0.11.15",
     "hardhat-gas-reporter": "1.0.9",
@@ -79,8 +83,5 @@
     "typechain": "8.1.0",
     "typescript": "4.8.4",
     "wait-on": "6.0.1"
-  },
-  "dependencies": {
-    "arb-bridge-eth": "0.7.8"
   }
 }

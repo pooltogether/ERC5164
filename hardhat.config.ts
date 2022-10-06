@@ -1,8 +1,12 @@
 import * as fs from 'fs';
-import { HardhatUserConfig } from 'hardhat/config';
+import glob from 'glob';
+
+import { HardhatUserConfig, subtask } from 'hardhat/config';
+import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names';
 
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomiclabs/hardhat-ethers';
+import '@typechain/hardhat';
 import 'hardhat-deploy';
 import 'hardhat-preprocessor';
 
@@ -28,6 +32,7 @@ const config: HardhatUserConfig = {
     artifacts: './out',
     sources: './src',
     cache: './cache_hardhat',
+    tests: './test',
   },
   preprocess: {
     eachLine: () => ({
@@ -47,7 +52,15 @@ const config: HardhatUserConfig = {
   solidity: {
     version: '0.8.16',
   },
+  typechain: {
+    outDir: './types',
+    target: 'ethers-v5',
+  },
 };
+
+subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS, async () => {
+  return [...glob.sync('./src/**/*.sol'), ...glob.sync('./test/**/*.sol')];
+});
 
 forkTasks;
 

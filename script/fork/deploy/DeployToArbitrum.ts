@@ -1,6 +1,5 @@
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import kill from 'kill-port';
 
 import {
   ARBITRUM_CHAIN_ID,
@@ -9,18 +8,8 @@ import {
   MAX_TX_GAS_LIMIT,
 } from '../../../Constants';
 import { getContractAddress } from '../../../helpers/getContract';
-import { getChainName } from '../../../helpers/getChain';
-import { action, error as errorLog, info, success } from '../../../helpers/log';
+import { action, info, success } from '../../../helpers/log';
 import { CrossChainRelayerArbitrum, CrossChainExecutorArbitrum } from '../../../types';
-
-const killHardhatNode = async (port: number, chainId: number) => {
-  await kill(port, 'tcp')
-    .then(() => success(`Killed ${getChainName(chainId)} Hardhat node`))
-    .catch((error) => {
-      errorLog(`Failed to kill ${getChainName(chainId)} Hardhat node`);
-      console.log(error);
-    });
-};
 
 export const deployRelayer = task(
   'fork:deploy-relayer',
@@ -67,6 +56,33 @@ export const deployExecutor = task(
   success(`Arbitrum Executor deployed on Arbitrum at address: ${address}`);
 });
 
+export const deployGreeter = task('fork:deploy-greeter', 'Deploy Greeter on Arbitrum').setAction(
+  async (taskArguments, hre: HardhatRuntimeEnvironment) => {
+    action('Deploy Greeter on Arbitrum...');
+
+    const {
+      deployments: { deploy },
+      getNamedAccounts,
+    } = hre;
+
+    const { deployer } = await getNamedAccounts();
+
+    info(`Deployer is: ${deployer}`);
+
+    const crossChainExecutorArbitrumAddress = await getContractAddress(
+      'CrossChainExecutorArbitrum',
+      ARBITRUM_CHAIN_ID,
+    );
+
+    const { address } = await deploy('Greeter', {
+      from: deployer,
+      args: [crossChainExecutorArbitrumAddress, 'Hello from L2'],
+    });
+
+    success(`Arbitrum Greeter deployed on Arbitrum at address: ${address}`);
+  },
+);
+
 export const setExecutor = task('fork:set-executor', 'Set Executor on Arbitrum Relayer').setAction(
   async (taskArguments, hre: HardhatRuntimeEnvironment) => {
     action('Set Executor on Arbitrum Relayer...');
@@ -102,7 +118,5 @@ export const setRelayer = task('fork:set-relayer', 'Set Relayer on Arbitrum Exec
     await crossChainExecutorArbitrum.setRelayer(crossChainRelayerArbitrumAddress);
 
     success('Relayer set on Arbitrum Executor!');
-
-    await killHardhatNode(8546, ARBITRUM_CHAIN_ID);
   },
 );
