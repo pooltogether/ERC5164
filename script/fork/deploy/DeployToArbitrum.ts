@@ -5,7 +5,7 @@ import {
   ARBITRUM_CHAIN_ID,
   MAINNET_CHAIN_ID,
   DELAYED_INBOX,
-  MAX_TX_GAS_LIMIT,
+  ARBITRUM_MAX_TX_GAS_LIMIT,
 } from '../../../Constants';
 import { getContractAddress } from '../../../helpers/getContract';
 import { action, info, success } from '../../../helpers/log';
@@ -28,7 +28,7 @@ export const deployRelayer = task(
 
   const { address } = await deploy('CrossChainRelayerArbitrum', {
     from: deployer,
-    args: [DELAYED_INBOX, MAX_TX_GAS_LIMIT],
+    args: [DELAYED_INBOX, ARBITRUM_MAX_TX_GAS_LIMIT],
   });
 
   success(`Arbitrum Relayer deployed on Ethereum at address: ${address}`);

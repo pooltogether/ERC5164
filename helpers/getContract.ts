@@ -3,11 +3,21 @@ import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 import { error as errorLog } from './log';
-import { MAINNET_CHAIN_ID, ARBITRUM_CHAIN_ID } from '../Constants';
+import {
+  MAINNET_CHAIN_ID,
+  ARBITRUM_CHAIN_ID,
+  GOERLI_CHAIN_ID,
+  ARBITRUM_GOERLI_CHAIN_ID,
+} from '../Constants';
 
-const deploymentFolderPath: { [key: number]: string } = {
+const deploymentFolderPathHardhat: { [key: number]: string } = {
   [MAINNET_CHAIN_ID]: 'deployments/localhostMainnet',
   [ARBITRUM_CHAIN_ID]: 'deployments/localhostArbitrum',
+};
+
+const deploymentFolderPathForge: { [key: number]: string } = {
+  [GOERLI_CHAIN_ID]: 'broadcast/DeployToArbitrumGoerli.s.sol/5',
+  [ARBITRUM_GOERLI_CHAIN_ID]: 'broadcast/DeployToArbitrumGoerli.s.sol/421613',
 };
 
 /**
@@ -35,8 +45,12 @@ export const getContract = async (
 export const getContractAddress = async (
   contractName: string,
   chainId: number,
+  deployer: 'Hardhat' | 'Forge' = 'Hardhat',
 ): Promise<string> => {
   let address = '';
+
+  const deploymentFolderPath =
+    deployer === 'Hardhat' ? deploymentFolderPathHardhat : deploymentFolderPathForge;
 
   const deploymentPath = `${__dirname.slice(0, __dirname.lastIndexOf('/'))}/${
     deploymentFolderPath[chainId]
@@ -45,17 +59,33 @@ export const getContractAddress = async (
   await fs.promises
     .readdir(deploymentPath, { withFileTypes: true })
     .then(async (files) => {
-      let filePath;
+      files.reverse();
 
       for (const file of files) {
-        if (file.name.startsWith(contractName)) {
-          const filePath = `${deploymentPath}/${contractName}.json`;
+        if (deployer === 'Hardhat') {
+          if (file.name.startsWith(contractName)) {
+            const filePath = `${deploymentPath}/${file.name}`;
+
+            await fs.promises.readFile(filePath).then((content) => {
+              const data = JSON.parse(content.toString());
+
+              address = data.address;
+            });
+          }
+        } else {
+          const filePath = `${deploymentPath}/${file.name}`;
 
           await fs.promises.readFile(filePath).then((content) => {
             const data = JSON.parse(content.toString());
 
-            address = data.address;
+            if (data.transactions[0].contractName === contractName) {
+              address = data.transactions[0].contractAddress;
+            }
           });
+
+          if (address !== '') {
+            break;
+          }
         }
       }
     })

@@ -1,34 +1,22 @@
-import { task } from 'hardhat/config';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { L1TransactionReceipt, L1ToL2MessageGasEstimator } from '@arbitrum/sdk/';
 import { hexDataLength } from '@ethersproject/bytes';
 import { BigNumber, providers } from 'ethers';
-import kill from 'kill-port';
+import hre from 'hardhat';
 
-import { ARBITRUM_CHAIN_ID, MAINNET_CHAIN_ID } from '../../../Constants';
-import { getContractAddress } from '../../../helpers/getContract';
-import { getChainName } from '../../../helpers/getChain';
-import { action, error as errorLog, info, success } from '../../../helpers/log';
-import { CrossChainRelayerArbitrum } from '../../../types';
+import { ARBITRUM_GOERLI_CHAIN_ID, GOERLI_CHAIN_ID } from '../../Constants';
+import { getContractAddress } from '../../helpers/getContract';
+import { getChainName } from '../../helpers/getChain';
+import { action, error as errorLog, info, success } from '../../helpers/log';
+import { CrossChainRelayerArbitrum, CrossChainExecutorArbitrum } from '../../types';
+import CrossChainRelayerArbitrumArtifact from '../../out/CrossChainRelayerArbitrum.sol/CrossChainRelayerArbitrum.json';
 
-const killHardhatNode = async (port: number, chainId: number) => {
-  await kill(port, 'tcp')
-    .then(() => success(`Killed ${getChainName(chainId)} Hardhat node`))
-    .catch((error) => {
-      errorLog(`Failed to kill ${getChainName(chainId)} Hardhat node`);
-      console.log(error);
-    });
-};
-
-export const relayCalls = task(
-  'fork:relay-calls',
-  'Relay calls from Ethereum to Arbitrum',
-).setAction(async (taskArguments, hre: HardhatRuntimeEnvironment) => {
+const main = async () => {
   action('Relay calls from Ethereum to Arbitrum...');
 
   const {
     ethers: {
       getContract,
+      getContractAt,
       provider: l1Provider,
       utils: { defaultAbiCoder, Interface },
     },
@@ -37,20 +25,28 @@ export const relayCalls = task(
 
   const { deployer } = await getNamedAccounts();
 
-  const l2Provider = new providers.JsonRpcProvider(process.env.ARBITRUM_RPC_URL);
+  const l2Provider = new providers.JsonRpcProvider(process.env.ARBITRUM_GOERLI_RPC_URL);
 
   info(`Caller is: ${deployer}`);
 
-  const crossChainRelayerArbitrum = (await getContract(
+  const crossChainRelayerArbitrumAddress = await getContractAddress(
     'CrossChainRelayerArbitrum',
+    GOERLI_CHAIN_ID,
+    'Forge',
+  );
+
+  const crossChainRelayerArbitrum = (await getContractAt(
+    CrossChainRelayerArbitrumArtifact.abi,
+    crossChainRelayerArbitrumAddress,
   )) as CrossChainRelayerArbitrum;
 
   const crossChainExecutorAddress = await getContractAddress(
     'CrossChainExecutorArbitrum',
-    ARBITRUM_CHAIN_ID,
+    ARBITRUM_GOERLI_CHAIN_ID,
+    'Forge',
   );
 
-  const greeterAddress = await getContractAddress('Greeter', ARBITRUM_CHAIN_ID);
+  const greeterAddress = await getContractAddress('Greeter', ARBITRUM_GOERLI_CHAIN_ID, 'Forge');
 
   const greeting = 'Hello from L1';
   const callData = new Interface(['function setGreeting(string)']).encodeFunctionData(
@@ -66,6 +62,8 @@ export const relayCalls = task(
   ];
 
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
+
+  console.log('before estimateRetryableTicketGasLimit');
 
   const maxGas = await l1ToL2MessageGasEstimate.estimateRetryableTicketGasLimit({
     from: crossChainRelayerArbitrum.address,
@@ -84,6 +82,8 @@ export const relayCalls = task(
 
   const greetingBytes = defaultAbiCoder.encode(['string'], [greeting]);
   const greetingBytesLength = hexDataLength(greetingBytes) + 4; // 4 bytes func identifier
+
+  console.log('before estimateSubmissionFee');
 
   const submissionPriceWei = await l1ToL2MessageGasEstimate.estimateSubmissionFee(
     l1Provider,
@@ -133,6 +133,10 @@ export const relayCalls = task(
   info(`Nonce: ${nonce.toString()}`);
   info(`TicketId: ${ticketId.toString()}`);
   info(`RetryableCreationId: ${retryableCreationId}`);
+};
 
-  await killHardhatNode(8545, MAINNET_CHAIN_ID);
+main().catch((error) => {
+  errorLog('Failed to bridge to Arbitrum Goerli');
+  console.error(error);
+  process.exitCode = 1;
 });
