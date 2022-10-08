@@ -16,9 +16,12 @@ export const DELAYED_INBOX = '0x4Dbd4fc535Ac27206064B68FfCf827b0A60BAB3f';
  * Address: https://arbiscan.io/address/0x000000000000000000000000000000000000006C
  * Contract: https://github.com/OffchainLabs/nitro/blob/master/contracts/src/precompiles/ArbGasInfo.sol#L80
  */
-export const MAX_TX_GAS_LIMIT = 32000000;
+export const ARBITRUM_MAX_TX_GAS_LIMIT = 32000000;
 
 export const MAINNET_CHAIN_ID = 1;
 export const ARBITRUM_CHAIN_ID = 42161;
 export const OPTIMISM_CHAIN_ID = 10;
 export const POLYGON_CHAIN_ID = 137;
+
+export const GOERLI_CHAIN_ID = 5;
+export const ARBITRUM_GOERLI_CHAIN_ID = 421613;

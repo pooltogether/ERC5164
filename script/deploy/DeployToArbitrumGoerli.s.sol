@@ -3,32 +3,30 @@
 pragma solidity 0.8.16;
 
 import { Script } from "forge-std/Script.sol";
-import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
+import { IInbox } from "../../src/interfaces/arbitrum/IInbox.sol";
 import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
-import { CrossChainExecutorOptimism } from "../../src/executors/CrossChainExecutorOptimism.sol";
-import { CrossChainRelayerOptimism } from "../../src/relayers/CrossChainRelayerOptimism.sol";
+import { CrossChainExecutorArbitrum } from "../../src/executors/CrossChainExecutorArbitrum.sol";
+import { CrossChainRelayerArbitrum } from "../../src/relayers/CrossChainRelayerArbitrum.sol";
 import { Greeter } from "../../test/Greeter.sol";
 
 contract DeployCrossChainRelayerToGoerli is Script {
-  address public proxyOVML1CrossDomainMessenger = 0x5086d1eEF304eb5284A0f6720f79403b4e9bE294;
+  address public delayedInbox = 0x4Dbd4fc535Ac27206064B68FfCf827b0A60BAB3f;
 
   function run() public {
     vm.broadcast();
 
-    new CrossChainRelayerOptimism(ICrossDomainMessenger(proxyOVML1CrossDomainMessenger), 1920000);
+    new CrossChainRelayerArbitrum(IInbox(delayedInbox), 32000000);
 
     vm.stopBroadcast();
   }
 }
 
-contract DeployCrossChainExecutorToOptimismGoerli is Script {
-  address public l2CrossDomainMessenger = 0x4200000000000000000000000000000000000007;
-
+contract DeployCrossChainExecutorToArbitrumGoerli is Script {
   function run() public {
     vm.broadcast();
 
-    new CrossChainExecutorOptimism(ICrossDomainMessenger(l2CrossDomainMessenger));
+    new CrossChainExecutorArbitrum();
 
     vm.stopBroadcast();
   }
@@ -37,8 +35,8 @@ contract DeployCrossChainExecutorToOptimismGoerli is Script {
 /// @dev Needs to be run after deploying CrossChainRelayer and CrossChainExecutor
 contract SetCrossChainExecutor is DeployedContracts {
   function setCrossChainExecutor() public {
-    CrossChainRelayerOptimism _crossChainRelayer = _getCrossChainRelayerOptimism();
-    CrossChainExecutorOptimism _crossChainExecutor = _getCrossChainExecutorOptimism();
+    CrossChainRelayerArbitrum _crossChainRelayer = _getCrossChainRelayerArbitrum();
+    CrossChainExecutorArbitrum _crossChainExecutor = _getCrossChainExecutorArbitrum();
 
     _crossChainRelayer.setExecutor(_crossChainExecutor);
   }
@@ -55,8 +53,8 @@ contract SetCrossChainExecutor is DeployedContracts {
 /// @dev Needs to be run after deploying CrossChainRelayer and CrossChainExecutor
 contract SetCrossChainRelayer is DeployedContracts {
   function setCrossChainRelayer() public {
-    CrossChainRelayerOptimism _crossChainRelayer = _getCrossChainRelayerOptimism();
-    CrossChainExecutorOptimism _crossChainExecutor = _getCrossChainExecutorOptimism();
+    CrossChainRelayerArbitrum _crossChainRelayer = _getCrossChainRelayerArbitrum();
+    CrossChainExecutorArbitrum _crossChainExecutor = _getCrossChainExecutorArbitrum();
 
     _crossChainExecutor.setRelayer(_crossChainRelayer);
   }
@@ -70,9 +68,9 @@ contract SetCrossChainRelayer is DeployedContracts {
   }
 }
 
-contract DeployGreeterToOptimismGoerli is DeployedContracts {
+contract DeployGreeterToArbitrumGoerli is DeployedContracts {
   function deployGreeter() public {
-    CrossChainExecutorOptimism _crossChainExecutor = _getCrossChainExecutorOptimism();
+    CrossChainExecutorArbitrum _crossChainExecutor = _getCrossChainExecutorArbitrum();
     new Greeter(address(_crossChainExecutor), "Hello from L2");
   }
 

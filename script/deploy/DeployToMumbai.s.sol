@@ -38,8 +38,6 @@ contract DeployCrossChainExecutorToMumbai is Script {
 /// @dev Needs to be run after deploying CrossChainRelayer and CrossChainExecutor
 contract SetFxChildTunnel is DeployedContracts {
   function setFxChildTunnel() public {
-    vm.allowCheatcodes(address(this));
-
     CrossChainRelayerPolygon _crossChainRelayer = _getCrossChainRelayerPolygon();
     CrossChainExecutorPolygon _crossChainExecutor = _getCrossChainExecutorPolygon();
 
@@ -58,8 +56,6 @@ contract SetFxChildTunnel is DeployedContracts {
 /// @dev Needs to be run after deploying CrossChainRelayer and CrossChainExecutor
 contract SetFxRootTunnel is DeployedContracts {
   function setFxRootTunnel() public {
-    vm.allowCheatcodes(address(this));
-
     CrossChainRelayerPolygon _crossChainRelayer = _getCrossChainRelayerPolygon();
     CrossChainExecutorPolygon _crossChainExecutor = _getCrossChainExecutorPolygon();
 
