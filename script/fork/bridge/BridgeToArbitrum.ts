@@ -2,14 +2,17 @@ import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { L1TransactionReceipt, L1ToL2MessageGasEstimator } from '@arbitrum/sdk/';
 import { hexDataLength } from '@ethersproject/bytes';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, providers } from 'ethers';
 import kill from 'kill-port';
 
-import { ARBITRUM_CHAIN_ID, MAINNET_CHAIN_ID } from '../../../Constants';
+import { processL1ToL2Tx } from '../helpers/arbitrum';
+import { ARBITRUM_CHAIN_ID, MAINNET_CHAIN_ID, DELAYED_INBOX } from '../../../Constants';
 import { getContractAddress } from '../../../helpers/getContract';
 import { getChainName } from '../../../helpers/getChain';
 import { action, error as errorLog, info, success } from '../../../helpers/log';
-import { CrossChainRelayerArbitrum } from '../../../types';
+import { CrossChainRelayerArbitrum, CrossChainExecutorArbitrum, Greeter } from '../../../types';
+import GreeterArtifact from '../../../out/Greeter.sol/Greeter.json';
 
 const killHardhatNode = async (port: number, chainId: number) => {
   await kill(port, 'tcp')
@@ -101,7 +104,7 @@ export const relayCalls = task(
   const callValue = maxSubmissionCost.add(gasPriceBid.mul(maxGas));
 
   const processCallsTransaction = await crossChainRelayerArbitrum.processCalls(
-    1,
+    BigNumber.from(1),
     maxSubmissionCost,
     gasPriceBid,
     {
@@ -112,7 +115,7 @@ export const relayCalls = task(
   const processCallsTransactionReceipt = await processCallsTransaction.wait();
 
   const processedCallsEventInterface = new Interface([
-    'event ProcessedCalls(address indexed sender, uint256 indexed nonce, uint256 indexed ticketId)',
+    'event ProcessedCalls(uint256 indexed nonce, address indexed sender, uint256 indexed ticketId)',
   ]);
 
   const processedCallsEventLogs = processedCallsEventInterface.parseLog(
@@ -135,4 +138,66 @@ export const relayCalls = task(
   info(`RetryableCreationId: ${retryableCreationId}`);
 
   await killHardhatNode(8545, MAINNET_CHAIN_ID);
+});
+
+export const executeCalls = task(
+  'fork:execute-calls',
+  'Execute calls from Ethereum on Arbitrum',
+).setAction(async (taskArguments, hre: HardhatRuntimeEnvironment) => {
+  action('Execute calls from Ethereum on Arbitrum...');
+
+  const {
+    ethers: {
+      getContract,
+      getContractAt,
+      utils: { Interface },
+    },
+    getNamedAccounts,
+  } = hre;
+
+  const { deployer } = await getNamedAccounts();
+
+  info(`Caller is: ${deployer}`);
+
+  const crossChainRelayerArbitrumAddress = await getContractAddress(
+    'CrossChainRelayerArbitrum',
+    MAINNET_CHAIN_ID,
+  );
+
+  const greeterAddress = await getContractAddress('Greeter', ARBITRUM_CHAIN_ID);
+
+  const greeter = (await getContractAt(GreeterArtifact.abi, greeterAddress)) as Greeter;
+
+  const greeting = 'Hello from L1';
+  const callData = new Interface(['function setGreeting(string)']).encodeFunctionData(
+    'setGreeting',
+    [greeting],
+  );
+
+  const calls = [
+    {
+      target: greeterAddress,
+      data: callData,
+    },
+  ];
+
+  const crossChainExecutorArbitrum = (await getContract(
+    'CrossChainExecutorArbitrum',
+  )) as CrossChainExecutorArbitrum;
+
+  info(`Greeting before: ${await greeter.callStatic.greeting()}`);
+
+  await processL1ToL2Tx(
+    crossChainRelayerArbitrumAddress,
+    async (signer: SignerWithAddress) =>
+      await crossChainExecutorArbitrum
+        .connect(signer)
+        .executeCalls(BigNumber.from(1), deployer, calls),
+    hre,
+  );
+
+  success('Successfully executed calls from Mainnet on Arbitrum!');
+  info(`Greeting after: ${await greeter.callStatic.greeting()}`);
+
+  await killHardhatNode(8546, ARBITRUM_CHAIN_ID);
 });

@@ -35,7 +35,6 @@
     "bridge:arbitrumGoerli": "ts-node --files script/bridge/BridgeToArbitrumGoerli.ts",
     "test": "forge test -vv",
     "typechain": "typechain --target=ethers-v5 \"./out/**/*.json\" --out-dir \"./types\"",
-    "hardhat:compile": "hardhat --show-stack-traces --max-memory 8192 compile",
     "fork:startMainnet": "CHAIN_ID=1 hardhat node --no-reset --no-deploy --port 8545 --fork $MAINNET_RPC_URL --fork-block-number 15684520 --fork-ignore-unknown-tx-type true",
     "fork:startArbitrum": "CHAIN_ID=42161 hardhat node --no-reset --no-deploy --port 8546 --fork $ARBITRUM_RPC_URL --fork-block-number 28574320 --fork-ignore-unknown-tx-type true",
     "fork:impersonateMainnet": "CHAIN_ID=1 hardhat --network localhostMainnet fork:impersonate",
@@ -48,11 +47,13 @@
     "fork:setExecutorArbitrumMainnet": "CHAIN_ID=1 hardhat --network localhostMainnet fork:set-executor",
     "fork:setRelayerArbitrumMainnet": "CHAIN_ID=42161 hardhat --network localhostArbitrum fork:set-relayer",
     "fork:relayCallsArbitrumMainnet": "CHAIN_ID=1 hardhat --network localhostMainnet fork:relay-calls",
+    "fork:executeCallsArbitrumMainnet": "CHAIN_ID=42161 hardhat --network localhostArbitrum fork:execute-calls",
     "fork:runDeployMainnet": "wait-on tcp:8545 && yarn fork:impersonateMainnet && yarn fork:distributeMainnet && yarn fork:deployRelayerArbitrumMainnet",
     "fork:runDeployArbitrum": "wait-on tcp:8546 && yarn fork:impersonateArbitrum && yarn fork:distributeArbitrum && yarn fork:deployExecutorArbitrumMainnet && yarn fork:deployGreeterArbitrumMainnet",
     "fork:rmLocalhostDeployments": "rm -rf ./deployments/localhostMainnet && rm -rf ./deployments/localhostArbitrum",
     "fork:startArbitrumMainnet": "yarn fork:rmLocalhostDeployments && npm-run-all -p -r fork:startMainnet fork:startArbitrum",
-    "fork:runRelayCallsArbitrumMainnet": "npm-run-all -s fork:runDeployMainnet fork:runDeployArbitrum fork:setExecutorArbitrumMainnet fork:setRelayerArbitrumMainnet fork:relayCallsArbitrumMainnet"
+    "fork:runRelayCallsArbitrumMainnet": "npm-run-all -s fork:runDeployMainnet fork:runDeployArbitrum fork:setExecutorArbitrumMainnet fork:setRelayerArbitrumMainnet fork:relayCallsArbitrumMainnet",
+    "fork:runExecuteCallsArbitrumMainnet": "npm-run-all -s fork:runDeployMainnet fork:runDeployArbitrum fork:setExecutorArbitrumMainnet fork:setRelayerArbitrumMainnet fork:executeCallsArbitrumMainnet"
   },
   "packageManager": "yarn@3.2.3",
   "devDependencies": {

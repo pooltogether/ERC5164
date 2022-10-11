@@ -27,11 +27,11 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /**
    * @notice Emitted once a message has been processed and put in the Arbitrum inbox.
    *         Using the `ticketId`, this message can be reexecuted for some fixed amount of time if it reverts.
-   * @param sender Address who processed the calls
    * @param nonce Id of the message that was sent
+   * @param sender Address who processed the calls
    * @param ticketId Id of the newly created retryable ticket
    */
-  event ProcessedCalls(address indexed sender, uint256 indexed nonce, uint256 indexed ticketId);
+  event ProcessedCalls(uint256 indexed nonce, address indexed sender, uint256 indexed ticketId);
 
   /* ============ Variables ============ */
 
@@ -85,8 +85,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
 
     messages[_nonce] = abi.encode(
       abi.encodeWithSignature(
-        "executeCalls(address,uint256,address,(address,bytes)[])",
-        address(this),
+        "executeCalls(uint256,address,(address,bytes)[])",
         _nonce,
         msg.sender,
         _calls
@@ -122,7 +121,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
       _data
     );
 
-    emit ProcessedCalls(msg.sender, _nonce, _ticketID);
+    emit ProcessedCalls(_nonce, msg.sender, _ticketID);
 
     return _ticketID;
   }

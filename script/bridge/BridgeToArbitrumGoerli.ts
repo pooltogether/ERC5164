@@ -5,11 +5,14 @@ import hre from 'hardhat';
 
 import { ARBITRUM_GOERLI_CHAIN_ID, GOERLI_CHAIN_ID } from '../../Constants';
 import { getContractAddress } from '../../helpers/getContract';
-import { getChainName } from '../../helpers/getChain';
 import { action, error as errorLog, info, success } from '../../helpers/log';
-import { CrossChainRelayerArbitrum, CrossChainExecutorArbitrum } from '../../types';
+import { CrossChainRelayerArbitrum } from '../../types';
 import CrossChainRelayerArbitrumArtifact from '../../out/CrossChainRelayerArbitrum.sol/CrossChainRelayerArbitrum.json';
 
+/**
+ * Won't work until Hardhat supports Arbitrum Goerli
+ * https://github.com/NomicFoundation/hardhat/issues/3257
+ */
 const main = async () => {
   action('Relay calls from Ethereum to Arbitrum...');
 
@@ -63,10 +66,8 @@ const main = async () => {
 
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
 
-  console.log('before estimateRetryableTicketGasLimit');
-
   const maxGas = await l1ToL2MessageGasEstimate.estimateRetryableTicketGasLimit({
-    from: crossChainRelayerArbitrum.address,
+    from: crossChainRelayerArbitrumAddress,
     to: crossChainExecutorAddress,
     l2CallValue: BigNumber.from(0),
     excessFeeRefundAddress: deployer,
@@ -82,8 +83,6 @@ const main = async () => {
 
   const greetingBytes = defaultAbiCoder.encode(['string'], [greeting]);
   const greetingBytesLength = hexDataLength(greetingBytes) + 4; // 4 bytes func identifier
-
-  console.log('before estimateSubmissionFee');
 
   const submissionPriceWei = await l1ToL2MessageGasEstimate.estimateSubmissionFee(
     l1Provider,
@@ -112,14 +111,14 @@ const main = async () => {
   const processCallsTransactionReceipt = await processCallsTransaction.wait();
 
   const processedCallsEventInterface = new Interface([
-    'event ProcessedCalls(address indexed sender, uint256 indexed nonce, uint256 indexed ticketId)',
+    'event ProcessedCalls(uint256 indexed nonce, address indexed sender, uint256 indexed ticketId)',
   ]);
 
   const processedCallsEventLogs = processedCallsEventInterface.parseLog(
     processCallsTransactionReceipt.logs[2],
   );
 
-  const [sender, nonce, ticketId] = processedCallsEventLogs.args;
+  const [nonce, sender, ticketId] = processedCallsEventLogs.args;
 
   const receipt = await l1Provider.getTransactionReceipt(processCallsTransaction.hash);
   const l1Receipt = new L1TransactionReceipt(receipt);
@@ -129,8 +128,8 @@ const main = async () => {
   )[0];
 
   success('Successfully processed calls from Mainnet to Arbitrum!');
-  info(`Sender: ${sender}`);
   info(`Nonce: ${nonce.toString()}`);
+  info(`Sender: ${sender}`);
   info(`TicketId: ${ticketId.toString()}`);
   info(`RetryableCreationId: ${retryableCreationId}`);
 };
