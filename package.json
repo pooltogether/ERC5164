@@ -51,9 +51,10 @@
     "fork:runDeployMainnet": "wait-on tcp:8545 && yarn fork:impersonateMainnet && yarn fork:distributeMainnet && yarn fork:deployRelayerArbitrumMainnet",
     "fork:runDeployArbitrum": "wait-on tcp:8546 && yarn fork:impersonateArbitrum && yarn fork:distributeArbitrum && yarn fork:deployExecutorArbitrumMainnet && yarn fork:deployGreeterArbitrumMainnet",
     "fork:rmLocalhostDeployments": "rm -rf ./deployments/localhostMainnet && rm -rf ./deployments/localhostArbitrum",
-    "fork:startArbitrumMainnet": "yarn fork:rmLocalhostDeployments && npm-run-all -p -r fork:startMainnet fork:startArbitrum",
     "fork:runRelayCallsArbitrumMainnet": "npm-run-all -s fork:runDeployMainnet fork:runDeployArbitrum fork:setExecutorArbitrumMainnet fork:setRelayerArbitrumMainnet fork:relayCallsArbitrumMainnet",
-    "fork:runExecuteCallsArbitrumMainnet": "npm-run-all -s fork:runDeployMainnet fork:runDeployArbitrum fork:setExecutorArbitrumMainnet fork:setRelayerArbitrumMainnet fork:executeCallsArbitrumMainnet"
+    "fork:startRelayCallsArbitrumMainnet": "yarn fork:rmLocalhostDeployments && npm-run-all -p -r fork:startMainnet fork:startArbitrum fork:runRelayCallsArbitrumMainnet",
+    "fork:runExecuteCallsArbitrumMainnet": "npm-run-all -s fork:runDeployMainnet fork:runDeployArbitrum fork:setExecutorArbitrumMainnet fork:setRelayerArbitrumMainnet fork:executeCallsArbitrumMainnet",
+    "fork:startExecuteCallsArbitrumMainnet": "yarn fork:rmLocalhostDeployments && npm-run-all -p -r fork:startMainnet fork:startArbitrum fork:runExecuteCallsArbitrumMainnet"
   },
   "packageManager": "yarn@3.2.3",
   "devDependencies": {
