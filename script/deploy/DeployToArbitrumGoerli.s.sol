@@ -3,12 +3,12 @@
 pragma solidity 0.8.16;
 
 import { Script } from "forge-std/Script.sol";
-import { IInbox } from "../../src/interfaces/arbitrum/IInbox.sol";
+import { IInbox } from "@arbitrum/nitro-contracts/src/bridge/IInbox.sol";
 import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
 import { CrossChainExecutorArbitrum } from "../../src/executors/CrossChainExecutorArbitrum.sol";
 import { CrossChainRelayerArbitrum } from "../../src/relayers/CrossChainRelayerArbitrum.sol";
-import { Greeter } from "../../test/Greeter.sol";
+import { Greeter } from "../../test/contracts/Greeter.sol";
 
 contract DeployCrossChainRelayerToGoerli is Script {
   address public delayedInbox = 0x4Dbd4fc535Ac27206064B68FfCf827b0A60BAB3f;

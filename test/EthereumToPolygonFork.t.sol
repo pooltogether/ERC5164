@@ -10,7 +10,7 @@ import { ICrossChainExecutor } from "../src/interfaces/ICrossChainExecutor.sol";
 import "../src/relayers/CrossChainRelayerPolygon.sol";
 import "../src/executors/CrossChainExecutorPolygon.sol";
 
-import "./Greeter.sol";
+import "./contracts/Greeter.sol";
 
 contract EthereumToPolygonForkTest is Test {
   uint256 public mainnetFork;

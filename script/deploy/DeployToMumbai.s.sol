@@ -8,7 +8,7 @@ import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 import { CrossChainExecutorPolygon } from "../../src/executors/CrossChainExecutorPolygon.sol";
 import { CrossChainRelayerPolygon } from "../../src/relayers/CrossChainRelayerPolygon.sol";
 
-import { Greeter } from "../../test/Greeter.sol";
+import { Greeter } from "../../test/contracts/Greeter.sol";
 
 contract DeployCrossChainRelayerToGoerli is Script {
   address public checkpointManager = 0x2890bA17EfE978480615e330ecB65333b880928e;

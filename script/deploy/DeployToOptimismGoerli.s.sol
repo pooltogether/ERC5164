@@ -8,7 +8,7 @@ import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
 import { CrossChainExecutorOptimism } from "../../src/executors/CrossChainExecutorOptimism.sol";
 import { CrossChainRelayerOptimism } from "../../src/relayers/CrossChainRelayerOptimism.sol";
-import { Greeter } from "../../test/Greeter.sol";
+import { Greeter } from "../../test/contracts/Greeter.sol";
 
 contract DeployCrossChainRelayerToGoerli is Script {
   address public proxyOVML1CrossDomainMessenger = 0x5086d1eEF304eb5284A0f6720f79403b4e9bE294;

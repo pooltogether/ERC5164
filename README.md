@@ -8,7 +8,7 @@
 | --------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | Goerli          | [CrossChainRelayerOptimism](./src/relayers/CrossChainRelayerOptimism.sol)    | [0x56f0bA8EA5a317521057722f94b714Ca6A0373C4](https://goerli.etherscan.io/address/0x56f0bA8EA5a317521057722f94b714Ca6A0373C4)          |
 | Optimism Goerli | [CrossChainExecutorOptimism](./src/executors/CrossChainExecutorOptimism.sol) | [0x7f13836f80E1db095f97365B743d2CaB8Fac0b02](https://goerli-optimism.etherscan.io/address/0x7f13836f80E1db095f97365B743d2CaB8Fac0b02) |
-| Optimism Goerli | [Greeter](./test/Greeter.sol)                                                | [0x316CEFdEB914Ab4E88e7C59b59Fd01d53624165d](https://goerli-optimism.etherscan.io/address/0x316CEFdEB914Ab4E88e7C59b59Fd01d53624165d) |
+| Optimism Goerli | [Greeter](./test/contracts/Greeter.sol)                                      | [0x316CEFdEB914Ab4E88e7C59b59Fd01d53624165d](https://goerli-optimism.etherscan.io/address/0x316CEFdEB914Ab4E88e7C59b59Fd01d53624165d) |
 
 ### Polygon Mumbai
 
@@ -16,7 +16,7 @@
 | -------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | Goerli         | [CrossChainRelayerPolygon](./src/relayers/CrossChainRelayerPolygon.sol)    | [0x0B903B48B1c8f74c26425Ff04bD9241c1Ff4B804](https://goerli.etherscan.io/address/0x0B903B48B1c8f74c26425Ff04bD9241c1Ff4B804)    |
 | Polygon Mumbai | [CrossChainExecutorPolygon](./src/executors/CrossChainExecutorPolygon.sol) | [0xE5b60180C3094ead8E4e793c13e7A53C5623b77C](https://mumbai.polygonscan.com/address/0xE5b60180C3094ead8E4e793c13e7A53C5623b77C) |
-| Polygon Mumbai | [Greeter](./test/Greeter.sol)                                              | [0xB1475EEeE82123FAa4f611f0a78b4E62e802aECE](https://mumbai.polygonscan.com/address/0xB1475EEeE82123FAa4f611f0a78b4E62e802aECE) |
+| Polygon Mumbai | [Greeter](./test/contracts/Greeter.sol)                                    | [0xB1475EEeE82123FAa4f611f0a78b4E62e802aECE](https://mumbai.polygonscan.com/address/0xB1475EEeE82123FAa4f611f0a78b4E62e802aECE) |
 
 ## Example transactions
 

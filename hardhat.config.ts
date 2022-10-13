@@ -29,7 +29,7 @@ const config: HardhatUserConfig = {
   },
   networks,
   paths: {
-    artifacts: './out',
+    artifacts: './artifacts',
     sources: './src',
     cache: './cache_hardhat',
     tests: './test',
@@ -51,6 +51,13 @@ const config: HardhatUserConfig = {
   },
   solidity: {
     version: '0.8.16',
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 2000,
+      },
+      viaIR: true,
+    },
   },
   typechain: {
     outDir: './types',

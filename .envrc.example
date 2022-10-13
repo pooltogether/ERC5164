@@ -24,3 +24,6 @@ export POLYGONSCAN_API_KEY=""
 
 # Used to run Hardhat scripts in fork mode
 export FORK_ENABLED=true
+
+# Used to report gas usage when running Forge tests
+export FORGE_GAS_REPORT=true

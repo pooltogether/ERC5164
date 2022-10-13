@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-3.0
 
 pragma solidity 0.8.16;
 
@@ -11,7 +11,7 @@ import { ICrossChainRelayer } from "../src/interfaces/ICrossChainRelayer.sol";
 import { ICrossChainExecutor } from "../src/interfaces/ICrossChainExecutor.sol";
 import "../src/relayers/CrossChainRelayerOptimism.sol";
 import "../src/executors/CrossChainExecutorOptimism.sol";
-import "./Greeter.sol";
+import "./contracts/Greeter.sol";
 
 contract EthereumToOptimismForkTest is Test {
   uint256 public mainnetFork;

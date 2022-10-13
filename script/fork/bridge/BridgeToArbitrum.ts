@@ -7,7 +7,7 @@ import { BigNumber, providers } from 'ethers';
 import kill from 'kill-port';
 
 import { processL1ToL2Tx } from '../helpers/arbitrum';
-import { ARBITRUM_CHAIN_ID, MAINNET_CHAIN_ID, DELAYED_INBOX } from '../../../Constants';
+import { ARBITRUM_CHAIN_ID, MAINNET_CHAIN_ID } from '../../../Constants';
 import { getContractAddress } from '../../../helpers/getContract';
 import { getChainName } from '../../../helpers/getChain';
 import { action, error as errorLog, info, success } from '../../../helpers/log';
@@ -68,6 +68,14 @@ export const relayCalls = task(
     },
   ];
 
+  const executeCallsData = new Interface([
+    'function executeCalls(uint256,address,(address,bytes)[])',
+  ]).encodeFunctionData('executeCalls', [
+    BigNumber.from(1),
+    deployer,
+    [[greeterAddress, callData]],
+  ]);
+
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
 
   const maxGas = await l1ToL2MessageGasEstimate.estimateRetryableTicketGasLimit({
@@ -76,7 +84,7 @@ export const relayCalls = task(
     l2CallValue: BigNumber.from(0),
     excessFeeRefundAddress: deployer,
     callValueRefundAddress: deployer,
-    data: callData,
+    data: executeCallsData,
   });
 
   await crossChainRelayerArbitrum.relayCalls(calls, maxGas);
@@ -105,6 +113,9 @@ export const relayCalls = task(
 
   const processCallsTransaction = await crossChainRelayerArbitrum.processCalls(
     BigNumber.from(1),
+    calls,
+    deployer,
+    maxGas,
     maxSubmissionCost,
     gasPriceBid,
     {

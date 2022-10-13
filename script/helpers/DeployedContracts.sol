@@ -15,7 +15,7 @@ import { CrossChainExecutorPolygon } from "../../src/executors/CrossChainExecuto
 import { CrossChainRelayerArbitrum } from "../../src/relayers/CrossChainRelayerArbitrum.sol";
 import { CrossChainExecutorArbitrum } from "../../src/executors/CrossChainExecutorArbitrum.sol";
 
-import { Greeter } from "../../test/Greeter.sol";
+import { Greeter } from "../../test/contracts/Greeter.sol";
 
 string constant OP_GOERLI_PATH = "/broadcast/DeployToOptimismGoerli.s.sol/420/";
 string constant MUMBAI_PATH = "/broadcast/DeployToMumbai.s.sol/80001/";

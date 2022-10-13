@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import { IInbox } from "../interfaces/arbitrum/IInbox.sol";
+import { IInbox } from "@arbitrum/nitro-contracts/src/bridge/IInbox.sol";
 
 import "../interfaces/ICrossChainRelayer.sol";
 
@@ -48,11 +48,11 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   uint256 internal nonce;
 
   /**
-   * @notice Encoded messages queued when calling `relayCalls`.
-   *         nonce => encoded message
-   * @dev Anyone can send them by calling the `processCalls` function.
+   * @notice Hash of transactions that were relayed in `relayCalls`.
+   *         txHash => boolean
+   * @dev Ensure that messages passed to `processCalls` have been relayed first.
    */
-  mapping(uint256 => bytes) public messages;
+  mapping(bytes32 => bool) public relayed;
 
   /* ============ Constructor ============ */
 
@@ -83,32 +83,39 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
 
     uint256 _nonce = nonce;
 
-    messages[_nonce] = abi.encode(
-      abi.encodeWithSignature(
-        "executeCalls(uint256,address,(address,bytes)[])",
-        _nonce,
-        msg.sender,
-        _calls
-      ),
-      _gasLimit
-    );
+    relayed[_getTxHash(_nonce, _calls, msg.sender, _gasLimit)] = true;
 
     emit RelayedCalls(_nonce, msg.sender, executor, _calls, _gasLimit);
   }
 
   /**
-   * @notice Process encoded calls stored in `messages` mapping.
-   * @dev Retrieves message and put it in the Arbitrum inbox.
+   * @notice Process calls that have been relayed.
+   * @dev The transaction hash must match the one stored in the `relayed` mapping.
+   * @dev We store `_data` in memory to avoid a stack too deep error.
    * @param _nonce Nonce of the message to process
+   * @param _calls Array of calls being processed
+   * @param _sender Address who relayed the `_calls`
+   * @param _gasLimit Maximum amount of gas required for the `_calls` to be executed
    * @param _maxSubmissionCost Max gas deducted from user's L2 balance to cover base submission fee
    * @param _gasPriceBid Gas price bid for L2 execution
+   * @return uint256 Id of the retryable ticket that was created
    */
   function processCalls(
     uint256 _nonce,
+    Call[] calldata _calls,
+    address _sender,
+    uint256 _gasLimit,
     uint256 _maxSubmissionCost,
     uint256 _gasPriceBid
   ) external payable returns (uint256) {
-    (bytes memory _data, uint256 _gasLimit) = abi.decode(messages[_nonce], (bytes, uint256));
+    require(relayed[_getTxHash(_nonce, _calls, _sender, _gasLimit)], "Relayer/calls-not-relayed");
+
+    bytes memory _data = abi.encodeWithSignature(
+      "executeCalls(uint256,address,(address,bytes)[])",
+      _nonce,
+      _sender,
+      _calls
+    );
 
     uint256 _ticketID = inbox.createRetryableTicket{ value: msg.value }(
       address(executor),
@@ -134,5 +141,43 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   function setExecutor(ICrossChainExecutor _executor) external {
     require(address(executor) == address(0), "Relayer/executor-already-set");
     executor = _executor;
+  }
+
+  /**
+   * @notice Get transaction hash.
+   * @dev The transaction hash is used to ensure that only calls that were relayed are processed.
+   * @param _nonce Nonce uniquely identifying the messages that were relayed
+   * @param _calls Array of calls that were relayed
+   * @param _sender Address who relayed the calls
+   * @param _gasLimit Maximum amount of gas that will be consumed by the calls
+   * @return bytes32 Transaction hash
+   */
+  function getTxHash(
+    uint256 _nonce,
+    Call[] calldata _calls,
+    address _sender,
+    uint256 _gasLimit
+  ) external view returns (bytes32) {
+    return _getTxHash(_nonce, _calls, _sender, _gasLimit);
+  }
+
+  /* ============ Internal Functions ============ */
+
+  /**
+   * @notice Get transaction hash.
+   * @dev The transaction hash is used to ensure that only calls that were relayed are processed.
+   * @param _nonce Nonce uniquely identifying the messages that were relayed
+   * @param _calls Array of calls that were relayed
+   * @param _sender Address who relayed the calls
+   * @param _gasLimit Maximum amount of gas that will be consumed by the calls
+   * @return bytes32 Transaction hash
+   */
+  function _getTxHash(
+    uint256 _nonce,
+    Call[] calldata _calls,
+    address _sender,
+    uint256 _gasLimit
+  ) internal view returns (bytes32) {
+    return keccak256(abi.encode(address(this), _nonce, _calls, _sender, _gasLimit));
   }
 }
