@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
+import { AddressAliasHelper } from "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 
 import "../interfaces/ICrossChainExecutor.sol";
 
@@ -26,6 +26,13 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
   /// @notice Address of the relayer contract on the origin chain.
   ICrossChainRelayer public relayer;
 
+  /**
+   * @notice Nonce to uniquely identify messages that were executed
+   *         nonce => boolean
+   * @dev Ensure that messages cannot be replayed once they have been executed
+   */
+  mapping(uint256 => bool) public executed;
+
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainExecutor
@@ -34,6 +41,8 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
     address _caller,
     Call[] calldata _calls
   ) external {
+    require(!executed[_nonce], "Executor/nonce-already-executed");
+
     ICrossChainRelayer _relayer = relayer;
 
     _isAuthorized(_relayer);
@@ -44,13 +53,15 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
       Call memory _call = _calls[_callIndex];
 
       (bool _success, bytes memory _returnData) = _call.target.call(
-        abi.encodePacked(_call.data, _caller)
+        abi.encodePacked(_call.data, _nonce, _caller)
       );
 
       if (!_success) {
         revert CallFailure(_call, _returnData);
       }
     }
+
+    executed[_nonce] = true;
 
     emit ExecutedCalls(_relayer, _nonce, msg.sender, _calls);
   }

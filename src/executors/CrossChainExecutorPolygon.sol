@@ -47,6 +47,15 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
     Call[] calls
   );
 
+  /* ============ Variables ============ */
+
+  /**
+   * @notice Nonce to uniquely identify messages that were executed
+   *         nonce => boolean
+   * @dev Ensure that messages cannot be replayed once they have been executed
+   */
+  mapping(uint256 => bool) public executed;
+
   /* ============ Constructor ============ */
 
   /**
@@ -68,19 +77,23 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
       (uint256, address, Call[])
     );
 
+    require(!executed[_nonce], "Executor/nonce-already-executed");
+
     uint256 _callsLength = _calls.length;
 
     for (uint256 _callIndex; _callIndex < _callsLength; _callIndex++) {
       Call memory _call = _calls[_callIndex];
 
       (bool _success, bytes memory _returnData) = _call.target.call(
-        abi.encodePacked(_call.data, _caller)
+        abi.encodePacked(_call.data, _nonce, _caller)
       );
 
       if (!_success) {
         revert CallFailure(_call, _returnData);
       }
     }
+
+    executed[_nonce] = true;
 
     emit ExecutedCalls(_sender, _nonce, msg.sender, _calls);
   }

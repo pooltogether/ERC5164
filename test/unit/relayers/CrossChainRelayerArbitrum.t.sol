@@ -6,10 +6,10 @@ import "forge-std/Test.sol";
 
 import { IInbox } from "@arbitrum/nitro-contracts/src/bridge/IInbox.sol";
 
-import "../../src/relayers/CrossChainRelayerArbitrum.sol";
-import { CrossChainExecutorArbitrum } from "../../src/executors/CrossChainExecutorArbitrum.sol";
-import { Greeter } from "../contracts/Greeter.sol";
-import { ArbInbox } from "../contracts/mock/ArbInbox.sol";
+import "../../../src/relayers/CrossChainRelayerArbitrum.sol";
+import { CrossChainExecutorArbitrum } from "../../../src/executors/CrossChainExecutorArbitrum.sol";
+import { Greeter } from "../../contracts/Greeter.sol";
+import { ArbInbox } from "../../contracts/mock/ArbInbox.sol";
 
 contract CrossChainRelayerArbitrumUnitTest is Test {
   ArbInbox public inbox = new ArbInbox();
@@ -33,7 +33,6 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
   ICrossChainRelayer.Call[] public calls;
 
   /* ============ Events to test ============ */
-
   event RelayedCalls(
     uint256 indexed nonce,
     address indexed sender,

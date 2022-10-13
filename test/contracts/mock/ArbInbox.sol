@@ -101,7 +101,7 @@ contract ArbInbox is IInbox {
     revert("NOT_IMPLEMENTED");
   }
 
-  function generateRandomNumber() public returns (uint256) {
+  function generateRandomNumber() public view returns (uint256) {
     return uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
   }
 
@@ -148,7 +148,7 @@ contract ArbInbox is IInbox {
     address,
     uint256,
     bytes calldata
-  ) external returns (uint256) {
+  ) external pure returns (uint256) {
     revert("NOT_IMPLEMENTED");
   }
 
@@ -158,7 +158,7 @@ contract ArbInbox is IInbox {
     uint256,
     uint256,
     address
-  ) external returns (uint256) {
+  ) external pure returns (uint256) {
     revert("NOT_IMPLEMENTED");
   }
 

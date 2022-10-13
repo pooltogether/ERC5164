@@ -29,6 +29,13 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
   /// @notice Address of the relayer contract on the origin chain.
   ICrossChainRelayer public relayer;
 
+  /**
+   * @notice Nonce to uniquely identify messages that were executed
+   *         nonce => boolean
+   * @dev Ensure that messages cannot be replayed once they have been executed
+   */
+  mapping(uint256 => bool) public executed;
+
   /* ============ Constructor ============ */
 
   /**
@@ -48,6 +55,8 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
     address _caller,
     Call[] calldata _calls
   ) external {
+    require(!executed[_nonce], "Executor/nonce-already-executed");
+
     ICrossChainRelayer _relayer = relayer;
 
     _isAuthorized(_relayer);
@@ -58,13 +67,15 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
       Call memory _call = _calls[_callIndex];
 
       (bool _success, bytes memory _returnData) = _call.target.call(
-        abi.encodePacked(_call.data, _caller)
+        abi.encodePacked(_call.data, _nonce, _caller)
       );
 
       if (!_success) {
         revert CallFailure(_call, _returnData);
       }
     }
+
+    executed[_nonce] = true;
 
     emit ExecutedCalls(_relayer, _nonce, msg.sender, _calls);
   }
