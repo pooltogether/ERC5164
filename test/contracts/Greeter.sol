@@ -11,6 +11,7 @@ contract Greeter is ExecutorAware {
 
   event SetGreeting(
     string greeting,
+    uint256 nonce, // nonce of the message that was executed
     address l1Sender, // _msgSender() is the address who called `relayCalls` on the origin chain
     address l2Sender // CrossChainExecutor contract
   );
@@ -27,6 +28,6 @@ contract Greeter is ExecutorAware {
     require(isTrustedForwarder(msg.sender), "Greeter/caller-not-executor");
 
     greeting = _greeting;
-    emit SetGreeting(_greeting, _msgSender(), msg.sender);
+    emit SetGreeting(_greeting, _nonce(), _msgSender(), msg.sender);
   }
 }

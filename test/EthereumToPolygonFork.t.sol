@@ -24,8 +24,8 @@ contract EthereumToPolygonForkTest is Test {
   address public fxRoot = 0xfe5e5D361b2ad62c541bAb87C45a0B9B018389a2;
   address public fxChild = 0x8397259c983751DAf40400790063935a11afa28a;
 
-  string public greeterL1Greeting = "Hello from L1";
-  string public greeterL2Greeting = "Hello from L2";
+  string public l1Greeting = "Hello from L1";
+  string public l2Greeting = "Hello from L2";
 
   uint256 public maxGasLimit = 1920000;
   uint256 public nonce = 1;
@@ -47,9 +47,7 @@ contract EthereumToPolygonForkTest is Test {
     ICrossChainExecutor.Call[] calls
   );
 
-  event SetGreeting(string greeting, address l1Sender, address l2Sender);
-
-  event FailedRelayedMessage(bytes32 indexed msgHash);
+  event SetGreeting(string greeting, uint256 nonce, address l1Sender, address l2Sender);
 
   /* ============ Errors to test ============ */
 
@@ -81,7 +79,7 @@ contract EthereumToPolygonForkTest is Test {
   function deployGreeter() public {
     vm.selectFork(polygonFork);
 
-    greeter = new Greeter(address(executor), greeterL2Greeting);
+    greeter = new Greeter(address(executor), l2Greeting);
 
     vm.makePersistent(address(greeter));
   }
@@ -134,7 +132,7 @@ contract EthereumToPolygonForkTest is Test {
     deployExecutor();
     deployGreeter();
 
-    assertEq(greeter.greeting(), greeterL2Greeting);
+    assertEq(greeter.greeting(), l2Greeting);
   }
 
   function testRelayCalls() public {
@@ -146,7 +144,7 @@ contract EthereumToPolygonForkTest is Test {
 
     _calls[0] = ICrossChainRelayer.Call({
       target: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.expectEmit(true, true, true, true, address(relayer));
@@ -168,26 +166,26 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.selectFork(polygonFork);
 
-    assertEq(greeter.greet(), greeterL2Greeting);
+    assertEq(greeter.greet(), l2Greeting);
 
     ICrossChainExecutor.Call[] memory _calls = new ICrossChainExecutor.Call[](1);
 
     _calls[0] = ICrossChainExecutor.Call({
       target: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.startPrank(fxChild);
 
     vm.expectEmit(true, true, true, true, address(greeter));
-    emit SetGreeting(greeterL1Greeting, address(this), address(executor));
+    emit SetGreeting(l1Greeting, nonce, address(this), address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
     emit ExecutedCalls(relayer, nonce, fxChild, _calls);
 
     executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
 
-    assertEq(greeter.greet(), greeterL1Greeting);
+    assertEq(greeter.greet(), l1Greeting);
   }
 
   function testGasLimitTooHigh() public {
@@ -199,7 +197,7 @@ contract EthereumToPolygonForkTest is Test {
 
     _calls[0] = ICrossChainRelayer.Call({
       target: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.expectRevert(
@@ -223,7 +221,7 @@ contract EthereumToPolygonForkTest is Test {
 
     _calls[0] = ICrossChainExecutor.Call({
       target: address(this),
-      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.startPrank(fxChild);
@@ -242,6 +240,6 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.expectRevert(bytes("Greeter/caller-not-executor"));
 
-    greeter.setGreeting(greeterL2Greeting);
+    greeter.setGreeting(l2Greeting);
   }
 }

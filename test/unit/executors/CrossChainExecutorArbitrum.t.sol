@@ -17,8 +17,6 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
 
   address public relayerAlias = AddressAliasHelper.applyL1ToL2Alias(address(relayer));
 
-  Greeter public greeter = Greeter(0x720003dC4EA5aCDA0204823B98E014f095E667f8);
-
   address public sender = 0xa3a935315931A09A4e9B8A865517Cc18923497Ad;
   address public attacker = 0xdBdDa361Db11Adf8A51dab8a511a8ee89128E89A;
 
@@ -26,8 +24,9 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
 
   string public l1Greeting = "Hello from L1";
 
-  CrossChainExecutorArbitrum public executor;
   ICrossChainExecutor.Call[] public calls;
+  CrossChainExecutorArbitrum public executor;
+  Greeter public greeter;
 
   /* ============ Events to test ============ */
   event ExecutedCalls(
@@ -37,9 +36,12 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
     ICrossChainExecutor.Call[] calls
   );
 
+  event SetGreeting(string greeting, uint256 nonce, address l1Sender, address l2Sender);
+
   /* ============ Setup ============ */
   function setUp() public {
     executor = new CrossChainExecutorArbitrum();
+    greeter = new Greeter(address(executor), "Hello from L2");
 
     calls.push(
       ICrossChainExecutor.Call({
@@ -58,6 +60,9 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
     setRelayer();
 
     vm.startPrank(relayerAlias);
+
+    vm.expectEmit(true, true, true, true, address(greeter));
+    emit SetGreeting(l1Greeting, nonce, sender, address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
     emit ExecutedCalls(relayer, nonce, relayerAlias, calls);

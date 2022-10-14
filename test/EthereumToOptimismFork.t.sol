@@ -24,8 +24,8 @@ contract EthereumToOptimismForkTest is Test {
   address public proxyOVML1CrossDomainMessenger = 0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1;
   address public l2CrossDomainMessenger = 0x4200000000000000000000000000000000000007;
 
-  string public greeterL1Greeting = "Hello from L1";
-  string public greeterL2Greeting = "Hello from L2";
+  string public l1Greeting = "Hello from L1";
+  string public l2Greeting = "Hello from L2";
 
   uint256 public maxGasLimit = 1920000;
   uint256 public nonce = 1;
@@ -47,9 +47,7 @@ contract EthereumToOptimismForkTest is Test {
     ICrossChainExecutor.Call[] calls
   );
 
-  event SetGreeting(string greeting, address l1Sender, address l2Sender);
-
-  event FailedRelayedMessage(bytes32 indexed msgHash);
+  event SetGreeting(string greeting, uint256 nonce, address l1Sender, address l2Sender);
 
   /* ============ Setup ============ */
 
@@ -80,7 +78,7 @@ contract EthereumToOptimismForkTest is Test {
   function deployGreeter() public {
     vm.selectFork(optimismFork);
 
-    greeter = new Greeter(address(executor), greeterL2Greeting);
+    greeter = new Greeter(address(executor), l2Greeting);
 
     vm.makePersistent(address(greeter));
   }
@@ -130,9 +128,10 @@ contract EthereumToOptimismForkTest is Test {
     deployExecutor();
     deployGreeter();
 
-    assertEq(greeter.greeting(), greeterL2Greeting);
+    assertEq(greeter.greeting(), l2Greeting);
   }
 
+  /* ============ relayCalls ============ */
   function testRelayCalls() public {
     deployAll();
     setAll();
@@ -143,7 +142,7 @@ contract EthereumToOptimismForkTest is Test {
 
     _calls[0] = ICrossChainRelayer.Call({
       target: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.expectEmit(true, true, true, true, address(relayer));
@@ -153,19 +152,20 @@ contract EthereumToOptimismForkTest is Test {
     relayer.relayCalls(_calls, 200000);
   }
 
+  /* ============ executeCalls ============ */
   function testExecuteCalls() public {
     deployAll();
     setAll();
 
     vm.selectFork(optimismFork);
 
-    assertEq(greeter.greet(), greeterL2Greeting);
+    assertEq(greeter.greet(), l2Greeting);
 
     ICrossChainExecutor.Call[] memory _calls = new ICrossChainExecutor.Call[](1);
 
     _calls[0] = ICrossChainExecutor.Call({
       target: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     L2CrossDomainMessenger l2Bridge = L2CrossDomainMessenger(l2CrossDomainMessenger);
@@ -173,7 +173,7 @@ contract EthereumToOptimismForkTest is Test {
     vm.startPrank(AddressAliasHelper.applyL1ToL2Alias(proxyOVML1CrossDomainMessenger));
 
     vm.expectEmit(true, true, true, true, address(greeter));
-    emit SetGreeting(greeterL1Greeting, address(this), address(executor));
+    emit SetGreeting(l1Greeting, nonce, address(this), address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
     emit ExecutedCalls(relayer, nonce, l2CrossDomainMessenger, _calls);
@@ -190,7 +190,7 @@ contract EthereumToOptimismForkTest is Test {
       l2Bridge.messageNonce() + 1
     );
 
-    assertEq(greeter.greet(), greeterL1Greeting);
+    assertEq(greeter.greet(), l1Greeting);
   }
 
   function testGasLimitTooHigh() public {
@@ -203,7 +203,7 @@ contract EthereumToOptimismForkTest is Test {
 
     _calls[0] = ICrossChainRelayer.Call({
       target: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.expectRevert(
@@ -227,7 +227,7 @@ contract EthereumToOptimismForkTest is Test {
 
     _calls[0] = ICrossChainExecutor.Call({
       target: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", greeterL1Greeting)
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.expectRevert(bytes("Executor/caller-unauthorized"));
@@ -235,6 +235,7 @@ contract EthereumToOptimismForkTest is Test {
     executor.executeCalls(nonce, address(this), _calls);
   }
 
+  /* ============ Setters ============ */
   function testSetGreetingError() public {
     deployAll();
     setAll();
@@ -243,6 +244,6 @@ contract EthereumToOptimismForkTest is Test {
 
     vm.expectRevert(bytes("Greeter/caller-not-executor"));
 
-    greeter.setGreeting(greeterL2Greeting);
+    greeter.setGreeting(l2Greeting);
   }
 }

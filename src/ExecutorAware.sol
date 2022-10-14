@@ -56,4 +56,18 @@ abstract contract ExecutorAware {
       }
     }
   }
+
+  /**
+   * @notice Retrieve nonce from call data.
+   * @return _callDataNonce Nonce uniquely identifying the message that was executed
+   */
+  function _nonce() internal pure returns (uint256 _callDataNonce) {
+    _callDataNonce;
+
+    if (msg.data.length >= 52) {
+      assembly {
+        _callDataNonce := calldataload(sub(calldatasize(), 52))
+      }
+    }
+  }
 }
