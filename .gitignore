@@ -2,6 +2,7 @@
 artifacts/
 cache/
 cache_hardhat/
+coverage/
 out/
 types/
 
