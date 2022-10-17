@@ -23,17 +23,10 @@ interface ICrossChainRelayer {
    * @notice Emitted when calls have successfully been relayed to the executor chain.
    * @param nonce Unique identifier
    * @param sender Address of the sender
-   * @param executor Address of the CrossChainExecutor contract on the receiving chain
    * @param calls Array of calls being relayed
    * @param gasLimit Maximum amount of gas required for the `calls` to be executed
    */
-  event RelayedCalls(
-    uint256 indexed nonce,
-    address indexed sender,
-    ICrossChainExecutor indexed executor,
-    Call[] calls,
-    uint256 gasLimit
-  );
+  event RelayedCalls(uint256 indexed nonce, address indexed sender, Call[] calls, uint256 gasLimit);
 
   /**
    * @notice Relay the calls to the receiving chain.

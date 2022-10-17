@@ -35,7 +35,6 @@ contract EthereumToPolygonForkTest is Test {
   event RelayedCalls(
     uint256 indexed nonce,
     address indexed sender,
-    ICrossChainExecutor indexed executor,
     ICrossChainRelayer.Call[] calls,
     uint256 gasLimit
   );
@@ -149,13 +148,7 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.expectEmit(true, true, true, true, address(relayer));
 
-    emit RelayedCalls(
-      nonce,
-      address(this),
-      ICrossChainExecutor(relayer.fxChildTunnel()),
-      _calls,
-      200000
-    );
+    emit RelayedCalls(nonce, address(this), _calls, 200000);
 
     relayer.relayCalls(_calls, 200000);
   }

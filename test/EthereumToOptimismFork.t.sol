@@ -35,7 +35,6 @@ contract EthereumToOptimismForkTest is Test {
   event RelayedCalls(
     uint256 indexed nonce,
     address indexed sender,
-    ICrossChainExecutor indexed executor,
     ICrossChainRelayer.Call[] calls,
     uint256 gasLimit
   );
@@ -147,7 +146,7 @@ contract EthereumToOptimismForkTest is Test {
 
     vm.expectEmit(true, true, true, true, address(relayer));
 
-    emit RelayedCalls(nonce, address(this), executor, _calls, 200000);
+    emit RelayedCalls(nonce, address(this), _calls, 200000);
 
     relayer.relayCalls(_calls, 200000);
   }

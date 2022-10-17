@@ -36,7 +36,6 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
   event RelayedCalls(
     uint256 indexed nonce,
     address indexed sender,
-    ICrossChainExecutor indexed executor,
     ICrossChainRelayer.Call[] calls,
     uint256 gasLimit
   );
@@ -80,7 +79,7 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
     setExecutor();
 
     vm.expectEmit(true, true, true, true, address(relayer));
-    emit RelayedCalls(nonce, address(this), executor, calls, gasLimit);
+    emit RelayedCalls(nonce, address(this), calls, gasLimit);
 
     relayer.relayCalls(calls, gasLimit);
 

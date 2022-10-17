@@ -85,7 +85,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
 
     relayed[_getTxHash(_nonce, _calls, msg.sender, _gasLimit)] = true;
 
-    emit RelayedCalls(_nonce, msg.sender, executor, _calls, _gasLimit);
+    emit RelayedCalls(_nonce, msg.sender, _calls, _gasLimit);
   }
 
   /**

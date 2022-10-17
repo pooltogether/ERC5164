@@ -64,10 +64,9 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     nonce++;
 
     uint256 _nonce = nonce;
-    ICrossChainExecutor _executor = executor;
 
     crossDomainMessenger.sendMessage(
-      address(_executor),
+      address(executor),
       abi.encodeWithSignature(
         "executeCalls(uint256,address,(address,bytes)[])",
         _nonce,
@@ -77,7 +76,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
       uint32(_gasLimit)
     );
 
-    emit RelayedCalls(_nonce, msg.sender, _executor, _calls, _gasLimit);
+    emit RelayedCalls(_nonce, msg.sender, _calls, _gasLimit);
   }
 
   /**

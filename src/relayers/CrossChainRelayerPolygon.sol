@@ -67,7 +67,7 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
 
     _sendMessageToChild(abi.encode(_nonce, msg.sender, _calls));
 
-    emit RelayedCalls(_nonce, msg.sender, ICrossChainExecutor(fxChildTunnel), _calls, _gasLimit);
+    emit RelayedCalls(_nonce, msg.sender, _calls, _gasLimit);
   }
 
   /* ============ Internal Functions ============ */
