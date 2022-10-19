@@ -4,13 +4,14 @@ pragma solidity 0.8.16;
 
 import "forge-std/Test.sol";
 
-import { ICrossChainRelayer } from "../src/interfaces/ICrossChainRelayer.sol";
-import { ICrossChainExecutor } from "../src/interfaces/ICrossChainExecutor.sol";
+import { ICrossChainRelayer } from "../../src/interfaces/ICrossChainRelayer.sol";
+import { ICrossChainExecutor } from "../../src/interfaces/ICrossChainExecutor.sol";
 
-import "../src/relayers/CrossChainRelayerPolygon.sol";
-import "../src/executors/CrossChainExecutorPolygon.sol";
+import "../../src/ethereum-polygon/EthereumToPolygonRelayer.sol";
+import "../../src/ethereum-polygon/EthereumToPolygonExecutor.sol";
+import "../../src/libraries/CallLib.sol";
 
-import "./contracts/Greeter.sol";
+import "../contracts/Greeter.sol";
 
 contract EthereumToPolygonForkTest is Test {
   uint256 public mainnetFork;
@@ -35,7 +36,7 @@ contract EthereumToPolygonForkTest is Test {
   event RelayedCalls(
     uint256 indexed nonce,
     address indexed sender,
-    ICrossChainRelayer.Call[] calls,
+    CallLib.Call[] calls,
     uint256 gasLimit
   );
 
@@ -134,9 +135,9 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.selectFork(mainnetFork);
 
-    ICrossChainRelayer.Call[] memory _calls = new ICrossChainRelayer.Call[](1);
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
-    _calls[0] = ICrossChainRelayer.Call({
+    _calls[0] = CallLib.Call({
       target: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
@@ -158,9 +159,9 @@ contract EthereumToPolygonForkTest is Test {
 
     assertEq(greeter.greet(), l2Greeting);
 
-    ICrossChainExecutor.Call[] memory _calls = new ICrossChainExecutor.Call[](1);
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
-    _calls[0] = ICrossChainExecutor.Call({
+    _calls[0] = CallLib.Call({
       target: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
@@ -183,9 +184,9 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.selectFork(mainnetFork);
 
-    ICrossChainRelayer.Call[] memory _calls = new ICrossChainRelayer.Call[](1);
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
-    _calls[0] = ICrossChainRelayer.Call({
+    _calls[0] = CallLib.Call({
       target: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
@@ -207,18 +208,16 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.selectFork(polygonFork);
 
-    ICrossChainExecutor.Call[] memory _calls = new ICrossChainExecutor.Call[](1);
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
-    _calls[0] = ICrossChainExecutor.Call({
+    _calls[0] = CallLib.Call({
       target: address(this),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.startPrank(fxChild);
 
-    vm.expectRevert(
-      abi.encodeWithSelector(CrossChainExecutorPolygon.CallFailure.selector, 0, bytes(""))
-    );
+    vm.expectRevert(abi.encodeWithSelector(CallLib.CallFailure.selector, 0, bytes("")));
 
     executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
   }

@@ -7,8 +7,11 @@ import "forge-std/Test.sol";
 import { AddressAliasHelper } from "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 import { IInbox } from "@arbitrum/nitro-contracts/src/bridge/IInbox.sol";
 
-import "../../../src/executors/CrossChainExecutorArbitrum.sol";
-import { CrossChainRelayerArbitrum } from "../../../src/relayers/CrossChainRelayerArbitrum.sol";
+import { ICrossChainRelayer } from "../../../src/interfaces/ICrossChainRelayer.sol";
+import { CrossChainExecutorArbitrum } from "../../../src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol";
+import { CrossChainRelayerArbitrum } from "../../../src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol";
+import "../../../src/libraries/CallLib.sol";
+
 import { Greeter } from "../../contracts/Greeter.sol";
 
 contract CrossChainExecutorArbitrumUnitTest is Test {
@@ -24,7 +27,7 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
 
   string public l1Greeting = "Hello from L1";
 
-  ICrossChainExecutor.Call[] public calls;
+  CallLib.Call[] public calls;
   CrossChainExecutorArbitrum public executor;
   Greeter public greeter;
 
@@ -41,7 +44,7 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
     greeter = new Greeter(address(executor), "Hello from L2");
 
     calls.push(
-      ICrossChainExecutor.Call({
+      CallLib.Call({
         target: address(greeter),
         data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
       })
@@ -76,9 +79,7 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
     vm.startPrank(relayerAlias);
     executor.executeCalls(nonce, sender, calls);
 
-    vm.expectRevert(
-      abi.encodeWithSelector(CrossChainExecutorArbitrum.CallsAlreadyExecuted.selector, nonce)
-    );
+    vm.expectRevert(abi.encodeWithSelector(CallLib.CallsAlreadyExecuted.selector, nonce));
     executor.executeCalls(nonce, sender, calls);
   }
 

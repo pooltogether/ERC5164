@@ -4,21 +4,13 @@ pragma solidity 0.8.16;
 
 import "./ICrossChainRelayer.sol";
 
+import "../libraries/CallLib.sol";
+
 /**
  * @title CrossChainExecutor interface
  * @notice CrossChainExecutor interface of the ERC5164 standard as defined in the EIP.
  */
 interface ICrossChainExecutor {
-  /**
-   * @notice Call data structure
-   * @param target Address that will be called
-   * @param data Data that will be sent to the `target` address
-   */
-  struct Call {
-    address target;
-    bytes data;
-  }
-
   /**
    * @notice Emitted when calls have successfully been executed.
    * @param relayer Address of the contract that relayed the calls on the origin chain
@@ -37,6 +29,6 @@ interface ICrossChainExecutor {
   function executeCalls(
     uint256 nonce,
     address caller,
-    Call[] calldata calls
+    CallLib.Call[] calldata calls
   ) external;
 }

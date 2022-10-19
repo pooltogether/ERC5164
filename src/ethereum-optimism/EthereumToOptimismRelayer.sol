@@ -4,7 +4,9 @@ pragma solidity 0.8.16;
 
 import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
-import "../interfaces/ICrossChainRelayer.sol";
+import { ICrossChainExecutor } from "../interfaces/ICrossChainExecutor.sol";
+import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
+import "../libraries/CallLib.sol";
 
 /**
  * @title CrossChainRelayer contract
@@ -54,7 +56,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainRelayer
-  function relayCalls(Call[] calldata _calls, uint256 _gasLimit)
+  function relayCalls(CallLib.Call[] calldata _calls, uint256 _gasLimit)
     external
     payable
     returns (uint256)

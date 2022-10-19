@@ -6,8 +6,8 @@ import { Script } from "forge-std/Script.sol";
 import { IInbox } from "@arbitrum/nitro-contracts/src/bridge/IInbox.sol";
 import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
-import { CrossChainExecutorArbitrum } from "../../src/executors/CrossChainExecutorArbitrum.sol";
-import { CrossChainRelayerArbitrum } from "../../src/relayers/CrossChainRelayerArbitrum.sol";
+import { CrossChainExecutorArbitrum } from "../../src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol";
+import { CrossChainRelayerArbitrum } from "../../src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol";
 import { Greeter } from "../../test/contracts/Greeter.sol";
 
 contract DeployCrossChainRelayerToGoerli is Script {

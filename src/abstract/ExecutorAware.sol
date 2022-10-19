@@ -3,7 +3,7 @@
 pragma solidity 0.8.16;
 
 /**
- * @title ExecutorAware contract
+ * @title ExecutorAware abstract contract
  * @notice The ExecutorAware contract allows contracts on a receiving chain to execute calls from an origin chain.
  *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
  *         The `CrossChainExecutor` contract on the receiving chain executes these calls

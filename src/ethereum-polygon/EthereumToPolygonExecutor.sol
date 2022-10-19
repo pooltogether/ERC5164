@@ -4,39 +4,14 @@ pragma solidity 0.8.16;
 
 import { FxBaseChildTunnel } from "@maticnetwork/fx-portal/contracts/tunnel/FxBaseChildTunnel.sol";
 
+import "../libraries/CallLib.sol";
+
 /**
  * @title CrossChainExecutor contract
  * @notice The CrossChainExecutor contract executes call from the origin chain.
  *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
  */
 contract CrossChainExecutorPolygon is FxBaseChildTunnel {
-  /* ============ Structs ============ */
-
-  /**
-   * @notice Call data structure
-   * @param target Address that will be called
-   * @param data Data that will be sent to the `target` address
-   */
-  struct Call {
-    address target;
-    bytes data;
-  }
-
-  /* ============ Custom Errors ============ */
-
-  /**
-   * @notice Emitted if a call to a target contract fails.
-   * @param callIndex Index of the failed call
-   * @param errorData Error data returned by the failed call
-   */
-  error CallFailure(uint256 callIndex, bytes errorData);
-
-  /**
-   * @notice Emitted when a batch of calls has already been executed.
-   * @param nonce Nonce to uniquely identify the batch of calls that were re-executed
-   */
-  error CallsAlreadyExecuted(uint256 nonce);
-
   /* ============ Events ============ */
 
   /**
@@ -71,29 +46,12 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
     address _sender,
     bytes memory _data
   ) internal override validateSender(_sender) {
-    (uint256 _nonce, address _caller, Call[] memory _calls) = abi.decode(
+    (uint256 _nonce, address _caller, CallLib.Call[] memory _calls) = abi.decode(
       _data,
-      (uint256, address, Call[])
+      (uint256, address, CallLib.Call[])
     );
 
-    if (executed[_nonce]) {
-      revert CallsAlreadyExecuted(_nonce);
-    }
-
-    uint256 _callsLength = _calls.length;
-
-    for (uint256 _callIndex; _callIndex < _callsLength; _callIndex++) {
-      Call memory _call = _calls[_callIndex];
-
-      (bool _success, bytes memory _returnData) = _call.target.call(
-        abi.encodePacked(_call.data, _nonce, _caller)
-      );
-
-      if (!_success) {
-        revert CallFailure(_callIndex, _returnData);
-      }
-    }
-
+    CallLib.executeCalls(_nonce, _caller, _calls, executed[_nonce]);
     executed[_nonce] = true;
 
     emit ExecutedCalls(_sender, _nonce);

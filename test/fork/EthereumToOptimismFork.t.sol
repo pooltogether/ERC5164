@@ -3,15 +3,19 @@
 pragma solidity 0.8.16;
 
 import "forge-std/Test.sol";
+
 import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 import { L2CrossDomainMessenger } from "@eth-optimism/contracts/L2/messaging/L2CrossDomainMessenger.sol";
 import { AddressAliasHelper } from "@eth-optimism/contracts/standards/AddressAliasHelper.sol";
 
-import { ICrossChainRelayer } from "../src/interfaces/ICrossChainRelayer.sol";
-import { ICrossChainExecutor } from "../src/interfaces/ICrossChainExecutor.sol";
-import "../src/relayers/CrossChainRelayerOptimism.sol";
-import "../src/executors/CrossChainExecutorOptimism.sol";
-import "./contracts/Greeter.sol";
+import { ICrossChainRelayer } from "../../src/interfaces/ICrossChainRelayer.sol";
+import { ICrossChainExecutor } from "../../src/interfaces/ICrossChainExecutor.sol";
+
+import "../../src/ethereum-optimism/EthereumToOptimismRelayer.sol";
+import "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
+import "../../src/libraries/CallLib.sol";
+
+import "../contracts/Greeter.sol";
 
 contract EthereumToOptimismForkTest is Test {
   uint256 public mainnetFork;
@@ -35,7 +39,7 @@ contract EthereumToOptimismForkTest is Test {
   event RelayedCalls(
     uint256 indexed nonce,
     address indexed sender,
-    ICrossChainRelayer.Call[] calls,
+    CallLib.Call[] calls,
     uint256 gasLimit
   );
 
@@ -132,9 +136,9 @@ contract EthereumToOptimismForkTest is Test {
 
     vm.selectFork(mainnetFork);
 
-    ICrossChainRelayer.Call[] memory _calls = new ICrossChainRelayer.Call[](1);
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
-    _calls[0] = ICrossChainRelayer.Call({
+    _calls[0] = CallLib.Call({
       target: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
@@ -158,9 +162,9 @@ contract EthereumToOptimismForkTest is Test {
 
     assertEq(greeter.greet(), l2Greeting);
 
-    ICrossChainExecutor.Call[] memory _calls = new ICrossChainExecutor.Call[](1);
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
-    _calls[0] = ICrossChainExecutor.Call({
+    _calls[0] = CallLib.Call({
       target: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
@@ -196,9 +200,9 @@ contract EthereumToOptimismForkTest is Test {
 
     vm.selectFork(mainnetFork);
 
-    ICrossChainRelayer.Call[] memory _calls = new ICrossChainRelayer.Call[](1);
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
-    _calls[0] = ICrossChainRelayer.Call({
+    _calls[0] = CallLib.Call({
       target: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
@@ -220,9 +224,9 @@ contract EthereumToOptimismForkTest is Test {
 
     vm.selectFork(optimismFork);
 
-    ICrossChainExecutor.Call[] memory _calls = new ICrossChainExecutor.Call[](1);
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
-    _calls[0] = ICrossChainExecutor.Call({
+    _calls[0] = CallLib.Call({
       target: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });

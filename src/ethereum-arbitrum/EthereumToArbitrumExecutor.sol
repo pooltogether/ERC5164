@@ -5,6 +5,7 @@ pragma solidity 0.8.16;
 import { AddressAliasHelper } from "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 
 import "../interfaces/ICrossChainExecutor.sol";
+import "../libraries/CallLib.sol";
 
 /**
  * @title CrossChainExecutor contract
@@ -12,21 +13,6 @@ import "../interfaces/ICrossChainExecutor.sol";
  *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
  */
 contract CrossChainExecutorArbitrum is ICrossChainExecutor {
-  /* ============ Custom Errors ============ */
-
-  /**
-   * @notice Custom error emitted if a call to a target contract fails.
-   * @param callIndex Index of the failed call
-   * @param errorData Error data returned by the failed call
-   */
-  error CallFailure(uint256 callIndex, bytes errorData);
-
-  /**
-   * @notice Emitted when a batch of calls has already been executed.
-   * @param nonce Nonce to uniquely identify the batch of calls that were re-executed
-   */
-  error CallsAlreadyExecuted(uint256 nonce);
-
   /* ============ Variables ============ */
 
   /// @notice Address of the relayer contract on the origin chain.
@@ -45,30 +31,12 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
   function executeCalls(
     uint256 _nonce,
     address _caller,
-    Call[] calldata _calls
+    CallLib.Call[] calldata _calls
   ) external {
-    if (executed[_nonce]) {
-      revert CallsAlreadyExecuted(_nonce);
-    }
-
     ICrossChainRelayer _relayer = relayer;
-
     _isAuthorized(_relayer);
 
-    uint256 _callsLength = _calls.length;
-
-    for (uint256 _callIndex; _callIndex < _callsLength; _callIndex++) {
-      Call memory _call = _calls[_callIndex];
-
-      (bool _success, bytes memory _returnData) = _call.target.call(
-        abi.encodePacked(_call.data, _nonce, _caller)
-      );
-
-      if (!_success) {
-        revert CallFailure(_callIndex, _returnData);
-      }
-    }
-
+    CallLib.executeCalls(_nonce, _caller, _calls, executed[_nonce]);
     executed[_nonce] = true;
 
     emit ExecutedCalls(_relayer, _nonce);

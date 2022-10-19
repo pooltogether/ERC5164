@@ -5,8 +5,8 @@ pragma solidity 0.8.16;
 import { Script } from "forge-std/Script.sol";
 import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
-import { CrossChainExecutorPolygon } from "../../src/executors/CrossChainExecutorPolygon.sol";
-import { CrossChainRelayerPolygon } from "../../src/relayers/CrossChainRelayerPolygon.sol";
+import { CrossChainExecutorPolygon } from "../../src/ethereum-polygon/EthereumToPolygonExecutor.sol";
+import { CrossChainRelayerPolygon } from "../../src/ethereum-polygon/EthereumToPolygonRelayer.sol";
 
 import { Greeter } from "../../test/contracts/Greeter.sol";
 

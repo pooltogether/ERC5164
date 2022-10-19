@@ -6,8 +6,10 @@ import "forge-std/Test.sol";
 
 import { IInbox } from "@arbitrum/nitro-contracts/src/bridge/IInbox.sol";
 
-import "../../../src/relayers/CrossChainRelayerArbitrum.sol";
-import { CrossChainExecutorArbitrum } from "../../../src/executors/CrossChainExecutorArbitrum.sol";
+import { CrossChainRelayerArbitrum } from "../../../src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol";
+import { CrossChainExecutorArbitrum } from "../../../src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol";
+import "../../../src/libraries/CallLib.sol";
+
 import { Greeter } from "../../contracts/Greeter.sol";
 import { ArbInbox } from "../../contracts/mock/ArbInbox.sol";
 
@@ -30,13 +32,13 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
   string public l1Greeting = "Hello from L1";
 
   CrossChainRelayerArbitrum public relayer;
-  ICrossChainRelayer.Call[] public calls;
+  CallLib.Call[] public calls;
 
   /* ============ Events to test ============ */
   event RelayedCalls(
     uint256 indexed nonce,
     address indexed sender,
-    ICrossChainRelayer.Call[] calls,
+    CallLib.Call[] calls,
     uint256 gasLimit
   );
 
@@ -47,7 +49,7 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
     relayer = new CrossChainRelayerArbitrum(inbox, maxGasLimit);
 
     calls.push(
-      ICrossChainRelayer.Call({
+      CallLib.Call({
         target: address(greeter),
         data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
       })

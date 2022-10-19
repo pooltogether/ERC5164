@@ -4,7 +4,9 @@ pragma solidity 0.8.16;
 
 import { IInbox } from "@arbitrum/nitro-contracts/src/bridge/IInbox.sol";
 
-import "../interfaces/ICrossChainRelayer.sol";
+import { ICrossChainExecutor } from "../interfaces/ICrossChainExecutor.sol";
+import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
+import "../libraries/CallLib.sol";
 
 /**
  * @title CrossChainRelayer contract
@@ -72,7 +74,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainRelayer
-  function relayCalls(Call[] calldata _calls, uint256 _gasLimit)
+  function relayCalls(CallLib.Call[] calldata _calls, uint256 _gasLimit)
     external
     payable
     returns (uint256)
@@ -108,7 +110,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
    */
   function processCalls(
     uint256 _nonce,
-    Call[] calldata _calls,
+    CallLib.Call[] calldata _calls,
     address _sender,
     uint256 _gasLimit,
     uint256 _maxSubmissionCost,
@@ -160,7 +162,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
    */
   function getTxHash(
     uint256 _nonce,
-    Call[] calldata _calls,
+    CallLib.Call[] calldata _calls,
     address _sender,
     uint256 _gasLimit
   ) external view returns (bytes32) {
@@ -180,7 +182,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
    */
   function _getTxHash(
     uint256 _nonce,
-    Call[] calldata _calls,
+    CallLib.Call[] calldata _calls,
     address _sender,
     uint256 _gasLimit
   ) internal view returns (bytes32) {

@@ -4,7 +4,7 @@ pragma solidity 0.8.16;
 
 import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
-import "../../src/ExecutorAware.sol";
+import "../../src/abstract/ExecutorAware.sol";
 
 contract Greeter is ExecutorAware {
   string public greeting;

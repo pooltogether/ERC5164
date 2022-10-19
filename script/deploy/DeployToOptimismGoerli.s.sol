@@ -6,8 +6,8 @@ import { Script } from "forge-std/Script.sol";
 import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
-import { CrossChainExecutorOptimism } from "../../src/executors/CrossChainExecutorOptimism.sol";
-import { CrossChainRelayerOptimism } from "../../src/relayers/CrossChainRelayerOptimism.sol";
+import { CrossChainExecutorOptimism } from "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
+import { CrossChainRelayerOptimism } from "../../src/ethereum-optimism/EthereumToOptimismRelayer.sol";
 import { Greeter } from "../../test/contracts/Greeter.sol";
 
 contract DeployCrossChainRelayerToGoerli is Script {

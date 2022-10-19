@@ -6,14 +6,14 @@ import { Script } from "forge-std/Script.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 import "solidity-stringutils/strings.sol";
 
-import { CrossChainRelayerOptimism } from "../../src/relayers/CrossChainRelayerOptimism.sol";
-import { CrossChainExecutorOptimism } from "../../src/executors/CrossChainExecutorOptimism.sol";
+import { CrossChainRelayerOptimism } from "../../src/ethereum-optimism/EthereumToOptimismRelayer.sol";
+import { CrossChainExecutorOptimism } from "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
 
-import { CrossChainRelayerPolygon } from "../../src/relayers/CrossChainRelayerPolygon.sol";
-import { CrossChainExecutorPolygon } from "../../src/executors/CrossChainExecutorPolygon.sol";
+import { CrossChainRelayerPolygon } from "../../src/ethereum-polygon/EthereumToPolygonRelayer.sol";
+import { CrossChainExecutorPolygon } from "../../src/ethereum-polygon/EthereumToPolygonExecutor.sol";
 
-import { CrossChainRelayerArbitrum } from "../../src/relayers/CrossChainRelayerArbitrum.sol";
-import { CrossChainExecutorArbitrum } from "../../src/executors/CrossChainExecutorArbitrum.sol";
+import { CrossChainRelayerArbitrum } from "../../src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol";
+import { CrossChainExecutorArbitrum } from "../../src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol";
 
 import { Greeter } from "../../test/contracts/Greeter.sol";
 
