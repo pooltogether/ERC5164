@@ -50,7 +50,7 @@ contract EthereumToPolygonForkTest is Test {
 
   /* ============ Errors to test ============ */
 
-  error CallFailure(ICrossChainExecutor.Call call, bytes errorData);
+  error CallFailure(uint256 callIndex, bytes errorData);
 
   /* ============ Setup ============ */
 
@@ -220,7 +220,7 @@ contract EthereumToPolygonForkTest is Test {
     vm.startPrank(fxChild);
 
     vm.expectRevert(
-      abi.encodeWithSelector(CrossChainExecutorPolygon.CallFailure.selector, _calls[0], bytes(""))
+      abi.encodeWithSelector(CrossChainExecutorPolygon.CallFailure.selector, 0, bytes(""))
     );
 
     executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));

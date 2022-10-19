@@ -21,8 +21,8 @@ interface ICrossChainExecutor {
 
   /**
    * @notice Emitted when calls have successfully been executed.
-   * @param relayer Address of the contract that relayed the calls
-   * @param nonce Nonce to uniquely idenfity each batch of calls
+   * @param relayer Address of the contract that relayed the calls on the origin chain
+   * @param nonce Nonce to uniquely identify each batch of calls
    * @param caller Address of the caller on the origin chain
    * @param calls Array of calls being executed
    */

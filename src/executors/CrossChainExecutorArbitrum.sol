@@ -16,10 +16,10 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
 
   /**
    * @notice Custom error emitted if a call to a target contract fails.
-   * @param call Call struct
+   * @param callIndex Index of the failed call
    * @param errorData Error data returned by the failed call
    */
-  error CallFailure(Call call, bytes errorData);
+  error CallFailure(uint256 callIndex, bytes errorData);
 
   /* ============ Variables ============ */
 
@@ -57,7 +57,7 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
       );
 
       if (!_success) {
-        revert CallFailure(_call, _returnData);
+        revert CallFailure(_callIndex, _returnData);
       }
     }
 
