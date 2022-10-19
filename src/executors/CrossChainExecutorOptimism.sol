@@ -77,7 +77,7 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
 
     executed[_nonce] = true;
 
-    emit ExecutedCalls(_relayer, _nonce, msg.sender, _calls);
+    emit ExecutedCalls(_relayer, _nonce);
   }
 
   /**

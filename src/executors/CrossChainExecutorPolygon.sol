@@ -37,15 +37,8 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
    * @notice Emitted when calls have successfully been executed.
    * @param relayer Address of the contract that relayed the calls
    * @param nonce Unique identifier
-   * @param caller Address of the caller on the origin chain
-   * @param calls Array of calls being executed
    */
-  event ExecutedCalls(
-    address indexed relayer,
-    uint256 indexed nonce,
-    address indexed caller,
-    Call[] calls
-  );
+  event ExecutedCalls(address indexed relayer, uint256 indexed nonce);
 
   /* ============ Variables ============ */
 
@@ -95,6 +88,6 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
 
     executed[_nonce] = true;
 
-    emit ExecutedCalls(_sender, _nonce, msg.sender, _calls);
+    emit ExecutedCalls(_sender, _nonce);
   }
 }

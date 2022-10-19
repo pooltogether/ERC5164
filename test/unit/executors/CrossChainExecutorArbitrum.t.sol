@@ -29,16 +29,13 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
   Greeter public greeter;
 
   /* ============ Events to test ============ */
-  event ExecutedCalls(
-    ICrossChainRelayer indexed relayer,
-    uint256 indexed nonce,
-    address indexed caller,
-    ICrossChainExecutor.Call[] calls
-  );
+
+  event ExecutedCalls(ICrossChainRelayer indexed relayer, uint256 indexed nonce);
 
   event SetGreeting(string greeting, uint256 nonce, address l1Sender, address l2Sender);
 
   /* ============ Setup ============ */
+
   function setUp() public {
     executor = new CrossChainExecutorArbitrum();
     greeter = new Greeter(address(executor), "Hello from L2");
@@ -56,6 +53,7 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
   }
 
   /* ============ executeCalls ============ */
+
   function testExecuteCalls() public {
     setRelayer();
 
@@ -65,7 +63,7 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
     emit SetGreeting(l1Greeting, nonce, sender, address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
-    emit ExecutedCalls(relayer, nonce, relayerAlias, calls);
+    emit ExecutedCalls(relayer, nonce);
 
     executor.executeCalls(nonce, sender, calls);
 
@@ -90,6 +88,7 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
   }
 
   /* ============ Setters ============ */
+
   function testSetRelayer() public {
     setRelayer();
     assertEq(address(relayer), address(executor.relayer()));
