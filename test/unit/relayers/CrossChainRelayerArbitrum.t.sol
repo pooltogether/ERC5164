@@ -81,10 +81,10 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
     vm.expectEmit(true, true, true, true, address(relayer));
     emit RelayedCalls(nonce, address(this), calls, gasLimit);
 
-    relayer.relayCalls(calls, gasLimit);
+    uint256 _nonce = relayer.relayCalls(calls, gasLimit);
+    assertEq(_nonce, nonce);
 
     bytes32 txHash = relayer.getTxHash(nonce, calls, address(this), gasLimit);
-
     assertTrue(relayer.relayed(txHash));
   }
 
@@ -111,15 +111,16 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
   function testProcessCalls() public {
     setExecutor();
 
-    relayer.relayCalls(calls, gasLimit);
+    uint256 _nonce = relayer.relayCalls(calls, gasLimit);
+    assertEq(_nonce, nonce);
 
     vm.expectEmit(true, true, true, true, address(relayer));
 
     uint256 _randomNumber = inbox.generateRandomNumber();
-    emit ProcessedCalls(nonce, address(this), _randomNumber);
+    emit ProcessedCalls(_nonce, address(this), _randomNumber);
 
     uint256 _ticketId = relayer.processCalls(
-      nonce,
+      _nonce,
       calls,
       address(this),
       gasLimit,

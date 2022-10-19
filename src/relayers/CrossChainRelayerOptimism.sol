@@ -54,7 +54,11 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainRelayer
-  function relayCalls(Call[] calldata _calls, uint256 _gasLimit) external payable {
+  function relayCalls(Call[] calldata _calls, uint256 _gasLimit)
+    external
+    payable
+    returns (uint256)
+  {
     uint256 _maxGasLimit = maxGasLimit;
 
     if (_gasLimit > _maxGasLimit) {
@@ -77,6 +81,8 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     );
 
     emit RelayedCalls(_nonce, msg.sender, _calls, _gasLimit);
+
+    return _nonce;
   }
 
   /**

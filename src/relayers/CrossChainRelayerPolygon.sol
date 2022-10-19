@@ -54,7 +54,11 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainRelayer
-  function relayCalls(Call[] calldata _calls, uint256 _gasLimit) external payable {
+  function relayCalls(Call[] calldata _calls, uint256 _gasLimit)
+    external
+    payable
+    returns (uint256)
+  {
     uint256 _maxGasLimit = maxGasLimit;
 
     if (_gasLimit > _maxGasLimit) {
@@ -68,6 +72,8 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
     _sendMessageToChild(abi.encode(_nonce, msg.sender, _calls));
 
     emit RelayedCalls(_nonce, msg.sender, _calls, _gasLimit);
+
+    return _nonce;
   }
 
   /* ============ Internal Functions ============ */

@@ -72,7 +72,11 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainRelayer
-  function relayCalls(Call[] calldata _calls, uint256 _gasLimit) external payable {
+  function relayCalls(Call[] calldata _calls, uint256 _gasLimit)
+    external
+    payable
+    returns (uint256)
+  {
     uint256 _maxGasLimit = maxGasLimit;
 
     if (_gasLimit > _maxGasLimit) {
@@ -86,6 +90,8 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
     relayed[_getTxHash(_nonce, _calls, msg.sender, _gasLimit)] = true;
 
     emit RelayedCalls(_nonce, msg.sender, _calls, _gasLimit);
+
+    return _nonce;
   }
 
   /**

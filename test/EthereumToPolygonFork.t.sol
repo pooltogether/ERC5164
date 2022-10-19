@@ -145,7 +145,9 @@ contract EthereumToPolygonForkTest is Test {
 
     emit RelayedCalls(nonce, address(this), _calls, 200000);
 
-    relayer.relayCalls(_calls, 200000);
+    uint256 _nonce = relayer.relayCalls(_calls, 200000);
+
+    assertEq(_nonce, nonce);
   }
 
   function testExecuteCalls() public {
