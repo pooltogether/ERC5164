@@ -33,7 +33,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /// @notice Gas limit provided for free on Optimism.
   uint256 public immutable maxGasLimit;
 
-  /// @notice Internal nonce to uniquely idenfity each batch of calls.
+  /// @notice Nonce to uniquely idenfity each batch of calls.
   uint256 internal nonce;
 
   /* ============ Constructor ============ */

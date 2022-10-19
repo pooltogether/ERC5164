@@ -21,7 +21,7 @@ interface ICrossChainRelayer {
 
   /**
    * @notice Emitted when calls have successfully been relayed to the executor chain.
-   * @param nonce Unique id that identifies the batch of `calls` that were relayed
+   * @param nonce Nonce to uniquely idenfity the batch of calls
    * @param sender Address of the sender
    * @param calls Array of calls being relayed
    * @param gasLimit Maximum amount of gas required for the `calls` to be executed
@@ -30,12 +30,12 @@ interface ICrossChainRelayer {
 
   /**
    * @notice Relay the calls to the receiving chain.
-   * @dev Must increment a `nonce` so that each batch of calls can be uniquely identified.
+   * @dev Must increment a `nonce` so that the batch of calls can be uniquely identified.
    * @dev Must emit the `RelayedCalls` event when successfully called.
    * @dev May require payment. Some bridges may require payment in the native currency, so the function is payable.
    * @param calls Array of calls being relayed
    * @param gasLimit Maximum amount of gas required for the `calls` to be executed
-   * @return uint256 Unique id that identifies the batch of `calls` that were relayed
+   * @return uint256 Nonce to uniquely idenfity the batch of calls
    */
   function relayCalls(Call[] calldata calls, uint256 gasLimit) external payable returns (uint256);
 }

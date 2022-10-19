@@ -28,7 +28,7 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
   /// @notice Gas limit provided for free on Polygon.
   uint256 public immutable maxGasLimit;
 
-  /// @notice Internal nonce to uniquely idenfity each batch of calls.
+  /// @notice Nonce to uniquely idenfity each batch of calls.
   uint256 internal nonce;
 
   /// @notice Latest data relayed through the `CrossChainRelayer` contract.

@@ -22,7 +22,7 @@ interface ICrossChainExecutor {
   /**
    * @notice Emitted when calls have successfully been executed.
    * @param relayer Address of the contract that relayed the calls on the origin chain
-   * @param nonce Nonce to uniquely identify each batch of calls
+   * @param nonce Nonce to uniquely identify the batch of calls
    */
   event ExecutedCalls(ICrossChainRelayer indexed relayer, uint256 indexed nonce);
 
@@ -30,7 +30,7 @@ interface ICrossChainExecutor {
    * @notice Execute calls from the origin chain.
    * @dev Should authenticate that the call has been performed by the bridge transport layer.
    * @dev Must emit the `ExecutedCalls` event once calls have been executed.
-   * @param nonce Nonce to uniquely idenfity each batch of calls
+   * @param nonce Nonce to uniquely idenfity the batch of calls
    * @param caller Address of the caller on the origin chain
    * @param calls Array of calls being executed
    */

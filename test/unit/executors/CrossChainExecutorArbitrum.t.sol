@@ -76,7 +76,9 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
     vm.startPrank(relayerAlias);
     executor.executeCalls(nonce, sender, calls);
 
-    vm.expectRevert(bytes("Executor/nonce-already-executed"));
+    vm.expectRevert(
+      abi.encodeWithSelector(CrossChainExecutorArbitrum.CallsAlreadyExecuted.selector, nonce)
+    );
     executor.executeCalls(nonce, sender, calls);
   }
 

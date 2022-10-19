@@ -27,7 +27,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /**
    * @notice Emitted once a message has been processed and put in the Arbitrum inbox.
    *         Using the `ticketId`, this message can be reexecuted for some fixed amount of time if it reverts.
-   * @param nonce Id of the message that was sent
+   * @param nonce Nonce to uniquely idenfity the batch of calls.
    * @param sender Address who processed the calls
    * @param ticketId Id of the newly created retryable ticket
    */
@@ -44,7 +44,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /// @notice Gas limit provided for free on Arbitrum.
   uint256 public immutable maxGasLimit;
 
-  /// @notice Internal nonce to uniquely idenfity each batch of calls.
+  /// @notice Nonce to uniquely idenfity each batch of calls.
   uint256 internal nonce;
 
   /**
@@ -98,7 +98,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
    * @notice Process calls that have been relayed.
    * @dev The transaction hash must match the one stored in the `relayed` mapping.
    * @dev We store `_data` in memory to avoid a stack too deep error.
-   * @param _nonce Nonce of the message to process
+   * @param _nonce Nonce of the batch of calls to process
    * @param _calls Array of calls being processed
    * @param _sender Address who relayed the `_calls`
    * @param _gasLimit Maximum amount of gas required for the `_calls` to be executed
@@ -152,7 +152,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /**
    * @notice Get transaction hash.
    * @dev The transaction hash is used to ensure that only calls that were relayed are processed.
-   * @param _nonce Nonce uniquely identifying the messages that were relayed
+   * @param _nonce Nonce uniquely identifying the batch of calls that were relayed
    * @param _calls Array of calls that were relayed
    * @param _sender Address who relayed the calls
    * @param _gasLimit Maximum amount of gas that will be consumed by the calls
@@ -172,7 +172,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /**
    * @notice Get transaction hash.
    * @dev The transaction hash is used to ensure that only calls that were relayed are processed.
-   * @param _nonce Nonce uniquely identifying the messages that were relayed
+   * @param _nonce Nonce uniquely identifying the batch of calls that were relayed
    * @param _calls Array of calls that were relayed
    * @param _sender Address who relayed the calls
    * @param _gasLimit Maximum amount of gas that will be consumed by the calls

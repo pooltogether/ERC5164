@@ -25,27 +25,33 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
   /* ============ Custom Errors ============ */
 
   /**
-   * @notice Custom error emitted if a call to a target contract fails.
+   * @notice Emitted if a call to a target contract fails.
    * @param callIndex Index of the failed call
    * @param errorData Error data returned by the failed call
    */
   error CallFailure(uint256 callIndex, bytes errorData);
+
+  /**
+   * @notice Emitted when a batch of calls has already been executed.
+   * @param nonce Nonce to uniquely identify the batch of calls that were re-executed
+   */
+  error CallsAlreadyExecuted(uint256 nonce);
 
   /* ============ Events ============ */
 
   /**
    * @notice Emitted when calls have successfully been executed.
    * @param relayer Address of the contract that relayed the calls
-   * @param nonce Unique identifier
+   * @param nonce Nonce to uniquely identify the batch of calls that were executed
    */
   event ExecutedCalls(address indexed relayer, uint256 indexed nonce);
 
   /* ============ Variables ============ */
 
   /**
-   * @notice Nonce to uniquely identify messages that were executed
+   * @notice Nonce to uniquely identify the batch of calls that were executed
    *         nonce => boolean
-   * @dev Ensure that messages cannot be replayed once they have been executed
+   * @dev Ensure that batch of calls cannot be replayed once they have been executed
    */
   mapping(uint256 => bool) public executed;
 
@@ -70,7 +76,9 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
       (uint256, address, Call[])
     );
 
-    require(!executed[_nonce], "Executor/nonce-already-executed");
+    if (executed[_nonce]) {
+      revert CallsAlreadyExecuted(_nonce);
+    }
 
     uint256 _callsLength = _calls.length;
 

@@ -21,15 +21,21 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
    */
   error CallFailure(uint256 callIndex, bytes errorData);
 
+  /**
+   * @notice Emitted when a batch of calls has already been executed.
+   * @param nonce Nonce to uniquely identify the batch of calls that were re-executed
+   */
+  error CallsAlreadyExecuted(uint256 nonce);
+
   /* ============ Variables ============ */
 
   /// @notice Address of the relayer contract on the origin chain.
   ICrossChainRelayer public relayer;
 
   /**
-   * @notice Nonce to uniquely identify messages that were executed
+   * @notice Nonce to uniquely identify the batch of calls that were executed
    *         nonce => boolean
-   * @dev Ensure that messages cannot be replayed once they have been executed
+   * @dev Ensure that batch of calls cannot be replayed once they have been executed
    */
   mapping(uint256 => bool) public executed;
 
@@ -41,7 +47,9 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
     address _caller,
     Call[] calldata _calls
   ) external {
-    require(!executed[_nonce], "Executor/nonce-already-executed");
+    if (executed[_nonce]) {
+      revert CallsAlreadyExecuted(_nonce);
+    }
 
     ICrossChainRelayer _relayer = relayer;
 
