@@ -4,8 +4,9 @@ pragma solidity 0.8.16;
 
 import { FxBaseRootTunnel } from "@maticnetwork/fx-portal/contracts/tunnel/FxBaseRootTunnel.sol";
 
-import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
 import { ICrossChainExecutor } from "../interfaces/ICrossChainExecutor.sol";
+import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
+import "../libraries/CallLib.sol";
 
 /**
  * @title CrossChainRelayer contract
@@ -28,7 +29,7 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
   /// @notice Gas limit provided for free on Polygon.
   uint256 public immutable maxGasLimit;
 
-  /// @notice Internal nonce to uniquely idenfity each batch of calls.
+  /// @notice Nonce to uniquely idenfity each batch of calls.
   uint256 internal nonce;
 
   /// @notice Latest data relayed through the `CrossChainRelayer` contract.
@@ -54,7 +55,11 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainRelayer
-  function relayCalls(Call[] calldata _calls, uint256 _gasLimit) external payable {
+  function relayCalls(CallLib.Call[] calldata _calls, uint256 _gasLimit)
+    external
+    payable
+    returns (uint256)
+  {
     uint256 _maxGasLimit = maxGasLimit;
 
     if (_gasLimit > _maxGasLimit) {
@@ -67,7 +72,9 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
 
     _sendMessageToChild(abi.encode(_nonce, msg.sender, _calls));
 
-    emit RelayedCalls(_nonce, msg.sender, ICrossChainExecutor(fxChildTunnel), _calls, _gasLimit);
+    emit RelayedCalls(_nonce, msg.sender, _calls, _gasLimit);
+
+    return _nonce;
   }
 
   /* ============ Internal Functions ============ */

@@ -6,7 +6,7 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  check:
+  forge:
     strategy:
       fail-fast: true
 
@@ -16,6 +16,11 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
+
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -28,11 +33,43 @@ jobs:
           forge build --sizes
         id: build
 
-      - name: Run Forge tests
+      - name: Run Forge coverage
         env:
           MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
           OPTIMISM_RPC_URL: ${{ secrets.OPTIMISM_RPC_URL }}
           POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
         run: |
-          forge test -vvvv
-        id: test
+          forge coverage --report lcov
+        id: coverage
+
+      - name: Report code coverage
+        uses: zgosalvez/github-actions-report-lcov@v1
+        with:
+          coverage-files: lcov.info
+          minimum-coverage: 20
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install yarn dependencies and generate types
+        run: |
+          yarn
+          yarn typechain
+
+      - name: Run relayCalls Arbitrum fork tests
+        continue-on-error: true
+        env:
+          MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
+          ARBITRUM_RPC_URL: ${{ secrets.ARBITRUM_RPC_URL }}
+          FORK_ENABLED: true
+          HDWALLET_MNEMONIC: ${{ secrets.HDWALLET_MNEMONIC }}
+        run: |
+          yarn fork:startRelayCallsArbitrumMainnet
+
+      - name: Run executeCalls Arbitrum fork tests
+        continue-on-error: true
+        env:
+          MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
+          ARBITRUM_RPC_URL: ${{ secrets.ARBITRUM_RPC_URL }}
+          FORK_ENABLED: true
+          HDWALLET_MNEMONIC: ${{ secrets.HDWALLET_MNEMONIC }}
+        run: |
+          yarn fork:startExecuteCallsArbitrumMainnet

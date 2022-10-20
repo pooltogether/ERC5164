@@ -5,10 +5,10 @@ pragma solidity 0.8.16;
 import { Script } from "forge-std/Script.sol";
 import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
-import { CrossChainExecutorPolygon } from "../../src/executors/CrossChainExecutorPolygon.sol";
-import { CrossChainRelayerPolygon } from "../../src/relayers/CrossChainRelayerPolygon.sol";
+import { CrossChainExecutorPolygon } from "../../src/ethereum-polygon/EthereumToPolygonExecutor.sol";
+import { CrossChainRelayerPolygon } from "../../src/ethereum-polygon/EthereumToPolygonRelayer.sol";
 
-import { Greeter } from "../../test/Greeter.sol";
+import { Greeter } from "../../test/contracts/Greeter.sol";
 
 contract DeployCrossChainRelayerToGoerli is Script {
   address public checkpointManager = 0x2890bA17EfE978480615e330ecB65333b880928e;
@@ -38,8 +38,6 @@ contract DeployCrossChainExecutorToMumbai is Script {
 /// @dev Needs to be run after deploying CrossChainRelayer and CrossChainExecutor
 contract SetFxChildTunnel is DeployedContracts {
   function setFxChildTunnel() public {
-    vm.allowCheatcodes(address(this));
-
     CrossChainRelayerPolygon _crossChainRelayer = _getCrossChainRelayerPolygon();
     CrossChainExecutorPolygon _crossChainExecutor = _getCrossChainExecutorPolygon();
 
@@ -58,8 +56,6 @@ contract SetFxChildTunnel is DeployedContracts {
 /// @dev Needs to be run after deploying CrossChainRelayer and CrossChainExecutor
 contract SetFxRootTunnel is DeployedContracts {
   function setFxRootTunnel() public {
-    vm.allowCheatcodes(address(this));
-
     CrossChainRelayerPolygon _crossChainRelayer = _getCrossChainRelayerPolygon();
     CrossChainExecutorPolygon _crossChainExecutor = _getCrossChainExecutorPolygon();
 

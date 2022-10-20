@@ -5,6 +5,7 @@ pragma solidity 0.8.16;
 import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
 import "../interfaces/ICrossChainExecutor.sol";
+import "../libraries/CallLib.sol";
 
 /**
  * @title CrossChainExecutor contract
@@ -12,15 +13,6 @@ import "../interfaces/ICrossChainExecutor.sol";
  *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
  */
 contract CrossChainExecutorOptimism is ICrossChainExecutor {
-  /* ============ Custom Errors ============ */
-
-  /**
-   * @notice Custom error emitted if a call to a target contract fails.
-   * @param call Call struct
-   * @param errorData Error data returned by the failed call
-   */
-  error CallFailure(Call call, bytes errorData);
-
   /* ============ Variables ============ */
 
   /// @notice Address of the Optimism cross domain messenger on the receiving chain.
@@ -28,6 +20,13 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
 
   /// @notice Address of the relayer contract on the origin chain.
   ICrossChainRelayer public relayer;
+
+  /**
+   * @notice Nonce to uniquely identify the batch of calls that were executed
+   *         nonce => boolean
+   * @dev Ensure that batch of calls cannot be replayed once they have been executed
+   */
+  mapping(uint256 => bool) public executed;
 
   /* ============ Constructor ============ */
 
@@ -46,25 +45,15 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
   function executeCalls(
     uint256 _nonce,
     address _caller,
-    Call[] calldata _calls
+    CallLib.Call[] calldata _calls
   ) external {
-    _isAuthorized();
+    ICrossChainRelayer _relayer = relayer;
+    _isAuthorized(_relayer);
 
-    uint256 _callsLength = _calls.length;
+    CallLib.executeCalls(_nonce, _caller, _calls, executed[_nonce]);
+    executed[_nonce] = true;
 
-    for (uint256 _callIndex; _callIndex < _callsLength; _callIndex++) {
-      Call memory _call = _calls[_callIndex];
-
-      (bool _success, bytes memory _returnData) = _call.target.call(
-        abi.encodePacked(_call.data, _caller)
-      );
-
-      if (!_success) {
-        revert CallFailure(_call, _returnData);
-      }
-    }
-
-    emit ExecutedCalls(relayer, _nonce, msg.sender, _calls);
+    emit ExecutedCalls(_relayer, _nonce);
   }
 
   /**
@@ -79,13 +68,16 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
 
   /* ============ Internal Functions ============ */
 
-  /// @notice Check if caller is authorized to call `executeCalls`.
-  function _isAuthorized() internal view {
+  /**
+   * @notice Check if caller is authorized to call `executeCalls`.
+   * @param _relayer Address of the relayer on the origin chain
+   */
+  function _isAuthorized(ICrossChainRelayer _relayer) internal view {
     ICrossDomainMessenger _crossDomainMessenger = crossDomainMessenger;
 
     require(
       msg.sender == address(_crossDomainMessenger) &&
-        _crossDomainMessenger.xDomainMessageSender() == address(relayer),
+        _crossDomainMessenger.xDomainMessageSender() == address(_relayer),
       "Executor/caller-unauthorized"
     );
   }

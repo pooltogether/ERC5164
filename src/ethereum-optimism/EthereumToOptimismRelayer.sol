@@ -4,7 +4,9 @@ pragma solidity 0.8.16;
 
 import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
-import "../interfaces/ICrossChainRelayer.sol";
+import { ICrossChainExecutor } from "../interfaces/ICrossChainExecutor.sol";
+import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
+import "../libraries/CallLib.sol";
 
 /**
  * @title CrossChainRelayer contract
@@ -33,7 +35,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /// @notice Gas limit provided for free on Optimism.
   uint256 public immutable maxGasLimit;
 
-  /// @notice Internal nonce to uniquely idenfity each batch of calls.
+  /// @notice Nonce to uniquely idenfity each batch of calls.
   uint256 internal nonce;
 
   /* ============ Constructor ============ */
@@ -54,7 +56,11 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainRelayer
-  function relayCalls(Call[] calldata _calls, uint256 _gasLimit) external payable {
+  function relayCalls(CallLib.Call[] calldata _calls, uint256 _gasLimit)
+    external
+    payable
+    returns (uint256)
+  {
     uint256 _maxGasLimit = maxGasLimit;
 
     if (_gasLimit > _maxGasLimit) {
@@ -64,10 +70,9 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     nonce++;
 
     uint256 _nonce = nonce;
-    ICrossChainExecutor _executor = executor;
 
     crossDomainMessenger.sendMessage(
-      address(_executor),
+      address(executor),
       abi.encodeWithSignature(
         "executeCalls(uint256,address,(address,bytes)[])",
         _nonce,
@@ -77,7 +82,9 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
       uint32(_gasLimit)
     );
 
-    emit RelayedCalls(_nonce, msg.sender, _executor, _calls, _gasLimit);
+    emit RelayedCalls(_nonce, msg.sender, _calls, _gasLimit);
+
+    return _nonce;
   }
 
   /**

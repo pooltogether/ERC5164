@@ -6,16 +6,20 @@ import { Script } from "forge-std/Script.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 import "solidity-stringutils/strings.sol";
 
-import { CrossChainRelayerOptimism } from "../../src/relayers/CrossChainRelayerOptimism.sol";
-import { CrossChainExecutorOptimism } from "../../src/executors/CrossChainExecutorOptimism.sol";
+import { CrossChainRelayerOptimism } from "../../src/ethereum-optimism/EthereumToOptimismRelayer.sol";
+import { CrossChainExecutorOptimism } from "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
 
-import { CrossChainRelayerPolygon } from "../../src/relayers/CrossChainRelayerPolygon.sol";
-import { CrossChainExecutorPolygon } from "../../src/executors/CrossChainExecutorPolygon.sol";
+import { CrossChainRelayerPolygon } from "../../src/ethereum-polygon/EthereumToPolygonRelayer.sol";
+import { CrossChainExecutorPolygon } from "../../src/ethereum-polygon/EthereumToPolygonExecutor.sol";
 
-import { Greeter } from "../../test/Greeter.sol";
+import { CrossChainRelayerArbitrum } from "../../src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol";
+import { CrossChainExecutorArbitrum } from "../../src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol";
+
+import { Greeter } from "../../test/contracts/Greeter.sol";
 
 string constant OP_GOERLI_PATH = "/broadcast/DeployToOptimismGoerli.s.sol/420/";
 string constant MUMBAI_PATH = "/broadcast/DeployToMumbai.s.sol/80001/";
+string constant ARBITRUM_PATH = "/broadcast/DeployToArbitrumGoerli.s.sol/421613/";
 
 abstract contract DeployedContracts is Script {
   using strings for *;
@@ -123,5 +127,28 @@ abstract contract DeployedContracts is Script {
 
   function _getGreeterPolygon() internal returns (Greeter) {
     return Greeter(_getContractAddress("Greeter", MUMBAI_PATH, "greeter-not-found"));
+  }
+
+  /* ============ Arbitrum ============ */
+  function _getCrossChainRelayerArbitrum() internal returns (CrossChainRelayerArbitrum) {
+    return
+      CrossChainRelayerArbitrum(
+        _getContractAddress(
+          "CrossChainRelayerArbitrum",
+          "/broadcast/DeployToArbitrumGoerli.s.sol/5/",
+          "relayer-not-found"
+        )
+      );
+  }
+
+  function _getCrossChainExecutorArbitrum() internal returns (CrossChainExecutorArbitrum) {
+    return
+      CrossChainExecutorArbitrum(
+        _getContractAddress("CrossChainExecutorArbitrum", ARBITRUM_PATH, "executor-not-found")
+      );
+  }
+
+  function _getGreeterArbitrum() internal returns (Greeter) {
+    return Greeter(_getContractAddress("Greeter", ARBITRUM_PATH, "greeter-not-found"));
   }
 }
