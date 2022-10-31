@@ -4,7 +4,7 @@ pragma solidity 0.8.16;
 
 /**
  * @title CallLib
- * @notice Library to declare and manipulate Call(s)
+ * @notice Library to declare and manipulate Call(s).
  */
 library CallLib {
   /* ============ Structs ============ */
@@ -42,13 +42,13 @@ library CallLib {
    * @dev Will revert if a call fails.
    * @dev Must emit the `ExecutedCalls` event once calls have been executed.
    * @param _nonce Nonce to uniquely idenfity the batch of calls
-   * @param _caller Address of the caller on the origin chain
+   * @param _sender Address of the sender on the origin chain
    * @param _calls Array of calls being executed
    * @param _executedNonce Whether `_calls` have already been executed or not
    */
   function executeCalls(
     uint256 _nonce,
-    address _caller,
+    address _sender,
     Call[] memory _calls,
     bool _executedNonce
   ) internal {
@@ -62,7 +62,7 @@ library CallLib {
       Call memory _call = _calls[_callIndex];
 
       (bool _success, bytes memory _returnData) = _call.target.call(
-        abi.encodePacked(_call.data, _nonce, _caller)
+        abi.encodePacked(_call.data, _nonce, _sender)
       );
 
       if (!_success) {

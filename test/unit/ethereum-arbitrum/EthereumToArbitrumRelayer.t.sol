@@ -8,6 +8,7 @@ import { IInbox } from "@arbitrum/nitro-contracts/src/bridge/IInbox.sol";
 
 import { CrossChainRelayerArbitrum } from "../../../src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol";
 import { CrossChainExecutorArbitrum } from "../../../src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol";
+import { ICrossChainRelayer } from "../../../src/interfaces/ICrossChainRelayer.sol";
 import "../../../src/libraries/CallLib.sol";
 
 import { Greeter } from "../../contracts/Greeter.sol";
@@ -95,7 +96,7 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
 
     vm.expectRevert(
       abi.encodeWithSelector(
-        CrossChainRelayerArbitrum.GasLimitTooHigh.selector,
+        ICrossChainRelayer.GasLimitTooHigh.selector,
         gasLimitGTMax,
         maxGasLimit
       )

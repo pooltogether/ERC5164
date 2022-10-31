@@ -25,7 +25,7 @@ contract Greeter is ExecutorAware {
   }
 
   function setGreeting(string memory _greeting) public {
-    require(isTrustedExecutor(msg.sender), "Greeter/caller-not-executor");
+    require(isTrustedExecutor(msg.sender), "Greeter/sender-not-executor");
 
     greeting = _greeting;
     emit SetGreeting(_greeting, _nonce(), _msgSender(), msg.sender);

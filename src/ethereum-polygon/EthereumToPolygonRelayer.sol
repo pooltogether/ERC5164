@@ -9,21 +9,11 @@ import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
 import "../libraries/CallLib.sol";
 
 /**
- * @title CrossChainRelayer contract
- * @notice The CrossChainRelayer contract allows a user or contract to send messages to another chain.
- *         It lives on the origin chain and communicates with the `CrossChainExecutor` contract on the receiving chain.
+ * @title CrossChainRelayerPolygon contract
+ * @notice The CrossChainRelayerPolygon contract allows a user or contract to send messages from Ethereum to Polygon.
+ *         It lives on the Ethereum chain and communicates with the `CrossChainExecutorPolygon` contract on the Polygon chain.
  */
 contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
-  /* ============ Custom Errors ============ */
-
-  /**
-   * @notice Custom error emitted if the `gasLimit` passed to `relayCalls`
-   *         is greater than the one provided for free on Polygon.
-   * @param gasLimit Gas limit passed to `relayCalls`
-   * @param maxGasLimit Gas limit provided for free on Polygon
-   */
-  error GasLimitTooHigh(uint256 gasLimit, uint256 maxGasLimit);
-
   /* ============ Variables ============ */
 
   /// @notice Gas limit provided for free on Polygon.
@@ -32,15 +22,12 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
   /// @notice Nonce to uniquely idenfity each batch of calls.
   uint256 internal nonce;
 
-  /// @notice Latest data relayed through the `CrossChainRelayer` contract.
-  bytes public latestData;
-
   /* ============ Constructor ============ */
 
   /**
-   * @notice CrossChainRelayer constructor.
-   * @param _checkpointManager Address of the root chain manager contract on mainnet
-   * @param _fxRoot Address of the state sender contract on mainnet
+   * @notice CrossChainRelayerPolygon constructor.
+   * @param _checkpointManager Address of the root chain manager contract on Ethereum
+   * @param _fxRoot Address of the state sender contract on Ethereum
    * @param _maxGasLimit Gas limit provided for free on Polygon
    */
   constructor(
@@ -79,8 +66,12 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
 
   /* ============ Internal Functions ============ */
 
-  /// @inheritdoc FxBaseRootTunnel
+  /**
+   * @inheritdoc FxBaseRootTunnel
+   * @dev This contract must not be used to receive and execute messages from Polygon.
+   *      We need to implement the following function to be able to inherit from FxBaseRootTunnel.
+   */
   function _processMessageFromChild(bytes memory data) internal override {
-    latestData = data;
+    /// no-op
   }
 }

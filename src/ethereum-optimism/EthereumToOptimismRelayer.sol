@@ -9,27 +9,17 @@ import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
 import "../libraries/CallLib.sol";
 
 /**
- * @title CrossChainRelayer contract
- * @notice The CrossChainRelayer contract allows a user or contract to send messages to another chain.
- *         It lives on the origin chain and communicates with the `CrossChainExecutor` contract on the receiving chain.
+ * @title CrossChainRelayerOptimism contract
+ * @notice The CrossChainRelayerOptimism contract allows a user or contract to send messages from Ethereum to Optimism.
+ *         It lives on the Ethereum chain and communicates with the `CrossChainExecutorOptimism` contract on the Optimism chain.
  */
 contract CrossChainRelayerOptimism is ICrossChainRelayer {
-  /* ============ Custom Errors ============ */
-
-  /**
-   * @notice Custom error emitted if the `gasLimit` passed to `relayCalls`
-   *         is greater than the one provided for free on Optimism.
-   * @param gasLimit Gas limit passed to `relayCalls`
-   * @param maxGasLimit Gas limit provided for free on Optimism
-   */
-  error GasLimitTooHigh(uint256 gasLimit, uint256 maxGasLimit);
-
   /* ============ Variables ============ */
 
-  /// @notice Address of the Optimism cross domain messenger on the origin chain.
+  /// @notice Address of the Optimism cross domain messenger on the Ethereum chain.
   ICrossDomainMessenger public immutable crossDomainMessenger;
 
-  /// @notice Address of the executor contract on the receiving chain.
+  /// @notice Address of the executor contract on the Optimism chain.
   ICrossChainExecutor public executor;
 
   /// @notice Gas limit provided for free on Optimism.
@@ -41,7 +31,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /* ============ Constructor ============ */
 
   /**
-   * @notice CrossChainRelayer constructor.
+   * @notice CrossChainRelayerOptimism constructor.
    * @param _crossDomainMessenger Address of the Optimism cross domain messenger
    * @param _maxGasLimit Gas limit provided for free on Optimism
    */
@@ -90,7 +80,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /**
    * @notice Set executor contract address.
    * @dev Will revert if it has already been set.
-   * @param _executor Address of the executor contract on the receiving chain
+   * @param _executor Address of the executor contract on the Optimism chain
    */
   function setExecutor(ICrossChainExecutor _executor) external {
     require(address(executor) == address(0), "Relayer/executor-already-set");
