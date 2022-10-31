@@ -5,7 +5,6 @@ libs = ['lib']
 solc = "0.8.16"
 fs_permissions = [{ access = "read", path = "./broadcast"}]
 gas_reports = ["*"]
-via_ir = true
 
 [rpc_endpoints]
 mainnet = "${MAINNET_RPC_URL}"
