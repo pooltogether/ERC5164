@@ -6,19 +6,14 @@ import hre from 'hardhat';
 import { ARBITRUM_GOERLI_CHAIN_ID, GOERLI_CHAIN_ID } from '../../Constants';
 import { getContractAddress } from '../../helpers/getContract';
 import { action, error as errorLog, info, success } from '../../helpers/log';
-import { CrossChainRelayerArbitrum } from '../../types';
+import { CrossChainRelayerArbitrum, ICrossChainRelayer } from '../../types';
 import CrossChainRelayerArbitrumArtifact from '../../out/CrossChainRelayerArbitrum.sol/CrossChainRelayerArbitrum.json';
 
-/**
- * Won't work until Hardhat supports Arbitrum Goerli
- * https://github.com/NomicFoundation/hardhat/issues/3257
- */
 const main = async () => {
   action('Relay calls from Ethereum to Arbitrum...');
 
   const {
     ethers: {
-      getContract,
       getContractAt,
       provider: l1Provider,
       utils: { defaultAbiCoder, Interface },
@@ -57,12 +52,20 @@ const main = async () => {
     [greeting],
   );
 
-  const calls = [
+  const calls: ICrossChainRelayer.CallStruct[] = [
     {
       target: greeterAddress,
       data: callData,
     },
   ];
+
+  const executeCallsData = new Interface([
+    'function executeCalls(uint256,address,(address,bytes)[])',
+  ]).encodeFunctionData('executeCalls', [
+    BigNumber.from(1),
+    deployer,
+    [[greeterAddress, callData]],
+  ]);
 
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
 
@@ -72,12 +75,24 @@ const main = async () => {
     l2CallValue: BigNumber.from(0),
     excessFeeRefundAddress: deployer,
     callValueRefundAddress: deployer,
-    data: callData,
+    data: executeCallsData,
   });
 
-  await crossChainRelayerArbitrum.relayCalls(calls, maxGas);
+  const relayCallsTransaction = await crossChainRelayerArbitrum.relayCalls(calls, maxGas);
+  const relayCallsTransactionReceipt = await relayCallsTransaction.wait();
 
-  success('Successfully relayed calls from Mainnet to Arbitrum!');
+  const relayedCallsEventInterface = new Interface([
+    'event RelayedCalls(uint256 indexed nonce,address indexed sender, (address target,bytes data)[], uint256 gasLimit)',
+  ]);
+
+  const relayedCallsEventLogs = relayedCallsEventInterface.parseLog(
+    relayCallsTransactionReceipt.logs[0],
+  );
+
+  const [relayCallsNonce] = relayedCallsEventLogs.args;
+
+  success('Successfully relayed calls from Ethereum to Arbitrum!');
+  info(`Nonce: ${relayCallsNonce}`);
 
   action('Process calls from Ethereum to Arbitrum...');
 
@@ -100,7 +115,10 @@ const main = async () => {
   const callValue = maxSubmissionCost.add(gasPriceBid.mul(maxGas));
 
   const processCallsTransaction = await crossChainRelayerArbitrum.processCalls(
-    1,
+    relayCallsNonce,
+    calls,
+    deployer,
+    maxGas,
     maxSubmissionCost,
     gasPriceBid,
     {
@@ -127,7 +145,7 @@ const main = async () => {
     await l1Receipt.getL1ToL2Messages(l2Provider)
   )[0];
 
-  success('Successfully processed calls from Mainnet to Arbitrum!');
+  success('Successfully processed calls from Ethereum to Arbitrum!');
   info(`Nonce: ${nonce.toString()}`);
   info(`Sender: ${sender}`);
   info(`TicketId: ${ticketId.toString()}`);

@@ -11,7 +11,7 @@ import { CrossChainRelayerArbitrum } from "../../src/ethereum-arbitrum/EthereumT
 import { Greeter } from "../../test/contracts/Greeter.sol";
 
 contract DeployCrossChainRelayerToGoerli is Script {
-  address public delayedInbox = 0x4Dbd4fc535Ac27206064B68FfCf827b0A60BAB3f;
+  address public delayedInbox = 0x6BEbC4925716945D46F0Ec336D5C2564F419682C;
 
   function run() public {
     vm.broadcast();

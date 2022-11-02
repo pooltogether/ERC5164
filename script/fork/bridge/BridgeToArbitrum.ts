@@ -89,7 +89,7 @@ export const relayCalls = task(
 
   await crossChainRelayerArbitrum.relayCalls(calls, maxGas);
 
-  success('Successfully relayed calls from Mainnet to Arbitrum!');
+  success('Successfully relayed calls from Ethereum to Arbitrum!');
 
   action('Process calls from Ethereum to Arbitrum...');
 
@@ -142,7 +142,7 @@ export const relayCalls = task(
     await l1Receipt.getL1ToL2Messages(l2Provider)
   )[0];
 
-  success('Successfully processed calls from Mainnet to Arbitrum!');
+  success('Successfully processed calls from Ethereum to Arbitrum!');
   info(`Sender: ${sender}`);
   info(`Nonce: ${nonce.toString()}`);
   info(`TicketId: ${ticketId.toString()}`);
@@ -207,7 +207,7 @@ export const executeCalls = task(
     hre,
   );
 
-  success('Successfully executed calls from Mainnet on Arbitrum!');
+  success('Successfully executed calls from Ethereum on Arbitrum!');
   info(`Greeting after: ${await greeter.callStatic.greeting()}`);
 
   await killHardhatNode(8546, ARBITRUM_CHAIN_ID);

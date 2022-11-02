@@ -5,12 +5,15 @@ import {
   ARBITRUM_CHAIN_ID,
   OPTIMISM_CHAIN_ID,
   POLYGON_CHAIN_ID,
+  GOERLI_CHAIN_ID,
 } from './Constants';
 
 const mainnetRPCUrl = process.env.MAINNET_RPC_URL;
 const arbitrumRPCUrl = process.env.ARBITRUM_RPC_URL;
 const optimismRPCUrl = process.env.OPTIMISM_RPC_URL;
 const polygonRPCUrl = process.env.OPTIMISM_RPC_URL;
+
+const goerliRPCUrl = process.env.GOERLI_RPC_URL;
 
 const mnemonic = process.env.HDWALLET_MNEMONIC;
 
@@ -31,6 +34,13 @@ const networks: HardhatUserConfig['networks'] = {
     chainId,
     url: 'http://127.0.0.1:8546',
     allowUnlimitedContractSize: true,
+  },
+  goerli: {
+    chainId: GOERLI_CHAIN_ID,
+    url: goerliRPCUrl,
+    accounts: {
+      mnemonic,
+    },
   },
 };
 
