@@ -35,14 +35,17 @@ const networks: HardhatUserConfig['networks'] = {
     url: 'http://127.0.0.1:8546',
     allowUnlimitedContractSize: true,
   },
-  goerli: {
+};
+
+if (goerliRPCUrl && mnemonic) {
+  networks.goerli = {
     chainId: GOERLI_CHAIN_ID,
     url: goerliRPCUrl,
     accounts: {
       mnemonic,
     },
-  },
-};
+  };
+}
 
 if (process.env.FORK_ENABLED && mnemonic) {
   const defaultHardhatConfig = {
@@ -55,23 +58,19 @@ if (process.env.FORK_ENABLED && mnemonic) {
   if (chainId === MAINNET_CHAIN_ID && mainnetRPCUrl) {
     networks.hardhat = {
       chainId: MAINNET_CHAIN_ID,
-      // Need to pass the forking config to the command line until the following bug is fixed
-      // https://github.com/NomicFoundation/hardhat/issues/2995#issuecomment-1264741751
-      // forking: {
-      //   url: mainnetRPCUrl,
-      //   blockNumber: 15684520,
-      //   ignoreUnknownTxType: true
-      // },
+      forking: {
+        url: mainnetRPCUrl,
+        blockNumber: 15684520,
+      },
       ...defaultHardhatConfig,
     };
   } else if (chainId === ARBITRUM_CHAIN_ID && arbitrumRPCUrl) {
     networks.hardhat = {
       chainId: ARBITRUM_CHAIN_ID,
-      // forking: {
-      //   url: arbitrumRPCUrl,
-      //   blockNumber: 28574320,
-      //   ignoreUnknownTxType: true
-      // },
+      forking: {
+        url: arbitrumRPCUrl,
+        blockNumber: 28574320,
+      },
       ...defaultHardhatConfig,
     };
   } else if (chainId === OPTIMISM_CHAIN_ID && optimismRPCUrl) {
