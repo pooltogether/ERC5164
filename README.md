@@ -3,12 +3,15 @@
 Repository containing various implementations of EIP-5164, an interface defining cross-chain execution between EVM-based blockchains.
 
 The EIP is currently in the Review stage: https://eips.ethereum.org/EIPS/eip-5164
+
 Feedback and PR are welcome!
 
 ## How to use
 
 For most bridges, you only have to relay the message and the bridge will take care of estimating the gas needed to automatically execute it on L2.
+
 Others like Arbitrum, may require you to provide the estimated gas required to execute the message on L2.
+
 In this case, a message has to be relayed in a two step process that we will review below.
 
 ### Relaying
@@ -74,7 +77,9 @@ Code:
 
 #### Process calls
 
-For L2s like Arbitrum, that require you to use their [SDK](https://github.com/offchainlabs/arbitrum-sdk) to properly estimate the gas required to execute the message on L2, you will first need to queue the message by calling `relayCalls`. Once your message queued, you can process it by calling `processCalls`.
+For L2s like Arbitrum, that require you to use their [SDK](https://github.com/offchainlabs/arbitrum-sdk) to properly estimate the gas required to execute the message on L2, you will first need to queue the message by calling `relayCalls`. 
+
+Once your message queued, you can process it by calling `processCalls`.
 
 ```solidity
 /**
@@ -150,6 +155,7 @@ Code: [script/bridge/BridgeToArbitrumGoerli.ts](script/bridge/BridgeToArbitrumGo
 #### Execute calls
 
 Once the message has been bridged it will be executed by the [CrossChainExecutor](./src/interfaces/ICrossChainExecutor.sol) contract.
+
 Execution of the message is implementation specific but in most cases, the `executeCalls` function will be called:
 
 ```solidity
@@ -172,7 +178,9 @@ function executeCalls(
 #### Authenticate calls
 
 To ensure that the calls originate from the CrossChainExecutor contract, your contracts can inherit from the [ExecutorAware](./src/abstract/ExecutorAware.sol) abstract contract.
+
 It makes use of [EIP-2771](https://eips.ethereum.org/EIPS/eip-2771) to authenticate the call forwarder (i.e. the CrossChainExecutor) and original caller on the origin chain.
+
 It also passes the call nonce, which allows you to enforce transaction ordering in your contract.
 
 ```solidity
@@ -263,8 +271,7 @@ yarn compile
 
 ### Test
 
-We use [Hardhat](https://hardhat.org) to run Arbitrum fork tests.
-All other tests are being written in Solidity and make use of [Forge Standard Library](https://github.com/foundry-rs/forge-std).
+We use [Hardhat](https://hardhat.org) to run Arbitrum fork tests. All other tests are being written in Solidity and make use of [Forge Standard Library](https://github.com/foundry-rs/forge-std).
 
 To run Forge unit and fork tests:
 
@@ -325,6 +332,7 @@ yarn deploy:mumbai
 ### Bridging
 
 You can use the following commands to bridge from Ethereum to a layer 2 of your choice.
+
 It will set the greeting message in the [Greeter](./test/contracts/Greeter.sol) contract to `Hello from L1` instead of `Hello from L2`.
 
 #### Ethereum Goerli to Arbitrum Goerli
