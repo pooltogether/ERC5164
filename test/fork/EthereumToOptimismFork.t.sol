@@ -208,11 +208,7 @@ contract EthereumToOptimismForkTest is Test {
     });
 
     vm.expectRevert(
-      abi.encodeWithSelector(
-        CrossChainRelayerOptimism.GasLimitTooHigh.selector,
-        2000000,
-        maxGasLimit
-      )
+      abi.encodeWithSelector(ICrossChainRelayer.GasLimitTooHigh.selector, 2000000, maxGasLimit)
     );
 
     relayer.relayCalls(_calls, 2000000);
@@ -231,7 +227,7 @@ contract EthereumToOptimismForkTest is Test {
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
-    vm.expectRevert(bytes("Executor/caller-unauthorized"));
+    vm.expectRevert(bytes("Executor/sender-unauthorized"));
 
     executor.executeCalls(nonce, address(this), _calls);
   }
@@ -243,7 +239,7 @@ contract EthereumToOptimismForkTest is Test {
 
     vm.selectFork(optimismFork);
 
-    vm.expectRevert(bytes("Greeter/caller-not-executor"));
+    vm.expectRevert(bytes("Greeter/sender-not-executor"));
 
     greeter.setGreeting(l2Greeting);
   }

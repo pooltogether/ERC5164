@@ -192,11 +192,7 @@ contract EthereumToPolygonForkTest is Test {
     });
 
     vm.expectRevert(
-      abi.encodeWithSelector(
-        CrossChainRelayerPolygon.GasLimitTooHigh.selector,
-        2000000,
-        maxGasLimit
-      )
+      abi.encodeWithSelector(ICrossChainRelayer.GasLimitTooHigh.selector, 2000000, maxGasLimit)
     );
 
     relayer.relayCalls(_calls, 2000000);
@@ -227,7 +223,7 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.selectFork(polygonFork);
 
-    vm.expectRevert(bytes("Greeter/caller-not-executor"));
+    vm.expectRevert(bytes("Greeter/sender-not-executor"));
 
     greeter.setGreeting(l2Greeting);
   }

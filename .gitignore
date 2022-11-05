@@ -22,5 +22,6 @@ deployments/localhostArbitrum
 !.yarn/sdks
 !.yarn/versions
 
+.DS_Store
 .envrc
 node_modules

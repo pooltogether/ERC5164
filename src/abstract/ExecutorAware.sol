@@ -8,7 +8,7 @@ pragma solidity 0.8.16;
  *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
  *         The `CrossChainExecutor` contract on the receiving chain executes these calls
  *         and then forward them to an ExecutorAware contract on the receiving chain.
- * @dev This contract implements EIP 2771 (https://eips.ethereum.org/EIPS/eip-2771)
+ * @dev This contract implements EIP-2771 (https://eips.ethereum.org/EIPS/eip-2771)
  *      to ensure that calls are sent by a trusted `CrossChainExecutor` contract.
  */
 abstract contract ExecutorAware {

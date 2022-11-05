@@ -5,11 +5,16 @@ libs = ['lib']
 solc = "0.8.16"
 fs_permissions = [{ access = "read", path = "./broadcast"}]
 gas_reports = ["*"]
-via_ir = true
 
 [rpc_endpoints]
 mainnet = "${MAINNET_RPC_URL}"
 optimism = "${OPTIMISM_RPC_URL}"
 polygon = "${POLYGON_RPC_URL}"
+
+[etherscan]
+goerli = { key = "${ETHERSCAN_API_KEY}", url = "https://api-goerli.etherscan.io/api" }
+arbitrum-goerli = { key = "${ARBITRUM_ETHERSCAN_API_KEY}", url = "https://api-goerli.arbiscan.io/api" }
+optimism-goerli = { key = "${OPTIMISM_ETHERSCAN_API_KEY}", url = "https://api-goerli-optimism.etherscan.io/api" }
+polygon-mumbai = { key = "${POLYGONSCAN_API_KEY}", url = "https://api-testnet.polygonscan.com/api" }
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

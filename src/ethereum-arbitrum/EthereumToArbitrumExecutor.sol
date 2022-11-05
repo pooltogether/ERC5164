@@ -8,20 +8,20 @@ import "../interfaces/ICrossChainExecutor.sol";
 import "../libraries/CallLib.sol";
 
 /**
- * @title CrossChainExecutor contract
- * @notice The CrossChainExecutor contract executes call from the origin chain.
- *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
+ * @title CrossChainExecutorArbitrum contract
+ * @notice The CrossChainExecutorArbitrum contract executes calls from the Ethereum chain.
+ *         These calls are sent by the `CrossChainRelayerArbitrum` contract which lives on the Ethereum chain.
  */
 contract CrossChainExecutorArbitrum is ICrossChainExecutor {
   /* ============ Variables ============ */
 
-  /// @notice Address of the relayer contract on the origin chain.
+  /// @notice Address of the relayer contract on the Ethereum chain.
   ICrossChainRelayer public relayer;
 
   /**
-   * @notice Nonce to uniquely identify the batch of calls that were executed
+   * @notice Nonce to uniquely identify the batch of calls that were executed.
    *         nonce => boolean
-   * @dev Ensure that batch of calls cannot be replayed once they have been executed
+   * @dev Ensure that batch of calls cannot be replayed once they have been executed.
    */
   mapping(uint256 => bool) public executed;
 
@@ -30,14 +30,16 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
   /// @inheritdoc ICrossChainExecutor
   function executeCalls(
     uint256 _nonce,
-    address _caller,
+    address _sender,
     CallLib.Call[] calldata _calls
   ) external {
     ICrossChainRelayer _relayer = relayer;
     _isAuthorized(_relayer);
 
-    CallLib.executeCalls(_nonce, _caller, _calls, executed[_nonce]);
+    bool _executedNonce = executed[_nonce];
     executed[_nonce] = true;
+
+    CallLib.executeCalls(_nonce, _sender, _calls, _executedNonce);
 
     emit ExecutedCalls(_relayer, _nonce);
   }
@@ -45,7 +47,7 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
   /**
    * @notice Set relayer contract address.
    * @dev Will revert if it has already been set.
-   * @param _relayer Address of the relayer contract
+   * @param _relayer Address of the relayer contract on the Ethereum chain
    */
   function setRelayer(ICrossChainRelayer _relayer) external {
     require(address(relayer) == address(0), "Executor/relayer-already-set");
@@ -55,14 +57,14 @@ contract CrossChainExecutorArbitrum is ICrossChainExecutor {
   /* ============ Internal Functions ============ */
 
   /**
-   * @notice Check that the message came from the `relayer` on the origin chain.
+   * @notice Check that the message came from the `relayer` on the Ethereum chain.
    * @dev We check that the sender is the L1 contract's L2 alias.
-   * @param _relayer Address of the relayer on the origin chain
+   * @param _relayer Address of the relayer on the Ethereum chain
    */
   function _isAuthorized(ICrossChainRelayer _relayer) internal view {
     require(
       msg.sender == AddressAliasHelper.applyL1ToL2Alias(address(_relayer)),
-      "Executor/caller-unauthorized"
+      "Executor/sender-unauthorized"
     );
   }
 }

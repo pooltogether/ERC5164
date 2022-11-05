@@ -8,7 +8,7 @@ import "../libraries/CallLib.sol";
 
 /**
  * @title CrossChainExecutor interface
- * @notice CrossChainExecutor interface of the ERC5164 standard as defined in the EIP.
+ * @notice CrossChainExecutor interface of the ERC-5164 standard as defined in the EIP.
  */
 interface ICrossChainExecutor {
   /**
@@ -23,12 +23,12 @@ interface ICrossChainExecutor {
    * @dev Should authenticate that the call has been performed by the bridge transport layer.
    * @dev Must emit the `ExecutedCalls` event once calls have been executed.
    * @param nonce Nonce to uniquely idenfity the batch of calls
-   * @param caller Address of the caller on the origin chain
+   * @param sender Address of the sender on the origin chain
    * @param calls Array of calls being executed
    */
   function executeCalls(
     uint256 nonce,
-    address caller,
+    address sender,
     CallLib.Call[] calldata calls
   ) external;
 }

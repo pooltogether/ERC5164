@@ -86,7 +86,7 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
   function testExecuteCallsUnauthorized() public {
     setRelayer();
 
-    vm.expectRevert(bytes("Executor/caller-unauthorized"));
+    vm.expectRevert(bytes("Executor/sender-unauthorized"));
     executor.executeCalls(nonce, sender, calls);
   }
 

@@ -29,7 +29,7 @@ const config: HardhatUserConfig = {
   },
   networks,
   paths: {
-    artifacts: './artifacts',
+    artifacts: './out',
     sources: './src',
     cache: './cache_hardhat',
     tests: './test',

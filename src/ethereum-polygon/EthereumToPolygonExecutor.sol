@@ -7,9 +7,9 @@ import { FxBaseChildTunnel } from "@maticnetwork/fx-portal/contracts/tunnel/FxBa
 import "../libraries/CallLib.sol";
 
 /**
- * @title CrossChainExecutor contract
- * @notice The CrossChainExecutor contract executes call from the origin chain.
- *         These calls are sent by the `CrossChainRelayer` contract which live on the origin chain.
+ * @title CrossChainExecutorPolygon contract
+ * @notice The CrossChainExecutorPolygon contract executes calls from the Ethereum chain.
+ *         These calls are sent by the `CrossChainRelayerPolygon` contract which lives on the Ethereum chain.
  */
 contract CrossChainExecutorPolygon is FxBaseChildTunnel {
   /* ============ Events ============ */
@@ -24,17 +24,17 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
   /* ============ Variables ============ */
 
   /**
-   * @notice Nonce to uniquely identify the batch of calls that were executed
+   * @notice Nonce to uniquely identify the batch of calls that were executed.
    *         nonce => boolean
-   * @dev Ensure that batch of calls cannot be replayed once they have been executed
+   * @dev Ensure that batch of calls cannot be replayed once they have been executed.
    */
   mapping(uint256 => bool) public executed;
 
   /* ============ Constructor ============ */
 
   /**
-   * @notice CrossChainExecutor constructor.
-   * @param _fxChild Address of the fx child contract on Polygon
+   * @notice CrossChainExecutorPolygon constructor.
+   * @param _fxChild Address of the FxChild contract on the Polygon chain
    */
   constructor(address _fxChild) FxBaseChildTunnel(_fxChild) {}
 
@@ -46,13 +46,15 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
     address _sender,
     bytes memory _data
   ) internal override validateSender(_sender) {
-    (uint256 _nonce, address _caller, CallLib.Call[] memory _calls) = abi.decode(
+    (uint256 _nonce, address _callsSender, CallLib.Call[] memory _calls) = abi.decode(
       _data,
       (uint256, address, CallLib.Call[])
     );
 
-    CallLib.executeCalls(_nonce, _caller, _calls, executed[_nonce]);
+    bool _executedNonce = executed[_nonce];
     executed[_nonce] = true;
+
+    CallLib.executeCalls(_nonce, _callsSender, _calls, _executedNonce);
 
     emit ExecutedCalls(_sender, _nonce);
   }

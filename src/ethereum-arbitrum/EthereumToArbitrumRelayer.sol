@@ -9,27 +9,17 @@ import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
 import "../libraries/CallLib.sol";
 
 /**
- * @title CrossChainRelayer contract
- * @notice The CrossChainRelayer contract allows a user or contract to send messages to another chain.
- *         It lives on the origin chain and communicates with the `CrossChainExecutor` contract on the receiving chain.
+ * @title CrossChainRelayerArbitrum contract
+ * @notice The CrossChainRelayerArbitrum contract allows a user or contract to send messages from Ethereum to Arbitrum.
+ *         It lives on the Ethereum chain and communicates with the `CrossChainExecutorArbitrum` contract on the Arbitrum chain.
  */
 contract CrossChainRelayerArbitrum is ICrossChainRelayer {
-  /* ============ Custom Errors ============ */
-
-  /**
-   * @notice Custom error emitted if the `gasLimit` passed to `relayCalls`
-   *         is greater than the one provided for free on Arbitrum.
-   * @param gasLimit Gas limit passed to `relayCalls`
-   * @param maxGasLimit Gas limit provided for free on Arbitrum
-   */
-  error GasLimitTooHigh(uint256 gasLimit, uint256 maxGasLimit);
-
   /* ============ Events ============ */
 
   /**
    * @notice Emitted once a message has been processed and put in the Arbitrum inbox.
-   *         Using the `ticketId`, this message can be reexecuted for some fixed amount of time if it reverts.
-   * @param nonce Nonce to uniquely idenfity the batch of calls.
+   * @dev Using the `ticketId`, this message can be reexecuted for some fixed amount of time if it reverts.
+   * @param nonce Nonce to uniquely idenfity the batch of calls
    * @param sender Address who processed the calls
    * @param ticketId Id of the newly created retryable ticket
    */
@@ -37,10 +27,10 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
 
   /* ============ Variables ============ */
 
-  /// @notice Address of the Arbitrum inbox on the origin chain.
+  /// @notice Address of the Arbitrum inbox on the Ethereum chain.
   IInbox public immutable inbox;
 
-  /// @notice Address of the executor contract on the receiving chain
+  /// @notice Address of the executor contract on the Arbitrum chain.
   ICrossChainExecutor public executor;
 
   /// @notice Gas limit provided for free on Arbitrum.
@@ -60,7 +50,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
 
   /**
    * @notice CrossChainRelayer constructor.
-   * @param _inbox Address of the Arbitrum inbox
+   * @param _inbox Address of the Arbitrum inbox on Ethereum
    * @param _maxGasLimit Gas limit provided for free on Arbitrum
    */
   constructor(IInbox _inbox, uint256 _maxGasLimit) {
@@ -144,7 +134,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /**
    * @notice Set executor contract address.
    * @dev Will revert if it has already been set.
-   * @param _executor Address of the executor contract on the receiving chain
+   * @param _executor Address of the executor contract on the Arbitrum chain
    */
   function setExecutor(ICrossChainExecutor _executor) external {
     require(address(executor) == address(0), "Relayer/executor-already-set");
