@@ -1,6 +1,6 @@
 # ERC-5164
 
-Repository containing various implementations of EIP-5164, an interface defining cross-chain execution between EVM-based blockchains.
+EIP-5164 specifies how smart contracts on one chain can call contracts on another. Transport layers, such as bridges, will have their own EIP-5164 implementations. This repository includes implementations for: Ethereum to Polygon, Ethereum to Optimism, and Ethereum to Arbitrum. All three use the 'native' bridge solutions.
 
 The EIP is currently in the Review stage: https://eips.ethereum.org/EIPS/eip-5164
 
@@ -8,26 +8,26 @@ Feedback and PR are welcome!
 
 ## How to use
 
-The 5164 standard allows smart contracts to execute calls on other chains. Implementations of ERC-5164 provide a CrossChainRelayer and CrossChainExecutor contracts. These contracts are used to bridge calls. The process is like so:
+To use ERC-5164 to send messages your contract code will need to:
 
-1. A smart contract on the sending chain calls `relayCalls` on the CrossChainRelayer; it is passed an array of Call structs.
-2. Any corresponding CrossChainExecutors will execute the batch of Call structs. The address of the original caller on the sending chain is appended to the call data.
-3. Any smart contract can receive calls from a CrossChainExecutor, but they should use the original caller address for authentication.
+- On the sending chain, send a batch of calls to the CrossChainRelayer `relayCalls` function
+- Listen for calls from the corresponding CrossChainExecutor on the receiving chain. Inherit from the `ExecutorAware` contract.
 
-To use the specification, your contract code will need to:
-
-- Send Calls to the CrossChainRelayer `relayCalls` function on the sending chain
-- Listen for calls from the corresponding CrossChainExecutor on the receiving chain.
-
-The listener will need to be able to unpack the original sender address (it's appended to calldata). We recommend inheriting from the included `ExecutorAware` abstract contract.
+*The listener will need to be able to unpack the original sender address (it's appended to calldata). We recommend inheriting from the included `ExecutorAware` abstract contract.*
 
 **Note**
 
 For most bridges, you only have to call the relayer in order to have messages executed by the CrossChainExecutor. However, Arbitrum requires an EOA to trigger the bridging process. We will review this process below.
 
-### Relaying
+## How it works
 
-#### Relay calls
+1. A smart contract on the sending chain calls `relayCalls` on the CrossChainRelayer; it is passed an array of Call structs.
+2. Any corresponding CrossChainExecutors will execute the batch of Call structs. The address of the original caller on the sending chain is appended to the call data.
+3. Any smart contract can receive calls from a CrossChainExecutor, but they should use the original caller address for authentication.
+
+## Relaying
+
+### Relay calls
 
 To relay a message from Ethereum to the L2 of your choice, you have to interact with the [CrossChainRelayer](./src/interfaces/ICrossChainRelayer.sol) contract and call the `relayCalls` function:
 
@@ -65,7 +65,7 @@ struct Call {
 
 `gasLimit` is the maximum amount of gas that will be needed to execute these calls.
 
-##### Example
+#### Example
 
 ```solidity
 CrossChainRelayerOptimism _crossChainRelayer = 0xB577c479D6D7eC677dB6c349e6E23B7bfE303295;
@@ -86,11 +86,14 @@ Code:
 - [script/bridge/BridgeToOptimismGoerli.s.sol](script/bridge/BridgeToOptimismGoerli.s.sol)
 - [script/bridge/BridgeToMumbai.s.sol](script/bridge/BridgeToMumbai.s.sol)
 
-#### Process calls
+### Arbitrum Relay
 
-For L2s like Arbitrum, that require you to use their [SDK](https://github.com/offchainlabs/arbitrum-sdk) to properly estimate the gas required to execute the message on L2, you will first need to queue the message by calling `relayCalls`. 
+Arbitrum requires an EOA to submit a bridge transaction. The Ethereum to Arbitrum ERC5164 implementation therefore is split into two actions:
 
-Once your message queued, you can process it by calling `processCalls`.
+1. Calls to `relayCalls` are fingerprinted and stored along with their nonce.
+2. Anyone may call `processCalls` to send a previously fingerprinted relayed call.
+
+The `processCalls` function same transaction parameters as the Arbitrum bridge. The [Arbitrum SDK](https://github.com/offchainlabs/arbitrum-sdk) is needed to properly estimate the gas required to execute the message on L2.
 
 ```solidity
 /**
@@ -115,7 +118,7 @@ function processCalls(
 
 ```
 
-##### Example
+#### Example
 
 ```typescript
 const greeting = 'Hello from L1';
@@ -161,7 +164,7 @@ await crossChainRelayerArbitrum.processCalls(
 
 Code: [script/bridge/BridgeToArbitrumGoerli.ts](script/bridge/BridgeToArbitrumGoerli.ts)
 
-### Execution
+## Execution
 
 #### Execute calls
 
