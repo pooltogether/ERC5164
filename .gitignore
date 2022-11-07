@@ -25,3 +25,4 @@ deployments/localhostArbitrum
 .DS_Store
 .envrc
 node_modules
+.history
