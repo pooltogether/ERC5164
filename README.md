@@ -11,19 +11,21 @@ Feedback and PR are welcome!
 To use ERC-5164 to send messages your contract code will need to:
 
 - On the sending chain, send a batch of calls to the CrossChainRelayer `relayCalls` function
-- Listen for calls from the corresponding CrossChainExecutor on the receiving chain. Inherit from the `ExecutorAware` contract.
+- Listen for calls from the corresponding CrossChainExecutor(s) on the receiving chain.
 
-*The listener will need to be able to unpack the original sender address (it's appended to calldata). We recommend inheriting from the included `ExecutorAware` abstract contract.*
+*The listener will need to be able to unpack the original sender address (it's appended to calldata). We recommend inheriting from the included Inherit from the [`ExecutorAware.sol`](./src/abstract/ExecutorAware.sol) contract.*
 
 **Note**
 
-For most bridges, you only have to call the relayer in order to have messages executed by the CrossChainExecutor. However, Arbitrum requires an EOA to trigger the bridging process. We will review this process below.
+For most bridges, you only have to call `relayCalls` to have messages executed by the CrossChainExecutor. However, Arbitrum requires an EOA to process the relay. We will review this below.
 
 ## How it works
 
 1. A smart contract on the sending chain calls `relayCalls` on the CrossChainRelayer; it is passed an array of Call structs.
-2. Any corresponding CrossChainExecutors will execute the batch of Call structs. The address of the original caller on the sending chain is appended to the call data.
+2. The corresponding CrossChainExecutor(s) on the receiving chain will execute the batch of Call structs. The address of the original caller on the sending chain is appended to the call data.
 3. Any smart contract can receive calls from a CrossChainExecutor, but they should use the original caller address for authentication.
+
+**Note: this specification does not require messages to be executed in order**
 
 ## Relaying
 
@@ -118,7 +120,7 @@ function processCalls(
 
 ```
 
-#### Example
+#### Arbitrum Relay Example
 
 ```typescript
 const greeting = 'Hello from L1';
