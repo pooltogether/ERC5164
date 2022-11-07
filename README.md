@@ -90,10 +90,10 @@ Code:
 
 ### Arbitrum Relay
 
-Arbitrum requires an EOA to submit a bridge transaction. The Ethereum to Arbitrum ERC-5164 implementation therefore is split into two actions:
+Arbitrum requires an EOA to submit a bridge transaction. The Ethereum to Arbitrum ERC-5164 CrossChainRelayer `relayCalls` implementation is therefore split into two actions:
 
-1. Calls to `relayCalls` are fingerprinted and stored along with their nonce.
-2. Anyone may call `processCalls` to send a previously fingerprinted relayed call.
+1. Calls to CrossChainRelayer `relayCalls` are fingerprinted and stored along with their nonce.
+2. Anyone may call CrossChainRelayer `processCalls` to send a previously fingerprinted relayed call.
 
 The `processCalls` function requires the same transaction parameters as the Arbitrum bridge. The [Arbitrum SDK](https://github.com/offchainlabs/arbitrum-sdk) is needed to properly estimate the gas required to execute the message on L2.
 
