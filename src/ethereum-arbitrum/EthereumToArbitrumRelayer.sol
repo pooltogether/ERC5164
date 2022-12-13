@@ -107,6 +107,9 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   ) external payable returns (uint256) {
     require(relayed[_getTxHash(_nonce, _calls, _sender, _gasLimit)], "Relayer/calls-not-relayed");
 
+    address _executorAddress = address(executor);
+    require(_executorAddress != address(0), "Relayer/executor-not-set");
+
     bytes memory _data = abi.encodeWithSignature(
       "executeCalls(uint256,address,(address,bytes)[])",
       _nonce,
@@ -115,7 +118,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
     );
 
     uint256 _ticketID = inbox.createRetryableTicket{ value: msg.value }(
-      address(executor),
+      _executorAddress,
       0,
       _maxSubmissionCost,
       msg.sender,

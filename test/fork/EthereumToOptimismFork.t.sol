@@ -152,6 +152,23 @@ contract EthereumToOptimismForkTest is Test {
     assertEq(_nonce, nonce);
   }
 
+  function testExecutorNotSet() public {
+    deployAll();
+
+    vm.selectFork(mainnetFork);
+
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
+
+    _calls[0] = CallLib.Call({
+      target: address(greeter),
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+    });
+
+    vm.expectRevert(bytes("Relayer/executor-not-set"));
+
+    relayer.relayCalls(_calls, 200000);
+  }
+
   /* ============ executeCalls ============ */
 
   function testExecuteCalls() public {

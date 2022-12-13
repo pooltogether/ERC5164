@@ -56,12 +56,15 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
       revert GasLimitTooHigh(_gasLimit, _maxGasLimit);
     }
 
+    address _executorAddress = address(executor);
+    require(_executorAddress != address(0), "Relayer/executor-not-set");
+
     nonce++;
 
     uint256 _nonce = nonce;
 
     crossDomainMessenger.sendMessage(
-      address(executor),
+      _executorAddress,
       abi.encodeWithSignature(
         "executeCalls(uint256,address,(address,bytes)[])",
         _nonce,

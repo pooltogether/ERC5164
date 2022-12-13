@@ -134,11 +134,19 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
     assertEq(_ticketId, _randomNumber);
   }
 
-  function testProcessCallsFail() public {
+  function testCallsNotRelayed() public {
     setExecutor();
 
     vm.expectRevert(bytes("Relayer/calls-not-relayed"));
     relayer.processCalls(nonce, calls, address(this), gasLimit, maxSubmissionCost, gasPriceBid);
+  }
+
+  function testExecutorNotSet() public {
+    uint256 _nonce = relayer.relayCalls(calls, gasLimit);
+
+    vm.expectRevert(bytes("Relayer/executor-not-set"));
+
+    relayer.processCalls(_nonce, calls, address(this), gasLimit, maxSubmissionCost, gasPriceBid);
   }
 
   /* ============ Getters ============ */

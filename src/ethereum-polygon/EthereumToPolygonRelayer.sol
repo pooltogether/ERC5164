@@ -52,6 +52,8 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
       revert GasLimitTooHigh(_gasLimit, _maxGasLimit);
     }
 
+    require(address(fxChildTunnel) != address(0), "Relayer/fxChildTunnel-not-set");
+
     nonce++;
 
     uint256 _nonce = nonce;

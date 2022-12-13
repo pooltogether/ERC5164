@@ -132,6 +132,7 @@ contract EthereumToPolygonForkTest is Test {
 
   function testRelayCalls() public {
     deployAll();
+    setAll();
 
     vm.selectFork(mainnetFork);
 
@@ -149,6 +150,23 @@ contract EthereumToPolygonForkTest is Test {
     uint256 _nonce = relayer.relayCalls(_calls, 200000);
 
     assertEq(_nonce, nonce);
+  }
+
+  function testFxChildTunnelNotSet() public {
+    deployAll();
+
+    vm.selectFork(mainnetFork);
+
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
+
+    _calls[0] = CallLib.Call({
+      target: address(greeter),
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+    });
+
+    vm.expectRevert(bytes("Relayer/fxChildTunnel-not-set"));
+
+    relayer.relayCalls(_calls, 200000);
   }
 
   function testExecuteCalls() public {
