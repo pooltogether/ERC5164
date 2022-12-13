@@ -13,7 +13,7 @@ To use ERC-5164 to send messages your contract code will need to:
 - On the sending chain, send a batch of calls to the CrossChainRelayer `relayCalls` function
 - Listen for calls from the corresponding CrossChainExecutor(s) on the receiving chain.
 
-*The listener will need to be able to unpack the original sender address (it's appended to calldata). We recommend inheriting from the included [`ExecutorAware.sol`](./src/abstract/ExecutorAware.sol) contract.*
+_The listener will need to be able to unpack the original sender address (it's appended to calldata). We recommend inheriting from the included [`ExecutorAware.sol`](./src/abstract/ExecutorAware.sol) contract._
 
 **Note**
 

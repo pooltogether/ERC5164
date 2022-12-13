@@ -48,7 +48,6 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /// @inheritdoc ICrossChainRelayer
   function relayCalls(CallLib.Call[] calldata _calls, uint256 _gasLimit)
     external
-    payable
     returns (uint256)
   {
     uint256 _maxGasLimit = maxGasLimit;

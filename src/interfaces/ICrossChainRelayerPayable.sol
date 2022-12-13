@@ -7,9 +7,8 @@ import "../libraries/CallLib.sol";
 /**
  * @title CrossChainRelayer interface
  * @notice CrossChainRelayer interface of the ERC-5164 standard as defined in the EIP.
- * @dev Use `ICrossChainRelayerPayable` if the bridge you want to integrate requires a payment in the native currency.
  */
-interface ICrossChainRelayer {
+interface ICrossChainRelayerPayable {
   /**
    * @notice Custom error emitted if the `gasLimit` passed to `relayCalls`
    *         is greater than the one provided for free on the receiving chain.
@@ -36,9 +35,13 @@ interface ICrossChainRelayer {
    * @notice Relay the calls to the receiving chain.
    * @dev Must increment a `nonce` so that the batch of calls can be uniquely identified.
    * @dev Must emit the `RelayedCalls` event when successfully called.
+   * @dev May require payment. Some bridges requires payment in the native currency, so the function is payable.
    * @param calls Array of calls being relayed
    * @param gasLimit Maximum amount of gas required for the `calls` to be executed
    * @return uint256 Nonce to uniquely idenfity the batch of calls
    */
-  function relayCalls(CallLib.Call[] calldata calls, uint256 gasLimit) external returns (uint256);
+  function relayCalls(CallLib.Call[] calldata calls, uint256 gasLimit)
+    external
+    payable
+    returns (uint256);
 }
