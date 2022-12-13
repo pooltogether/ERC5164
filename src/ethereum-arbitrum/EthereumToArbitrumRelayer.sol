@@ -37,7 +37,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   uint256 public immutable maxGasLimit;
 
   /// @notice Nonce to uniquely idenfity each batch of calls.
-  uint256 internal nonce;
+  uint256 public nonce;
 
   /**
    * @notice Hash of transactions that were relayed in `relayCalls`.
