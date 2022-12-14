@@ -23,9 +23,8 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
   address public sender = 0xa3a935315931A09A4e9B8A865517Cc18923497Ad;
   address public attacker = 0xdBdDa361Db11Adf8A51dab8a511a8ee89128E89A;
 
-  uint256 public maxGasLimit = 32000000;
   uint256 public gasLimit = 1000000;
-  uint256 public gasLimitGTMax = maxGasLimit + 1;
+
   uint256 public maxSubmissionCost = 1 ether;
   uint256 public gasPriceBid = 500;
   uint256 public nonce = 1;
@@ -47,7 +46,7 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
 
   /* ============ Setup ============ */
   function setUp() public {
-    relayer = new CrossChainRelayerArbitrum(inbox, maxGasLimit);
+    relayer = new CrossChainRelayerArbitrum(inbox);
 
     calls.push(
       CallLib.Call({
@@ -64,17 +63,11 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
   /* ============ Constructor ============ */
   function testConstructor() public {
     assertEq(address(relayer.inbox()), address(inbox));
-    assertEq(relayer.maxGasLimit(), maxGasLimit);
   }
 
   function testConstructorInboxFail() public {
     vm.expectRevert(bytes("Relayer/inbox-not-zero-address"));
-    relayer = new CrossChainRelayerArbitrum(IInbox(address(0)), maxGasLimit);
-  }
-
-  function testConstructorMaxGasLimitFail() public {
-    vm.expectRevert(bytes("Relayer/max-gas-limit-gt-zero"));
-    relayer = new CrossChainRelayerArbitrum(inbox, 0);
+    relayer = new CrossChainRelayerArbitrum(IInbox(address(0)));
   }
 
   /* ============ relayCalls ============ */
@@ -89,24 +82,6 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
 
     bytes32 txHash = relayer.getTxHash(nonce, calls, address(this), gasLimit);
     assertTrue(relayer.relayed(txHash));
-  }
-
-  function testRelayCallsFail() public {
-    setExecutor();
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        ICrossChainRelayer.GasLimitTooHigh.selector,
-        gasLimitGTMax,
-        maxGasLimit
-      )
-    );
-
-    relayer.relayCalls(calls, gasLimitGTMax);
-
-    bytes32 txHash = relayer.getTxHash(nonce, calls, address(this), gasLimit);
-
-    assertTrue(!relayer.relayed(txHash));
   }
 
   /* ============ processCalls ============ */

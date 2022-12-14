@@ -33,9 +33,6 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /// @notice Address of the executor contract on the Arbitrum chain.
   ICrossChainExecutor public executor;
 
-  /// @notice Gas limit provided for free on Arbitrum.
-  uint256 public immutable maxGasLimit;
-
   /// @notice Nonce to uniquely idenfity each batch of calls.
   uint256 public nonce;
 
@@ -51,14 +48,10 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /**
    * @notice CrossChainRelayer constructor.
    * @param _inbox Address of the Arbitrum inbox on Ethereum
-   * @param _maxGasLimit Gas limit provided for free on Arbitrum
    */
-  constructor(IInbox _inbox, uint256 _maxGasLimit) {
+  constructor(IInbox _inbox) {
     require(address(_inbox) != address(0), "Relayer/inbox-not-zero-address");
-    require(_maxGasLimit > 0, "Relayer/max-gas-limit-gt-zero");
-
     inbox = _inbox;
-    maxGasLimit = _maxGasLimit;
   }
 
   /* ============ External Functions ============ */
@@ -68,12 +61,6 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
     external
     returns (uint256)
   {
-    uint256 _maxGasLimit = maxGasLimit;
-
-    if (_gasLimit > _maxGasLimit) {
-      revert GasLimitTooHigh(_gasLimit, _maxGasLimit);
-    }
-
     nonce++;
 
     uint256 _nonce = nonce;

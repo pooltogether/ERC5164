@@ -31,7 +31,6 @@ contract EthereumToOptimismForkTest is Test {
   string public l1Greeting = "Hello from L1";
   string public l2Greeting = "Hello from L2";
 
-  uint256 public maxGasLimit = 1920000;
   uint256 public nonce = 1;
 
   /* ============ Events to test ============ */
@@ -57,10 +56,7 @@ contract EthereumToOptimismForkTest is Test {
   function deployRelayer() public {
     vm.selectFork(mainnetFork);
 
-    relayer = new CrossChainRelayerOptimism(
-      ICrossDomainMessenger(proxyOVML1CrossDomainMessenger),
-      maxGasLimit
-    );
+    relayer = new CrossChainRelayerOptimism(ICrossDomainMessenger(proxyOVML1CrossDomainMessenger));
 
     vm.makePersistent(address(relayer));
   }
@@ -209,26 +205,6 @@ contract EthereumToOptimismForkTest is Test {
     );
 
     assertEq(greeter.greet(), l1Greeting);
-  }
-
-  function testGasLimitTooHigh() public {
-    deployAll();
-    setAll();
-
-    vm.selectFork(mainnetFork);
-
-    CallLib.Call[] memory _calls = new CallLib.Call[](1);
-
-    _calls[0] = CallLib.Call({
-      target: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
-    });
-
-    vm.expectRevert(
-      abi.encodeWithSelector(ICrossChainRelayer.GasLimitTooHigh.selector, 2000000, maxGasLimit)
-    );
-
-    relayer.relayCalls(_calls, 2000000);
   }
 
   function testIsAuthorized() public {
