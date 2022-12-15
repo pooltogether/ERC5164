@@ -58,7 +58,7 @@ library CallLib {
 
     uint256 _callsLength = _calls.length;
 
-    for (uint256 _callIndex; _callIndex < _callsLength; _callIndex++) {
+    for (uint256 _callIndex; _callIndex < _callsLength; ) {
       Call memory _call = _calls[_callIndex];
 
       (bool _success, bytes memory _returnData) = _call.target.call(
@@ -67,6 +67,10 @@ library CallLib {
 
       if (!_success) {
         revert CallFailure(_callIndex, _returnData);
+      }
+
+      unchecked {
+        _callIndex++;
       }
     }
   }
