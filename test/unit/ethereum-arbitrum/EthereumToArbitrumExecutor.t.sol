@@ -69,6 +69,9 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
     emit SetGreeting(l1Greeting, nonce, sender, address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
+    emit CallLib.CallSuccess(0, bytes(""));
+
+    vm.expectEmit(true, true, true, true, address(executor));
     emit ExecutedCalls(relayer, nonce);
 
     executor.executeCalls(nonce, sender, calls);
@@ -84,6 +87,26 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
     executor.executeCalls(nonce, sender, calls);
 
     vm.expectRevert(abi.encodeWithSelector(CallLib.CallsAlreadyExecuted.selector, nonce));
+    executor.executeCalls(nonce, sender, calls);
+  }
+
+  function testExecuteCallsFailed() public {
+    setRelayer();
+    pushCalls(address(this));
+
+    vm.startPrank(relayerAlias);
+
+    vm.expectEmit(true, true, true, true, address(executor));
+    emit CallLib.CallFailure(0, bytes(""));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        CrossChainExecutorArbitrum.ExecuteCallsFailed.selector,
+        address(relayer),
+        nonce
+      )
+    );
+
     executor.executeCalls(nonce, sender, calls);
   }
 

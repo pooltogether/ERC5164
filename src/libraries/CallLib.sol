@@ -19,14 +19,23 @@ library CallLib {
     bytes data;
   }
 
-  /* ============ Custom Errors ============ */
+  /* ============ Events ============ */
 
   /**
-   * @notice Custom error emitted if a call to a target contract fails.
-   * @param callIndex Index of the failed call
-   * @param errorData Error data returned by the failed call
+   * @notice Emitted if a call to a target contract fails.
+   * @param callIndex Index of the call
+   * @param errorData Error data returned by the call
    */
-  error CallFailure(uint256 callIndex, bytes errorData);
+  event CallFailure(uint256 callIndex, bytes errorData);
+
+  /**
+   * @notice Emitted if a call to a target contract succeeds.
+   * @param callIndex Index of the call
+   * @param successData Error data returned by the call
+   */
+  event CallSuccess(uint256 callIndex, bytes successData);
+
+  /* ============ Custom Errors ============ */
 
   /**
    * @notice Emitted when a batch of calls has already been executed.
@@ -39,19 +48,18 @@ library CallLib {
   /**
    * @notice Execute calls from the origin chain.
    * @dev Will revert if `_calls` have already been executed.
-   * @dev Will revert if a call fails.
-   * @dev Must emit the `ExecutedCalls` event once calls have been executed.
    * @param _nonce Nonce to uniquely idenfity the batch of calls
    * @param _sender Address of the sender on the origin chain
    * @param _calls Array of calls being executed
    * @param _executedNonce Whether `_calls` have already been executed or not
+   * @return bool Whether the batch of calls was executed successfully or not
    */
   function executeCalls(
     uint256 _nonce,
     address _sender,
     Call[] memory _calls,
     bool _executedNonce
-  ) internal {
+  ) internal returns (bool) {
     if (_executedNonce) {
       revert CallsAlreadyExecuted(_nonce);
     }
@@ -68,12 +76,17 @@ library CallLib {
       );
 
       if (!_success) {
-        revert CallFailure(_callIndex, _returnData);
+        emit CallFailure(_callIndex, _returnData);
+        return false;
       }
+
+      emit CallSuccess(_callIndex, _returnData);
 
       unchecked {
         _callIndex++;
       }
     }
+
+    return true;
   }
 }
