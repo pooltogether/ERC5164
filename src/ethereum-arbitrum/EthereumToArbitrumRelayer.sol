@@ -61,7 +61,9 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
     external
     returns (uint256)
   {
-    nonce++;
+    unchecked {
+      nonce++;
+    }
 
     uint256 _nonce = nonce;
 
