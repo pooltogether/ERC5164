@@ -42,10 +42,12 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
   function setUp() public {
     executor = new CrossChainExecutorArbitrum();
     greeter = new Greeter(address(executor), "Hello from L2");
+  }
 
+  function pushCalls(address _target) public {
     calls.push(
       CallLib.Call({
-        target: address(greeter),
+        target: _target,
         data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
       })
     );
@@ -59,6 +61,7 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
 
   function testExecuteCalls() public {
     setRelayer();
+    pushCalls(address(greeter));
 
     vm.startPrank(relayerAlias);
 
@@ -75,6 +78,7 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
 
   function testExecuteCallsAlreadyExecuted() public {
     setRelayer();
+    pushCalls(address(greeter));
 
     vm.startPrank(relayerAlias);
     executor.executeCalls(nonce, sender, calls);
@@ -85,8 +89,19 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
 
   function testExecuteCallsUnauthorized() public {
     setRelayer();
+    pushCalls(address(greeter));
 
     vm.expectRevert(bytes("Executor/sender-unauthorized"));
+    executor.executeCalls(nonce, sender, calls);
+  }
+
+  function testExecuteCallsTargetNotZeroAddress() public {
+    setRelayer();
+    pushCalls(address(0));
+
+    vm.startPrank(relayerAlias);
+
+    vm.expectRevert(bytes("CallLib/target-not-zero-address"));
     executor.executeCalls(nonce, sender, calls);
   }
 

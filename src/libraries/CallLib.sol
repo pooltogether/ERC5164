@@ -61,6 +61,8 @@ library CallLib {
     for (uint256 _callIndex; _callIndex < _callsLength; ) {
       Call memory _call = _calls[_callIndex];
 
+      require(_call.target != address(0), "CallLib/target-not-zero-address");
+
       (bool _success, bytes memory _returnData) = _call.target.call(
         abi.encodePacked(_call.data, _nonce, _sender)
       );
