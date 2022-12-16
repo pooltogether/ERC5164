@@ -39,7 +39,9 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
   {
     require(address(fxChildTunnel) != address(0), "Relayer/fxChildTunnel-not-set");
 
-    nonce++;
+    unchecked {
+      nonce++;
+    }
 
     uint256 _nonce = nonce;
 

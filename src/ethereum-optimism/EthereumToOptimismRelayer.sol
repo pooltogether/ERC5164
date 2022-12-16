@@ -46,7 +46,9 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     address _executorAddress = address(executor);
     require(_executorAddress != address(0), "Relayer/executor-not-set");
 
-    nonce++;
+    unchecked {
+      nonce++;
+    }
 
     uint256 _nonce = nonce;
 
