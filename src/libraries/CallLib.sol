@@ -23,17 +23,19 @@ library CallLib {
 
   /**
    * @notice Emitted if a call to a target contract fails.
+   * @param nonce Nonce to uniquely idenfity the batch of calls
    * @param callIndex Index of the call
    * @param errorData Error data returned by the call
    */
-  event CallFailure(uint256 callIndex, bytes errorData);
+  event CallFailure(uint256 nonce, uint256 callIndex, bytes errorData);
 
   /**
    * @notice Emitted if a call to a target contract succeeds.
+   * @param nonce Nonce to uniquely idenfity the batch of calls
    * @param callIndex Index of the call
    * @param successData Error data returned by the call
    */
-  event CallSuccess(uint256 callIndex, bytes successData);
+  event CallSuccess(uint256 nonce, uint256 callIndex, bytes successData);
 
   /* ============ Custom Errors ============ */
 
@@ -76,11 +78,11 @@ library CallLib {
       );
 
       if (!_success) {
-        emit CallFailure(_callIndex, _returnData);
+        emit CallFailure(_nonce, _callIndex, _returnData);
         return false;
       }
 
-      emit CallSuccess(_callIndex, _returnData);
+      emit CallSuccess(_nonce, _callIndex, _returnData);
 
       unchecked {
         _callIndex++;
