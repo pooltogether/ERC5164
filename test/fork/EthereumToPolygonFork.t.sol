@@ -231,7 +231,13 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.startPrank(fxChild);
 
-    vm.expectRevert(abi.encodeWithSelector(CallLib.CallFailure.selector, 0, bytes("")));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        CrossChainExecutorPolygon.ExecuteCallsFailed.selector,
+        address(relayer),
+        1
+      )
+    );
 
     executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
   }
