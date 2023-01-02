@@ -54,12 +54,7 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
 
     crossDomainMessenger.sendMessage(
       _executorAddress,
-      abi.encodeWithSignature(
-        "executeCalls(uint256,address,(address,bytes)[])",
-        _nonce,
-        msg.sender,
-        _calls
-      ),
+      abi.encodeWithSelector(ICrossChainExecutor.executeCalls.selector, _nonce, msg.sender, _calls),
       uint32(_gasLimit)
     );
 

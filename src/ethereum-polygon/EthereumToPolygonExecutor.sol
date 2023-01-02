@@ -12,6 +12,15 @@ import "../libraries/CallLib.sol";
  *         These calls are sent by the `CrossChainRelayerPolygon` contract which lives on the Ethereum chain.
  */
 contract CrossChainExecutorPolygon is FxBaseChildTunnel {
+  /* ============ Custom Errors ============ */
+
+  /**
+   * @notice Emitted when a batch of calls fails to execute.
+   * @param relayer Address of the contract that relayed the calls on the origin chain
+   * @param nonce Nonce to uniquely identify the batch of calls that failed to execute
+   */
+  error ExecuteCallsFailed(address relayer, uint256 nonce);
+
   /* ============ Events ============ */
 
   /**
@@ -54,7 +63,11 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
     bool _executedNonce = executed[_nonce];
     executed[_nonce] = true;
 
-    CallLib.executeCalls(_nonce, _callsSender, _calls, _executedNonce);
+    bool _callsExecuted = CallLib.executeCalls(_nonce, _callsSender, _calls, _executedNonce);
+
+    if (!_callsExecuted) {
+      revert ExecuteCallsFailed(_sender, _nonce);
+    }
 
     emit ExecutedCalls(_sender, _nonce);
   }
