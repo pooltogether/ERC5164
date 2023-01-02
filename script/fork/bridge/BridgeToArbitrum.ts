@@ -126,6 +126,7 @@ export const relayCalls = task(
     relayCallsNonce,
     calls,
     deployer,
+    deployer,
     gasLimit,
     maxSubmissionCost,
     gasPriceBid,

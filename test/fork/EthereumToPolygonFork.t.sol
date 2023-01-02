@@ -28,7 +28,6 @@ contract EthereumToPolygonForkTest is Test {
   string public l1Greeting = "Hello from L1";
   string public l2Greeting = "Hello from L2";
 
-  uint256 public maxGasLimit = 1920000;
   uint256 public nonce = 1;
 
   /* ============ Events to test ============ */
@@ -58,7 +57,7 @@ contract EthereumToPolygonForkTest is Test {
   function deployRelayer() public {
     vm.selectFork(mainnetFork);
 
-    relayer = new CrossChainRelayerPolygon(checkpointManager, fxRoot, maxGasLimit);
+    relayer = new CrossChainRelayerPolygon(checkpointManager, fxRoot);
 
     vm.makePersistent(address(relayer));
   }
@@ -109,7 +108,6 @@ contract EthereumToPolygonForkTest is Test {
 
     assertEq(address(relayer.checkpointManager()), checkpointManager);
     assertEq(address(relayer.fxRoot()), fxRoot);
-    assertEq(relayer.maxGasLimit(), maxGasLimit);
 
     assertEq(relayer.fxChildTunnel(), address(executor));
   }
@@ -197,23 +195,25 @@ contract EthereumToPolygonForkTest is Test {
     assertEq(greeter.greet(), l1Greeting);
   }
 
-  function testGasLimitTooHigh() public {
+  function testExecuteCallsTargetNotZeroAddress() public {
     deployAll();
+    setAll();
 
-    vm.selectFork(mainnetFork);
+    vm.selectFork(polygonFork);
+
+    assertEq(greeter.greet(), l2Greeting);
 
     CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
     _calls[0] = CallLib.Call({
-      target: address(greeter),
+      target: address(0),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
-    vm.expectRevert(
-      abi.encodeWithSelector(ICrossChainRelayer.GasLimitTooHigh.selector, 2000000, maxGasLimit)
-    );
+    vm.startPrank(fxChild);
 
-    relayer.relayCalls(_calls, 2000000);
+    vm.expectRevert(bytes("CallLib/no-contract-at-target"));
+    executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
   }
 
   function testCallFailure() public {
@@ -231,7 +231,13 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.startPrank(fxChild);
 
-    vm.expectRevert(abi.encodeWithSelector(CallLib.CallFailure.selector, 0, bytes("")));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        CrossChainExecutorPolygon.ExecuteCallsFailed.selector,
+        address(relayer),
+        1
+      )
+    );
 
     executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
   }

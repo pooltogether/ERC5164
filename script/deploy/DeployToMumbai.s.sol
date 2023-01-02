@@ -17,7 +17,7 @@ contract DeployCrossChainRelayerToGoerli is Script {
   function run() public {
     vm.broadcast();
 
-    new CrossChainRelayerPolygon(checkpointManager, fxRoot, 30000000);
+    new CrossChainRelayerPolygon(checkpointManager, fxRoot);
 
     vm.stopBroadcast();
   }

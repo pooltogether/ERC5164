@@ -16,7 +16,7 @@ contract DeployCrossChainRelayerToGoerli is Script {
   function run() public {
     vm.broadcast();
 
-    new CrossChainRelayerOptimism(ICrossDomainMessenger(proxyOVML1CrossDomainMessenger), 1920000);
+    new CrossChainRelayerOptimism(ICrossDomainMessenger(proxyOVML1CrossDomainMessenger));
 
     vm.stopBroadcast();
   }

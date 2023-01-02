@@ -33,9 +33,6 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /// @notice Address of the executor contract on the Arbitrum chain.
   ICrossChainExecutor public executor;
 
-  /// @notice Gas limit provided for free on Arbitrum.
-  uint256 public immutable maxGasLimit;
-
   /// @notice Nonce to uniquely idenfity each batch of calls.
   uint256 public nonce;
 
@@ -51,14 +48,10 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /**
    * @notice CrossChainRelayer constructor.
    * @param _inbox Address of the Arbitrum inbox on Ethereum
-   * @param _maxGasLimit Gas limit provided for free on Arbitrum
    */
-  constructor(IInbox _inbox, uint256 _maxGasLimit) {
+  constructor(IInbox _inbox) {
     require(address(_inbox) != address(0), "Relayer/inbox-not-zero-address");
-    require(_maxGasLimit > 0, "Relayer/max-gas-limit-gt-zero");
-
     inbox = _inbox;
-    maxGasLimit = _maxGasLimit;
   }
 
   /* ============ External Functions ============ */
@@ -68,13 +61,9 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
     external
     returns (uint256)
   {
-    uint256 _maxGasLimit = maxGasLimit;
-
-    if (_gasLimit > _maxGasLimit) {
-      revert GasLimitTooHigh(_gasLimit, _maxGasLimit);
+    unchecked {
+      nonce++;
     }
-
-    nonce++;
 
     uint256 _nonce = nonce;
 
@@ -88,10 +77,12 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
   /**
    * @notice Process calls that have been relayed.
    * @dev The transaction hash must match the one stored in the `relayed` mapping.
+   * @dev `_sender` is passed as `callValueRefundAddress` cause this address can cancel the retryably ticket.
    * @dev We store `_data` in memory to avoid a stack too deep error.
    * @param _nonce Nonce of the batch of calls to process
    * @param _calls Array of calls being processed
    * @param _sender Address who relayed the `_calls`
+   * @param _refundAddress Address that will receive the `excessFeeRefund` amount if any
    * @param _gasLimit Maximum amount of gas required for the `_calls` to be executed
    * @param _maxSubmissionCost Max gas deducted from user's L2 balance to cover base submission fee
    * @param _gasPriceBid Gas price bid for L2 execution
@@ -101,6 +92,7 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
     uint256 _nonce,
     CallLib.Call[] calldata _calls,
     address _sender,
+    address _refundAddress,
     uint256 _gasLimit,
     uint256 _maxSubmissionCost,
     uint256 _gasPriceBid
@@ -110,8 +102,10 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
     address _executorAddress = address(executor);
     require(_executorAddress != address(0), "Relayer/executor-not-set");
 
-    bytes memory _data = abi.encodeWithSignature(
-      "executeCalls(uint256,address,(address,bytes)[])",
+    require(_refundAddress != address(0), "Relayer/refund-address-not-zero");
+
+    bytes memory _data = abi.encodeWithSelector(
+      ICrossChainExecutor.executeCalls.selector,
       _nonce,
       _sender,
       _calls
@@ -121,8 +115,8 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
       _executorAddress,
       0,
       _maxSubmissionCost,
-      msg.sender,
-      msg.sender,
+      _refundAddress,
+      _sender,
       _gasLimit,
       _gasPriceBid,
       _data
