@@ -1,13 +1,14 @@
 import { L1TransactionReceipt, L1ToL2MessageGasEstimator } from '@arbitrum/sdk/';
-import { hexDataLength } from '@ethersproject/bytes';
+import { getBaseFee } from '@arbitrum/sdk/dist/lib/utils/lib';
 import { BigNumber, providers } from 'ethers';
 import hre from 'hardhat';
 
 import { ARBITRUM_GOERLI_CHAIN_ID, GOERLI_CHAIN_ID } from '../../Constants';
 import { getContractAddress } from '../../helpers/getContract';
 import { action, error as errorLog, info, success } from '../../helpers/log';
-import { CrossChainRelayerArbitrum, ICrossChainRelayer } from '../../types';
-import CrossChainRelayerArbitrumArtifact from '../../out/CrossChainRelayerArbitrum.sol/CrossChainRelayerArbitrum.json';
+import { CrossChainRelayerArbitrum } from '../../types';
+import { CallLib } from '../../types/ICrossChainRelayer';
+import CrossChainRelayerArbitrumArtifact from '../../out/EthereumToArbitrumRelayer.sol/CrossChainRelayerArbitrum.json';
 
 const main = async () => {
   action('Relay calls from Ethereum to Arbitrum...');
@@ -16,7 +17,7 @@ const main = async () => {
     ethers: {
       getContractAt,
       provider: l1Provider,
-      utils: { defaultAbiCoder, Interface },
+      utils: { Interface },
     },
     getNamedAccounts,
   } = hre;
@@ -52,33 +53,44 @@ const main = async () => {
     [greeting],
   );
 
-  const calls: ICrossChainRelayer.CallStruct[] = [
+  const calls: CallLib.CallStruct[] = [
     {
       target: greeterAddress,
       data: callData,
     },
   ];
 
+  const nextNonce = (await crossChainRelayerArbitrum.nonce()).add(1);
+
   const executeCallsData = new Interface([
     'function executeCalls(uint256,address,(address,bytes)[])',
-  ]).encodeFunctionData('executeCalls', [
-    BigNumber.from(1),
-    deployer,
-    [[greeterAddress, callData]],
-  ]);
+  ]).encodeFunctionData('executeCalls', [nextNonce, deployer, [[greeterAddress, callData]]]);
 
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
+  const baseFee = await getBaseFee(l1Provider);
 
-  const maxGas = await l1ToL2MessageGasEstimate.estimateRetryableTicketGasLimit({
-    from: crossChainRelayerArbitrumAddress,
-    to: crossChainExecutorAddress,
-    l2CallValue: BigNumber.from(0),
-    excessFeeRefundAddress: deployer,
-    callValueRefundAddress: deployer,
-    data: executeCallsData,
-  });
+  /**
+   * The estimateAll method gives us the following values for sending an L1->L2 message
+   * (1) maxSubmissionCost: The maximum cost to be paid for submitting the transaction
+   * (2) gasLimit: The L2 gas limit
+   * (3) deposit: The total amount to deposit on L1 to cover L2 gas and L2 call value
+   */
+  const { deposit, gasLimit, maxSubmissionCost } = await l1ToL2MessageGasEstimate.estimateAll(
+    {
+      from: crossChainRelayerArbitrumAddress,
+      to: crossChainExecutorAddress,
+      l2CallValue: BigNumber.from(0),
+      excessFeeRefundAddress: deployer,
+      callValueRefundAddress: deployer,
+      data: executeCallsData,
+    },
+    baseFee,
+    l1Provider,
+  );
 
-  const relayCallsTransaction = await crossChainRelayerArbitrum.relayCalls(calls, maxGas);
+  info(`Current retryable base submission price is: ${maxSubmissionCost.toString()}`);
+
+  const relayCallsTransaction = await crossChainRelayerArbitrum.relayCalls(calls, gasLimit);
   const relayCallsTransactionReceipt = await relayCallsTransaction.wait();
 
   const relayedCallsEventInterface = new Interface([
@@ -96,33 +108,22 @@ const main = async () => {
 
   action('Process calls from Ethereum to Arbitrum...');
 
-  const greetingBytes = defaultAbiCoder.encode(['string'], [greeting]);
-  const greetingBytesLength = hexDataLength(greetingBytes) + 4; // 4 bytes func identifier
-
-  const submissionPriceWei = await l1ToL2MessageGasEstimate.estimateSubmissionFee(
-    l1Provider,
-    await l1Provider.getGasPrice(),
-    greetingBytesLength,
-  );
-
-  info(`Current retryable base submission price: ${submissionPriceWei.toString()}`);
-
-  const maxSubmissionCost = submissionPriceWei.mul(5);
   const gasPriceBid = await l2Provider.getGasPrice();
 
   info(`L2 gas price: ${gasPriceBid.toString()}`);
 
-  const callValue = maxSubmissionCost.add(gasPriceBid.mul(maxGas));
+  info(`Sending greeting to L2 with ${deposit.toString()} callValue for L2 fees:`);
 
   const processCallsTransaction = await crossChainRelayerArbitrum.processCalls(
     relayCallsNonce,
     calls,
     deployer,
-    maxGas,
+    deployer,
+    gasLimit,
     maxSubmissionCost,
     gasPriceBid,
     {
-      value: callValue,
+      value: deposit,
     },
   );
 

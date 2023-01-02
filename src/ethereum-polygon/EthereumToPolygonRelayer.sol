@@ -4,7 +4,6 @@ pragma solidity 0.8.16;
 
 import { FxBaseRootTunnel } from "@maticnetwork/fx-portal/contracts/tunnel/FxBaseRootTunnel.sol";
 
-import { ICrossChainExecutor } from "../interfaces/ICrossChainExecutor.sol";
 import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
 import "../libraries/CallLib.sol";
 
@@ -16,9 +15,6 @@ import "../libraries/CallLib.sol";
 contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
   /* ============ Variables ============ */
 
-  /// @notice Gas limit provided for free on Polygon.
-  uint256 public immutable maxGasLimit;
-
   /// @notice Nonce to uniquely idenfity each batch of calls.
   uint256 internal nonce;
 
@@ -28,32 +24,23 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
    * @notice CrossChainRelayerPolygon constructor.
    * @param _checkpointManager Address of the root chain manager contract on Ethereum
    * @param _fxRoot Address of the state sender contract on Ethereum
-   * @param _maxGasLimit Gas limit provided for free on Polygon
    */
-  constructor(
-    address _checkpointManager,
-    address _fxRoot,
-    uint256 _maxGasLimit
-  ) FxBaseRootTunnel(_checkpointManager, _fxRoot) {
-    require(_maxGasLimit > 0, "Relayer/max-gas-limit-gt-zero");
-    maxGasLimit = _maxGasLimit;
-  }
+  constructor(address _checkpointManager, address _fxRoot)
+    FxBaseRootTunnel(_checkpointManager, _fxRoot)
+  {}
 
   /* ============ External Functions ============ */
 
   /// @inheritdoc ICrossChainRelayer
   function relayCalls(CallLib.Call[] calldata _calls, uint256 _gasLimit)
     external
-    payable
     returns (uint256)
   {
-    uint256 _maxGasLimit = maxGasLimit;
+    require(address(fxChildTunnel) != address(0), "Relayer/fxChildTunnel-not-set");
 
-    if (_gasLimit > _maxGasLimit) {
-      revert GasLimitTooHigh(_gasLimit, _maxGasLimit);
+    unchecked {
+      nonce++;
     }
-
-    nonce++;
 
     uint256 _nonce = nonce;
 
