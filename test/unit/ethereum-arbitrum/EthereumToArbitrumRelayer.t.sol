@@ -101,6 +101,7 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
       _nonce,
       calls,
       address(this),
+      msg.sender,
       gasLimit,
       maxSubmissionCost,
       gasPriceBid
@@ -113,7 +114,15 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
     setExecutor();
 
     vm.expectRevert(bytes("Relayer/calls-not-relayed"));
-    relayer.processCalls(nonce, calls, address(this), gasLimit, maxSubmissionCost, gasPriceBid);
+    relayer.processCalls(
+      nonce,
+      calls,
+      address(this),
+      msg.sender,
+      gasLimit,
+      maxSubmissionCost,
+      gasPriceBid
+    );
   }
 
   function testExecutorNotSet() public {
@@ -121,7 +130,33 @@ contract CrossChainRelayerArbitrumUnitTest is Test {
 
     vm.expectRevert(bytes("Relayer/executor-not-set"));
 
-    relayer.processCalls(_nonce, calls, address(this), gasLimit, maxSubmissionCost, gasPriceBid);
+    relayer.processCalls(
+      _nonce,
+      calls,
+      address(this),
+      msg.sender,
+      gasLimit,
+      maxSubmissionCost,
+      gasPriceBid
+    );
+  }
+
+  function testRefundAddressNotZero() public {
+    setExecutor();
+
+    uint256 _nonce = relayer.relayCalls(calls, gasLimit);
+
+    vm.expectRevert(bytes("Relayer/refund-address-not-zero"));
+
+    relayer.processCalls(
+      _nonce,
+      calls,
+      address(this),
+      address(0),
+      gasLimit,
+      maxSubmissionCost,
+      gasPriceBid
+    );
   }
 
   /* ============ Getters ============ */
