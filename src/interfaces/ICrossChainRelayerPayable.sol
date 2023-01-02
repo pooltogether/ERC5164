@@ -10,14 +10,6 @@ import "../libraries/CallLib.sol";
  */
 interface ICrossChainRelayerPayable {
   /**
-   * @notice Custom error emitted if the `gasLimit` passed to `relayCalls`
-   *         is greater than the one provided for free on the receiving chain.
-   * @param gasLimit Gas limit passed to `relayCalls`
-   * @param maxGasLimit Gas limit provided for free on the receiving chain
-   */
-  error GasLimitTooHigh(uint256 gasLimit, uint256 maxGasLimit);
-
-  /**
    * @notice Emitted when calls have successfully been relayed to the executor chain.
    * @param nonce Nonce to uniquely idenfity the batch of calls
    * @param sender Address of the sender
