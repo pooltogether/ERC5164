@@ -21,6 +21,7 @@ interface ICrossChainExecutor {
   /**
    * @notice Execute calls from the origin chain.
    * @dev Should authenticate that the call has been performed by the bridge transport layer.
+   * @dev Must revert if a call fails.
    * @dev Must emit the `ExecutedCalls` event once calls have been executed.
    * @param nonce Nonce to uniquely idenfity the batch of calls
    * @param sender Address of the sender on the origin chain
