@@ -22,9 +22,6 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /// @notice Address of the executor contract on the Optimism chain.
   ICrossChainExecutor public executor;
 
-  /// @notice Gas limit provided for free on Optimism.
-  uint256 public immutable maxGasLimit;
-
   /// @notice Nonce to uniquely idenfity each batch of calls.
   uint256 internal nonce;
 
@@ -33,14 +30,10 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
   /**
    * @notice CrossChainRelayerOptimism constructor.
    * @param _crossDomainMessenger Address of the Optimism cross domain messenger
-   * @param _maxGasLimit Gas limit provided for free on Optimism
    */
-  constructor(ICrossDomainMessenger _crossDomainMessenger, uint256 _maxGasLimit) {
+  constructor(ICrossDomainMessenger _crossDomainMessenger) {
     require(address(_crossDomainMessenger) != address(0), "Relayer/CDM-not-zero-address");
-    require(_maxGasLimit > 0, "Relayer/max-gas-limit-gt-zero");
-
     crossDomainMessenger = _crossDomainMessenger;
-    maxGasLimit = _maxGasLimit;
   }
 
   /* ============ External Functions ============ */
@@ -50,24 +43,18 @@ contract CrossChainRelayerOptimism is ICrossChainRelayer {
     external
     returns (uint256)
   {
-    uint256 _maxGasLimit = maxGasLimit;
+    address _executorAddress = address(executor);
+    require(_executorAddress != address(0), "Relayer/executor-not-set");
 
-    if (_gasLimit > _maxGasLimit) {
-      revert GasLimitTooHigh(_gasLimit, _maxGasLimit);
+    unchecked {
+      nonce++;
     }
-
-    nonce++;
 
     uint256 _nonce = nonce;
 
     crossDomainMessenger.sendMessage(
-      address(executor),
-      abi.encodeWithSignature(
-        "executeCalls(uint256,address,(address,bytes)[])",
-        _nonce,
-        msg.sender,
-        _calls
-      ),
+      _executorAddress,
+      abi.encodeWithSelector(ICrossChainExecutor.executeCalls.selector, _nonce, msg.sender, _calls),
       uint32(_gasLimit)
     );
 

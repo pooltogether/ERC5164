@@ -16,7 +16,7 @@ contract DeployCrossChainRelayerToGoerli is Script {
   function run() public {
     vm.broadcast();
 
-    new CrossChainRelayerArbitrum(IInbox(delayedInbox), 32000000);
+    new CrossChainRelayerArbitrum(IInbox(delayedInbox));
 
     vm.stopBroadcast();
   }

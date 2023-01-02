@@ -1,12 +1,7 @@
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-import {
-  ARBITRUM_CHAIN_ID,
-  MAINNET_CHAIN_ID,
-  DELAYED_INBOX,
-  ARBITRUM_MAX_TX_GAS_LIMIT,
-} from '../../../Constants';
+import { ARBITRUM_CHAIN_ID, MAINNET_CHAIN_ID, DELAYED_INBOX } from '../../../Constants';
 import { getContractAddress } from '../../../helpers/getContract';
 import { action, info, success } from '../../../helpers/log';
 import { CrossChainRelayerArbitrum, CrossChainExecutorArbitrum } from '../../../types';
@@ -28,7 +23,7 @@ export const deployRelayer = task(
 
   const { address } = await deploy('CrossChainRelayerArbitrum', {
     from: deployer,
-    args: [DELAYED_INBOX, ARBITRUM_MAX_TX_GAS_LIMIT],
+    args: [DELAYED_INBOX],
   });
 
   success(`Arbitrum Relayer deployed on Ethereum at address: ${address}`);
