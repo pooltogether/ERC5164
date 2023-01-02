@@ -205,9 +205,9 @@ function _nonce() internal pure returns (uint256 _callDataNonce);
 
 | Network         | Contract                                                                               | Address                                                                                                                      |
 | --------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Ethereum Goerli | [EthereumToArbitrumRelayer.sol](./src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol) | [0x7460fDb4db23C7287c67122A31661b753081e80a](https://goerli.etherscan.io/address/0x7460fDb4db23C7287c67122A31661b753081e80a) |
-| Arbitrum Goerli | [EthereumToArbitrumExecutor](./src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol)   | [0x18771cC0bbcA24d3B28C040669DCc7b5Ffba30FB](https://goerli.arbiscan.io/address/0x18771cC0bbcA24d3B28C040669DCc7b5Ffba30FB)  |
-| Arbitrum Goerli | [Greeter](./test/contracts/Greeter.sol)                                                | [0xa1d913940B8dbb7bDB1F68D8E9C54484D575FefC](https://goerli.arbiscan.io/address/0xa1d913940B8dbb7bDB1F68D8E9C54484D575FefC)  |
+| Ethereum Goerli | [EthereumToArbitrumRelayer.sol](./src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol) | [0x961f05163dBB383EF39323D04e04aE5b7cc5A7b2](https://goerli.etherscan.io/address/0x961f05163dBB383EF39323D04e04aE5b7cc5A7b2) |
+| Arbitrum Goerli | [EthereumToArbitrumExecutor](./src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol)   | [0x9c53fb1D0AE3b7EDd6da970Fa3dC70e8d2092723](https://goerli.arbiscan.io/address/0x9c53fb1D0AE3b7EDd6da970Fa3dC70e8d2092723)  |
+| Arbitrum Goerli | [Greeter](./test/contracts/Greeter.sol)                                                | [0xcCD175Fe1f7389A06C40765eaf33180295216460](https://goerli.arbiscan.io/address/0xcCD175Fe1f7389A06C40765eaf33180295216460)  |
 
 ### Ethereum Goerli -> Optimism Goerli
 
@@ -342,9 +342,9 @@ It takes about 15 minutes for the message to be bridged to Arbitrum Goerli.
 
 | Network         | Call         | Transaction hash                                                                                                                                                        |
 | --------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ethereum Goerli | relayCalls   | [0x102ae324d996fdeadf666d1f6f00db00c73be632c8b115cf6f2ab901fd1ca7f7](https://goerli.etherscan.io/tx/0x102ae324d996fdeadf666d1f6f00db00c73be632c8b115cf6f2ab901fd1ca7f7) |
-| Ethereum Goerli | processCalls | [0x34876c7553b4618170e1c95aaa30daf79e4ddb6436cb7e317215ea0e3593dbcc](https://goerli.etherscan.io/tx/0x34876c7553b4618170e1c95aaa30daf79e4ddb6436cb7e317215ea0e3593dbcc) |
-| Arbitrum Goerli | executeCalls | [0xc74b9570949b941ec1f1a020c1d988614448947e6f2de691e2031304bb76bd0c](https://goerli.arbiscan.io/tx/0xc74b9570949b941ec1f1a020c1d988614448947e6f2de691e2031304bb76bd0c)  |
+| Ethereum Goerli | relayCalls   | [0x34c62a91cf035c19393b90027b26bd4883e68e079f0814854a396b183ae03c28](https://goerli.etherscan.io/tx/0x34c62a91cf035c19393b90027b26bd4883e68e079f0814854a396b183ae03c28) |
+| Ethereum Goerli | processCalls | [0xf028e7415e2bd88c63419b9ba519913cd063651d4f6a5c5f3b4a2d3d7c6ccb04](https://goerli.etherscan.io/tx/0xf028e7415e2bd88c63419b9ba519913cd063651d4f6a5c5f3b4a2d3d7c6ccb04) |
+| Arbitrum Goerli | executeCalls | [0xcb418fb130f95035ee1cb17aa0759557b12e083bb00d9893663497fd7be8c197](https://goerli.arbiscan.io/tx/0xcb418fb130f95035ee1cb17aa0759557b12e083bb00d9893663497fd7be8c197)  |
 
 #### Ethereum Goerli to Optimism Goerli
 

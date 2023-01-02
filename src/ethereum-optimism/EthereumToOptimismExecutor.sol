@@ -13,6 +13,15 @@ import "../libraries/CallLib.sol";
  *         These calls are sent by the `CrossChainRelayerOptimism` contract which lives on the Ethereum chain.
  */
 contract CrossChainExecutorOptimism is ICrossChainExecutor {
+  /* ============ Custom Errors ============ */
+
+  /**
+   * @notice Emitted when a batch of calls fails to execute.
+   * @param relayer Address of the contract that relayed the calls on the origin chain
+   * @param nonce Nonce to uniquely identify the batch of calls that failed to execute
+   */
+  error ExecuteCallsFailed(ICrossChainRelayer relayer, uint256 nonce);
+
   /* ============ Variables ============ */
 
   /// @notice Address of the Optimism cross domain messenger on the Optimism chain.
@@ -53,7 +62,11 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
     bool _executedNonce = executed[_nonce];
     executed[_nonce] = true;
 
-    CallLib.executeCalls(_nonce, _sender, _calls, _executedNonce);
+    bool _callsExecuted = CallLib.executeCalls(_nonce, _sender, _calls, _executedNonce);
+
+    if (!_callsExecuted) {
+      revert ExecuteCallsFailed(_relayer, _nonce);
+    }
 
     emit ExecutedCalls(_relayer, _nonce);
   }
