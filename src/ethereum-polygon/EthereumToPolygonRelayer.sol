@@ -4,7 +4,6 @@ pragma solidity 0.8.16;
 
 import { FxBaseRootTunnel } from "@maticnetwork/fx-portal/contracts/tunnel/FxBaseRootTunnel.sol";
 
-import { ICrossChainExecutor } from "../interfaces/ICrossChainExecutor.sol";
 import { ICrossChainRelayer } from "../interfaces/ICrossChainRelayer.sol";
 import "../libraries/CallLib.sol";
 
@@ -39,7 +38,9 @@ contract CrossChainRelayerPolygon is ICrossChainRelayer, FxBaseRootTunnel {
   {
     require(address(fxChildTunnel) != address(0), "Relayer/fxChildTunnel-not-set");
 
-    nonce++;
+    unchecked {
+      nonce++;
+    }
 
     uint256 _nonce = nonce;
 

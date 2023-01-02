@@ -195,6 +195,27 @@ contract EthereumToPolygonForkTest is Test {
     assertEq(greeter.greet(), l1Greeting);
   }
 
+  function testExecuteCallsTargetNotZeroAddress() public {
+    deployAll();
+    setAll();
+
+    vm.selectFork(polygonFork);
+
+    assertEq(greeter.greet(), l2Greeting);
+
+    CallLib.Call[] memory _calls = new CallLib.Call[](1);
+
+    _calls[0] = CallLib.Call({
+      target: address(0),
+      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+    });
+
+    vm.startPrank(fxChild);
+
+    vm.expectRevert(bytes("CallLib/no-contract-at-target"));
+    executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
+  }
+
   function testCallFailure() public {
     deployAll();
     setAll();
@@ -210,7 +231,13 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.startPrank(fxChild);
 
-    vm.expectRevert(abi.encodeWithSelector(CallLib.CallFailure.selector, 0, bytes("")));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        CrossChainExecutorPolygon.ExecuteCallsFailed.selector,
+        address(relayer),
+        1
+      )
+    );
 
     executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
   }

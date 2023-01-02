@@ -61,7 +61,9 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
     external
     returns (uint256)
   {
-    nonce++;
+    unchecked {
+      nonce++;
+    }
 
     uint256 _nonce = nonce;
 
@@ -102,8 +104,8 @@ contract CrossChainRelayerArbitrum is ICrossChainRelayer {
 
     require(_refundAddress != address(0), "Relayer/refund-address-not-zero");
 
-    bytes memory _data = abi.encodeWithSignature(
-      "executeCalls(uint256,address,(address,bytes)[])",
+    bytes memory _data = abi.encodeWithSelector(
+      ICrossChainExecutor.executeCalls.selector,
       _nonce,
       _sender,
       _calls

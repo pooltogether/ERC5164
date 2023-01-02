@@ -42,10 +42,12 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
   function setUp() public {
     executor = new CrossChainExecutorArbitrum();
     greeter = new Greeter(address(executor), "Hello from L2");
+  }
 
+  function pushCalls(address _target) public {
     calls.push(
       CallLib.Call({
-        target: address(greeter),
+        target: _target,
         data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
       })
     );
@@ -59,11 +61,15 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
 
   function testExecuteCalls() public {
     setRelayer();
+    pushCalls(address(greeter));
 
     vm.startPrank(relayerAlias);
 
     vm.expectEmit(true, true, true, true, address(greeter));
     emit SetGreeting(l1Greeting, nonce, sender, address(executor));
+
+    vm.expectEmit(true, true, true, true, address(executor));
+    emit CallLib.CallSuccess(1, 0, bytes(""));
 
     vm.expectEmit(true, true, true, true, address(executor));
     emit ExecutedCalls(relayer, nonce);
@@ -75,6 +81,7 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
 
   function testExecuteCallsAlreadyExecuted() public {
     setRelayer();
+    pushCalls(address(greeter));
 
     vm.startPrank(relayerAlias);
     executor.executeCalls(nonce, sender, calls);
@@ -83,10 +90,41 @@ contract CrossChainExecutorArbitrumUnitTest is Test {
     executor.executeCalls(nonce, sender, calls);
   }
 
+  function testExecuteCallsFailed() public {
+    setRelayer();
+    pushCalls(address(this));
+
+    vm.startPrank(relayerAlias);
+
+    vm.expectEmit(true, true, true, true, address(executor));
+    emit CallLib.CallFailure(1, 0, bytes(""));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        CrossChainExecutorArbitrum.ExecuteCallsFailed.selector,
+        address(relayer),
+        nonce
+      )
+    );
+
+    executor.executeCalls(nonce, sender, calls);
+  }
+
   function testExecuteCallsUnauthorized() public {
     setRelayer();
+    pushCalls(address(greeter));
 
     vm.expectRevert(bytes("Executor/sender-unauthorized"));
+    executor.executeCalls(nonce, sender, calls);
+  }
+
+  function testExecuteCallsTargetNotZeroAddress() public {
+    setRelayer();
+    pushCalls(address(0));
+
+    vm.startPrank(relayerAlias);
+
+    vm.expectRevert(bytes("CallLib/no-contract-at-target"));
     executor.executeCalls(nonce, sender, calls);
   }
 
