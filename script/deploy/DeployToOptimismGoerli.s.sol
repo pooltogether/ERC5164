@@ -6,65 +6,65 @@ import { Script } from "forge-std/Script.sol";
 import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
-import { CrossChainExecutorOptimism } from "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
-import { CrossChainRelayerOptimism } from "../../src/ethereum-optimism/EthereumToOptimismRelayer.sol";
+import { MessageExecutorOptimism } from "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
+import { MessageDispatcherOptimism } from "../../src/ethereum-optimism/EthereumToOptimismDispatcher.sol";
 import { Greeter } from "../../test/contracts/Greeter.sol";
 
-contract DeployCrossChainRelayerToGoerli is Script {
+contract DeployMessageDispatcherToGoerli is Script {
   address public proxyOVML1CrossDomainMessenger = 0x5086d1eEF304eb5284A0f6720f79403b4e9bE294;
 
   function run() public {
     vm.broadcast();
 
-    new CrossChainRelayerOptimism(ICrossDomainMessenger(proxyOVML1CrossDomainMessenger));
+    new MessageDispatcherOptimism(ICrossDomainMessenger(proxyOVML1CrossDomainMessenger), 420);
 
     vm.stopBroadcast();
   }
 }
 
-contract DeployCrossChainExecutorToOptimismGoerli is Script {
+contract DeployMessageExecutorToOptimismGoerli is Script {
   address public l2CrossDomainMessenger = 0x4200000000000000000000000000000000000007;
 
   function run() public {
     vm.broadcast();
 
-    new CrossChainExecutorOptimism(ICrossDomainMessenger(l2CrossDomainMessenger));
+    new MessageExecutorOptimism(ICrossDomainMessenger(l2CrossDomainMessenger));
 
     vm.stopBroadcast();
   }
 }
 
-/// @dev Needs to be run after deploying CrossChainRelayer and CrossChainExecutor
-contract SetCrossChainExecutor is DeployedContracts {
-  function setCrossChainExecutor() public {
-    CrossChainRelayerOptimism _crossChainRelayer = _getCrossChainRelayerOptimism();
-    CrossChainExecutorOptimism _crossChainExecutor = _getCrossChainExecutorOptimism();
+/// @dev Needs to be run after deploying MessageDispatcher and MessageExecutor
+contract SetMessageExecutor is DeployedContracts {
+  function setMessageExecutor() public {
+    MessageDispatcherOptimism _messageDispatcher = _getMessageDispatcherOptimism();
+    MessageExecutorOptimism _messageExecutor = _getMessageExecutorOptimism();
 
-    _crossChainRelayer.setExecutor(_crossChainExecutor);
+    _messageDispatcher.setExecutor(_messageExecutor);
   }
 
   function run() public {
     vm.broadcast();
 
-    setCrossChainExecutor();
+    setMessageExecutor();
 
     vm.stopBroadcast();
   }
 }
 
-/// @dev Needs to be run after deploying CrossChainRelayer and CrossChainExecutor
-contract SetCrossChainRelayer is DeployedContracts {
-  function setCrossChainRelayer() public {
-    CrossChainRelayerOptimism _crossChainRelayer = _getCrossChainRelayerOptimism();
-    CrossChainExecutorOptimism _crossChainExecutor = _getCrossChainExecutorOptimism();
+/// @dev Needs to be run after deploying MessageDispatcher and MessageExecutor
+contract SetMessageDispatcher is DeployedContracts {
+  function setMessageDispatcher() public {
+    MessageDispatcherOptimism _messageDispatcher = _getMessageDispatcherOptimism();
+    MessageExecutorOptimism _messageExecutor = _getMessageExecutorOptimism();
 
-    _crossChainExecutor.setRelayer(_crossChainRelayer);
+    _messageExecutor.setDispatcher(_messageDispatcher);
   }
 
   function run() public {
     vm.broadcast();
 
-    setCrossChainRelayer();
+    setMessageDispatcher();
 
     vm.stopBroadcast();
   }
@@ -72,8 +72,8 @@ contract SetCrossChainRelayer is DeployedContracts {
 
 contract DeployGreeterToOptimismGoerli is DeployedContracts {
   function deployGreeter() public {
-    CrossChainExecutorOptimism _crossChainExecutor = _getCrossChainExecutorOptimism();
-    new Greeter(address(_crossChainExecutor), "Hello from L2");
+    MessageExecutorOptimism _messageExecutor = _getMessageExecutorOptimism();
+    new Greeter(address(_messageExecutor), "Hello from L2");
   }
 
   function run() public {

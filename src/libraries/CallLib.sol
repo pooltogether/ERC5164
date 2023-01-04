@@ -11,27 +11,27 @@ library CallLib {
 
   /**
    * @notice Call data structure
-   * @param target Address that will be called on the receiving chain
-   * @param data Data that will be sent to the `target` address
+   * @param to Address that will be called on the receiving chain
+   * @param data Data that will be sent to the `to` address
    */
   struct Call {
-    address target;
+    address to;
     bytes data;
   }
 
   /* ============ Events ============ */
 
   /**
-   * @notice Emitted if a call to a target contract fails.
-   * @param nonce Nonce to uniquely idenfity the batch of calls
+   * @notice Emitted if a call to a contract fails.
+   * @param nonce Nonce to uniquely identify the batch of calls
    * @param callIndex Index of the call
    * @param errorData Error data returned by the call
    */
   event CallFailure(uint256 nonce, uint256 callIndex, bytes errorData);
 
   /**
-   * @notice Emitted if a call to a target contract succeeds.
-   * @param nonce Nonce to uniquely idenfity the batch of calls
+   * @notice Emitted if a call to a contract succeeds.
+   * @param nonce Nonce to uniquely identify the batch of calls
    * @param callIndex Index of the call
    * @param successData Error data returned by the call
    */
@@ -50,16 +50,18 @@ library CallLib {
   /**
    * @notice Execute calls from the origin chain.
    * @dev Will revert if `_calls` have already been executed.
-   * @param _nonce Nonce to uniquely idenfity the batch of calls
-   * @param _sender Address of the sender on the origin chain
    * @param _calls Array of calls being executed
+   * @param _nonce Nonce to uniquely identify the batch of calls
+   * @param _from Address of the sender on the origin chain
+   * @param _fromChainId ID of the chain that relayed the `_calls`
    * @param _executedNonce Whether `_calls` have already been executed or not
    * @return bool Whether the batch of calls was executed successfully or not
    */
   function executeCalls(
-    uint256 _nonce,
-    address _sender,
     Call[] memory _calls,
+    uint256 _nonce,
+    address _from,
+    uint256 _fromChainId,
     bool _executedNonce
   ) internal returns (bool) {
     if (_executedNonce) {
@@ -71,10 +73,10 @@ library CallLib {
     for (uint256 _callIndex; _callIndex < _callsLength; ) {
       Call memory _call = _calls[_callIndex];
 
-      require(_call.target.code.length > 0, "CallLib/no-contract-at-target");
+      require(_call.to.code.length > 0, "CallLib/no-contract-at-to");
 
-      (bool _success, bytes memory _returnData) = _call.target.call(
-        abi.encodePacked(_call.data, _nonce, _sender)
+      (bool _success, bytes memory _returnData) = _call.to.call(
+        abi.encodePacked(_call.data, _nonce, _from, _fromChainId)
       );
 
       if (!_success) {

@@ -4,13 +4,13 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ARBITRUM_CHAIN_ID, MAINNET_CHAIN_ID, DELAYED_INBOX } from '../../../Constants';
 import { getContractAddress } from '../../../helpers/getContract';
 import { action, info, success } from '../../../helpers/log';
-import { CrossChainRelayerArbitrum, CrossChainExecutorArbitrum } from '../../../types';
+import { MessageDispatcherArbitrum, MessageExecutorArbitrum } from '../../../types';
 
-export const deployRelayer = task(
-  'fork:deploy-relayer',
-  'Deploy Arbitrum Relayer on Ethereum',
+export const deployDispatcher = task(
+  'fork:deploy-dispatcher',
+  'Deploy Arbitrum Dispatcher on Ethereum',
 ).setAction(async (taskArguments, hre: HardhatRuntimeEnvironment) => {
-  action('Deploy Relayer on Ethereum...');
+  action('Deploy Dispatcher on Ethereum...');
 
   const {
     deployments: { deploy },
@@ -21,12 +21,12 @@ export const deployRelayer = task(
 
   info(`Deployer is: ${deployer}`);
 
-  const { address } = await deploy('CrossChainRelayerArbitrum', {
+  const { address } = await deploy('MessageDispatcherArbitrum', {
     from: deployer,
-    args: [DELAYED_INBOX],
+    args: [DELAYED_INBOX, ARBITRUM_CHAIN_ID],
   });
 
-  success(`Arbitrum Relayer deployed on Ethereum at address: ${address}`);
+  success(`Arbitrum Dispatcher deployed on Ethereum at address: ${address}`);
 });
 
 export const deployExecutor = task(
@@ -44,7 +44,7 @@ export const deployExecutor = task(
 
   info(`Deployer is: ${deployer}`);
 
-  const { address } = await deploy('CrossChainExecutorArbitrum', {
+  const { address } = await deploy('MessageExecutorArbitrum', {
     from: deployer,
   });
 
@@ -64,54 +64,56 @@ export const deployGreeter = task('fork:deploy-greeter', 'Deploy Greeter on Arbi
 
     info(`Deployer is: ${deployer}`);
 
-    const crossChainExecutorArbitrumAddress = await getContractAddress(
-      'CrossChainExecutorArbitrum',
+    const messageExecutorArbitrumAddress = await getContractAddress(
+      'MessageExecutorArbitrum',
       ARBITRUM_CHAIN_ID,
     );
 
     const { address } = await deploy('Greeter', {
       from: deployer,
-      args: [crossChainExecutorArbitrumAddress, 'Hello from L2'],
+      args: [messageExecutorArbitrumAddress, 'Hello from L2'],
     });
 
     success(`Arbitrum Greeter deployed on Arbitrum at address: ${address}`);
   },
 );
 
-export const setExecutor = task('fork:set-executor', 'Set Executor on Arbitrum Relayer').setAction(
-  async (taskArguments, hre: HardhatRuntimeEnvironment) => {
-    action('Set Executor on Arbitrum Relayer...');
+export const setExecutor = task(
+  'fork:set-executor',
+  'Set Executor on Arbitrum Dispatcher',
+).setAction(async (taskArguments, hre: HardhatRuntimeEnvironment) => {
+  action('Set Executor on Arbitrum Dispatcher...');
 
-    const crossChainRelayerArbitrum = (await hre.ethers.getContract(
-      'CrossChainRelayerArbitrum',
-    )) as CrossChainRelayerArbitrum;
+  const messageDispatcherArbitrum = (await hre.ethers.getContract(
+    'MessageDispatcherArbitrum',
+  )) as MessageDispatcherArbitrum;
 
-    const crossChainExecutorArbitrumAddress = await getContractAddress(
-      'CrossChainExecutorArbitrum',
-      ARBITRUM_CHAIN_ID,
-    );
+  const messageExecutorArbitrumAddress = await getContractAddress(
+    'MessageExecutorArbitrum',
+    ARBITRUM_CHAIN_ID,
+  );
 
-    await crossChainRelayerArbitrum.setExecutor(crossChainExecutorArbitrumAddress);
+  await messageDispatcherArbitrum.setExecutor(messageExecutorArbitrumAddress);
 
-    success('Executor set on Arbitrum Relayer!');
-  },
-);
+  success('Executor set on Arbitrum Dispatcher!');
+});
 
-export const setRelayer = task('fork:set-relayer', 'Set Relayer on Arbitrum Executor').setAction(
-  async (taskArguments, hre: HardhatRuntimeEnvironment) => {
-    action('Set Relayer on Arbitrum Executor...');
+export const setDispatcher = task(
+  'fork:set-dispatcher',
+  'Set Dispatcher on Arbitrum Executor',
+).setAction(async (taskArguments, hre: HardhatRuntimeEnvironment) => {
+  action('Set Dispatcher on Arbitrum Executor...');
 
-    const crossChainExecutorArbitrum = (await hre.ethers.getContract(
-      'CrossChainExecutorArbitrum',
-    )) as CrossChainExecutorArbitrum;
+  const messageExecutorArbitrum = (await hre.ethers.getContract(
+    'MessageExecutorArbitrum',
+  )) as MessageExecutorArbitrum;
 
-    const crossChainRelayerArbitrumAddress = await getContractAddress(
-      'CrossChainRelayerArbitrum',
-      MAINNET_CHAIN_ID,
-    );
+  const messageDispatcherArbitrumAddress = await getContractAddress(
+    'MessageDispatcherArbitrum',
+    MAINNET_CHAIN_ID,
+  );
 
-    await crossChainExecutorArbitrum.setRelayer(crossChainRelayerArbitrumAddress);
+  await messageExecutorArbitrum.setDispatcher(messageDispatcherArbitrumAddress);
 
-    success('Relayer set on Arbitrum Executor!');
-  },
-);
+  success('Dispatcher set on Arbitrum Executor!');
+});
