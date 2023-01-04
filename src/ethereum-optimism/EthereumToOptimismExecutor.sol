@@ -4,43 +4,34 @@ pragma solidity 0.8.16;
 
 import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
-import "../interfaces/ICrossChainExecutor.sol";
-import "../libraries/CallLib.sol";
+import "../interfaces/IMessageExecutor.sol";
+import "../libraries/MessageLib.sol";
 
 /**
- * @title CrossChainExecutorOptimism contract
- * @notice The CrossChainExecutorOptimism contract executes calls from the Ethereum chain.
- *         These calls are sent by the `CrossChainRelayerOptimism` contract which lives on the Ethereum chain.
+ * @title MessageExecutorOptimism contract
+ * @notice The MessageExecutorOptimism contract executes messages from the Ethereum chain.
+ *         These messages are sent by the `MessageDispatcherOptimism` contract which lives on the Ethereum chain.
  */
-contract CrossChainExecutorOptimism is ICrossChainExecutor {
-  /* ============ Custom Errors ============ */
-
-  /**
-   * @notice Emitted when a batch of calls fails to execute.
-   * @param relayer Address of the contract that relayed the calls on the origin chain
-   * @param nonce Nonce to uniquely identify the batch of calls that failed to execute
-   */
-  error ExecuteCallsFailed(ICrossChainRelayer relayer, uint256 nonce);
-
+contract MessageExecutorOptimism is IMessageExecutor {
   /* ============ Variables ============ */
 
   /// @notice Address of the Optimism cross domain messenger on the Optimism chain.
   ICrossDomainMessenger public immutable crossDomainMessenger;
 
-  /// @notice Address of the relayer contract on the Ethereum chain.
-  ICrossChainRelayer public relayer;
+  /// @notice Address of the dispatcher contract on the Ethereum chain.
+  IMessageDispatcher public dispatcher;
 
   /**
-   * @notice Nonce to uniquely identify the batch of calls that were executed
-   *         nonce => boolean
-   * @dev Ensure that batch of calls cannot be replayed once they have been executed.
+   * @notice Mapping to uniquely identify the messages that were executed
+   *         messageId => boolean
+   * @dev Ensure that messages cannot be replayed once they have been executed.
    */
-  mapping(uint256 => bool) public executed;
+  mapping(bytes32 => bool) public executed;
 
   /* ============ Constructor ============ */
 
   /**
-   * @notice CrossChainExecutorOptimism constructor.
+   * @notice MessageExecutorOptimism constructor.
    * @param _crossDomainMessenger Address of the Optimism cross domain messenger on the Optimism chain
    */
   constructor(ICrossDomainMessenger _crossDomainMessenger) {
@@ -50,49 +41,65 @@ contract CrossChainExecutorOptimism is ICrossChainExecutor {
 
   /* ============ External Functions ============ */
 
-  /// @inheritdoc ICrossChainExecutor
-  function executeCalls(
-    uint256 _nonce,
-    address _sender,
-    CallLib.Call[] calldata _calls
+  /// @inheritdoc IMessageExecutor
+  function executeMessage(
+    address _to,
+    bytes calldata _data,
+    bytes32 _messageId,
+    uint256 _fromChainId,
+    address _from
   ) external {
-    ICrossChainRelayer _relayer = relayer;
-    _isAuthorized(_relayer);
+    IMessageDispatcher _dispatcher = dispatcher;
+    _isAuthorized(_dispatcher);
 
-    bool _executedNonce = executed[_nonce];
-    executed[_nonce] = true;
+    bool _executedMessageId = executed[_messageId];
+    executed[_messageId] = true;
 
-    bool _callsExecuted = CallLib.executeCalls(_nonce, _sender, _calls, _executedNonce);
+    MessageLib.executeMessage(_to, _data, _messageId, _fromChainId, _from, _executedMessageId);
 
-    if (!_callsExecuted) {
-      revert ExecuteCallsFailed(_relayer, _nonce);
-    }
+    emit ExecutedMessage(_fromChainId, _dispatcher, _messageId);
+  }
 
-    emit ExecutedCalls(_relayer, _nonce);
+  /// @inheritdoc IMessageExecutor
+  function executeMessageBatch(
+    MessageLib.Message[] calldata _messages,
+    bytes32 _messageId,
+    uint256 _fromChainId,
+    address _from
+  ) external {
+    IMessageDispatcher _dispatcher = dispatcher;
+    _isAuthorized(_dispatcher);
+
+    bool _executedMessageId = executed[_messageId];
+    executed[_messageId] = true;
+
+    MessageLib.executeMessageBatch(_messages, _messageId, _fromChainId, _from, _executedMessageId);
+
+    emit ExecutedMessageBatch(_fromChainId, _dispatcher, _messageId);
   }
 
   /**
-   * @notice Set relayer contract address.
+   * @notice Set dispatcher contract address.
    * @dev Will revert if it has already been set.
-   * @param _relayer Address of the relayer contract on the Ethereum chain
+   * @param _dispatcher Address of the dispatcher contract on the Ethereum chain
    */
-  function setRelayer(ICrossChainRelayer _relayer) external {
-    require(address(relayer) == address(0), "Executor/relayer-already-set");
-    relayer = _relayer;
+  function setDispatcher(IMessageDispatcher _dispatcher) external {
+    require(address(dispatcher) == address(0), "Executor/dispatcher-already-set");
+    dispatcher = _dispatcher;
   }
 
   /* ============ Internal Functions ============ */
 
   /**
-   * @notice Check if sender is authorized to call `executeCalls`.
-   * @param _relayer Address of the relayer on the Ethereum chain
+   * @notice Check if sender is authorized to message `executeMessageBatch`.
+   * @param _dispatcher Address of the dispatcher on the Ethereum chain
    */
-  function _isAuthorized(ICrossChainRelayer _relayer) internal view {
+  function _isAuthorized(IMessageDispatcher _dispatcher) internal view {
     ICrossDomainMessenger _crossDomainMessenger = crossDomainMessenger;
 
     require(
       msg.sender == address(_crossDomainMessenger) &&
-        _crossDomainMessenger.xDomainMessageSender() == address(_relayer),
+        _crossDomainMessenger.xDomainMessageSender() == address(_dispatcher),
       "Executor/sender-unauthorized"
     );
   }

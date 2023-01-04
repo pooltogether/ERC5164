@@ -57,7 +57,7 @@ jobs:
           yarn
           yarn typechain
 
-      - name: Run relayCalls Arbitrum fork tests
+      - name: Run dispatchMessageBatch Arbitrum fork tests
         continue-on-error: true
         env:
           MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
@@ -65,9 +65,9 @@ jobs:
           FORK_ENABLED: true
           HDWALLET_MNEMONIC: ${{ secrets.HDWALLET_MNEMONIC }}
         run: |
-          yarn fork:startRelayCallsArbitrumMainnet
+          yarn fork:startDispatchMessageBatchArbitrumMainnet
 
-      - name: Run executeCalls Arbitrum fork tests
+      - name: Run executeMessageBatch Arbitrum fork tests
         continue-on-error: true
         env:
           MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
@@ -75,4 +75,4 @@ jobs:
           FORK_ENABLED: true
           HDWALLET_MNEMONIC: ${{ secrets.HDWALLET_MNEMONIC }}
         run: |
-          yarn fork:startExecuteCallsArbitrumMainnet
+          yarn fork:startExecuteMessageBatchArbitrumMainnet

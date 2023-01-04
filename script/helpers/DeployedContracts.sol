@@ -6,14 +6,14 @@ import { Script } from "forge-std/Script.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 import "solidity-stringutils/strings.sol";
 
-import { CrossChainRelayerOptimism } from "../../src/ethereum-optimism/EthereumToOptimismRelayer.sol";
-import { CrossChainExecutorOptimism } from "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
+import { MessageDispatcherOptimism } from "../../src/ethereum-optimism/EthereumToOptimismDispatcher.sol";
+import { MessageExecutorOptimism } from "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
 
-import { CrossChainRelayerPolygon } from "../../src/ethereum-polygon/EthereumToPolygonRelayer.sol";
-import { CrossChainExecutorPolygon } from "../../src/ethereum-polygon/EthereumToPolygonExecutor.sol";
+import { MessageDispatcherPolygon } from "../../src/ethereum-polygon/EthereumToPolygonDispatcher.sol";
+import { MessageExecutorPolygon } from "../../src/ethereum-polygon/EthereumToPolygonExecutor.sol";
 
-import { CrossChainRelayerArbitrum } from "../../src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol";
-import { CrossChainExecutorArbitrum } from "../../src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol";
+import { MessageDispatcherArbitrum } from "../../src/ethereum-arbitrum/EthereumToArbitrumDispatcher.sol";
+import { MessageExecutorArbitrum } from "../../src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol";
 
 import { Greeter } from "../../test/contracts/Greeter.sol";
 
@@ -84,21 +84,21 @@ abstract contract DeployedContracts is Script {
   /* ============ Getters ============ */
 
   /* ============ Optimism ============ */
-  function _getCrossChainRelayerOptimism() internal returns (CrossChainRelayerOptimism) {
+  function _getMessageDispatcherOptimism() internal returns (MessageDispatcherOptimism) {
     return
-      CrossChainRelayerOptimism(
+      MessageDispatcherOptimism(
         _getContractAddress(
-          "CrossChainRelayerOptimism",
+          "MessageDispatcherOptimism",
           "/broadcast/DeployToOptimismGoerli.s.sol/5/",
-          "relayer-not-found"
+          "dispatcher-not-found"
         )
       );
   }
 
-  function _getCrossChainExecutorOptimism() internal returns (CrossChainExecutorOptimism) {
+  function _getMessageExecutorOptimism() internal returns (MessageExecutorOptimism) {
     return
-      CrossChainExecutorOptimism(
-        _getContractAddress("CrossChainExecutorOptimism", OP_GOERLI_PATH, "executor-not-found")
+      MessageExecutorOptimism(
+        _getContractAddress("MessageExecutorOptimism", OP_GOERLI_PATH, "executor-not-found")
       );
   }
 
@@ -107,21 +107,21 @@ abstract contract DeployedContracts is Script {
   }
 
   /* ============ Polygon ============ */
-  function _getCrossChainRelayerPolygon() internal returns (CrossChainRelayerPolygon) {
+  function _getMessageDispatcherPolygon() internal returns (MessageDispatcherPolygon) {
     return
-      CrossChainRelayerPolygon(
+      MessageDispatcherPolygon(
         _getContractAddress(
-          "CrossChainRelayerPolygon",
+          "MessageDispatcherPolygon",
           "/broadcast/DeployToMumbai.s.sol/5/",
-          "relayer-not-found"
+          "dispatcher-not-found"
         )
       );
   }
 
-  function _getCrossChainExecutorPolygon() internal returns (CrossChainExecutorPolygon) {
+  function _getMessageExecutorPolygon() internal returns (MessageExecutorPolygon) {
     return
-      CrossChainExecutorPolygon(
-        _getContractAddress("CrossChainExecutorPolygon", MUMBAI_PATH, "executor-not-found")
+      MessageExecutorPolygon(
+        _getContractAddress("MessageExecutorPolygon", MUMBAI_PATH, "executor-not-found")
       );
   }
 
@@ -130,21 +130,21 @@ abstract contract DeployedContracts is Script {
   }
 
   /* ============ Arbitrum ============ */
-  function _getCrossChainRelayerArbitrum() internal returns (CrossChainRelayerArbitrum) {
+  function _getMessageDispatcherArbitrum() internal returns (MessageDispatcherArbitrum) {
     return
-      CrossChainRelayerArbitrum(
+      MessageDispatcherArbitrum(
         _getContractAddress(
-          "CrossChainRelayerArbitrum",
+          "MessageDispatcherArbitrum",
           "/broadcast/DeployToArbitrumGoerli.s.sol/5/",
-          "relayer-not-found"
+          "dispatcher-not-found"
         )
       );
   }
 
-  function _getCrossChainExecutorArbitrum() internal returns (CrossChainExecutorArbitrum) {
+  function _getMessageExecutorArbitrum() internal returns (MessageExecutorArbitrum) {
     return
-      CrossChainExecutorArbitrum(
-        _getContractAddress("CrossChainExecutorArbitrum", ARBITRUM_PATH, "executor-not-found")
+      MessageExecutorArbitrum(
+        _getContractAddress("MessageExecutorArbitrum", ARBITRUM_PATH, "executor-not-found")
       );
   }
 
