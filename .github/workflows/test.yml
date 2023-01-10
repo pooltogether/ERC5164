@@ -57,7 +57,7 @@ jobs:
           yarn
           yarn typechain
 
-      - name: Run relayCalls Arbitrum fork tests
+      - name: Run dispatchMessages Arbitrum fork tests
         continue-on-error: true
         env:
           MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}

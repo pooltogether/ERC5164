@@ -4,10 +4,10 @@ pragma solidity 0.8.16;
 
 import "forge-std/Test.sol";
 
-import { ICrossChainRelayer } from "../../src/interfaces/ICrossChainRelayer.sol";
-import { ICrossChainExecutor } from "../../src/interfaces/ICrossChainExecutor.sol";
+import { IMessageDispatcher } from "../../src/interfaces/IMessageDispatcher.sol";
+import { IMessageExecutor } from "../../src/interfaces/IMessageExecutor.sol";
 
-import "../../src/ethereum-polygon/EthereumToPolygonRelayer.sol";
+import "../../src/ethereum-polygon/EthereumToPolygonDispatcher.sol";
 import "../../src/ethereum-polygon/EthereumToPolygonExecutor.sol";
 import "../../src/libraries/CallLib.sol";
 
@@ -17,8 +17,8 @@ contract EthereumToPolygonForkTest is Test {
   uint256 public mainnetFork;
   uint256 public polygonFork;
 
-  CrossChainRelayerPolygon public relayer;
-  CrossChainExecutorPolygon public executor;
+  MessageDispatcherPolygon public dispatcher;
+  MessageExecutorPolygon public executor;
   Greeter public greeter;
 
   address public checkpointManager = 0x86E4Dc95c7FBdBf52e33D563BbDB00823894C287;
@@ -29,19 +29,31 @@ contract EthereumToPolygonForkTest is Test {
   string public l2Greeting = "Hello from L2";
 
   uint256 public nonce = 1;
+  uint256 public toChainId = 137;
+  uint256 public fromChainId = 1;
 
   /* ============ Events to test ============ */
 
   event RelayedCalls(
     uint256 indexed nonce,
-    address indexed sender,
+    address indexed from,
     CallLib.Call[] calls,
-    uint256 gasLimit
+    uint256 toChainId
   );
 
-  event ExecutedCalls(ICrossChainRelayer indexed relayer, uint256 indexed nonce);
+  event ExecutedCalls(
+    uint256 indexed fromChainId,
+    IMessageDispatcher indexed dispatcher,
+    uint256 indexed nonce
+  );
 
-  event SetGreeting(string greeting, uint256 nonce, address l1Sender, address l2Sender);
+  event SetGreeting(
+    string greeting,
+    uint256 nonce,
+    address from,
+    uint256 fromChainId,
+    address l2Sender
+  );
 
   /* ============ Errors to test ============ */
 
@@ -54,18 +66,18 @@ contract EthereumToPolygonForkTest is Test {
     polygonFork = vm.createFork(vm.rpcUrl("polygon"));
   }
 
-  function deployRelayer() public {
+  function deployDispatcher() public {
     vm.selectFork(mainnetFork);
 
-    relayer = new CrossChainRelayerPolygon(checkpointManager, fxRoot);
+    dispatcher = new MessageDispatcherPolygon(checkpointManager, fxRoot, toChainId);
 
-    vm.makePersistent(address(relayer));
+    vm.makePersistent(address(dispatcher));
   }
 
   function deployExecutor() public {
     vm.selectFork(polygonFork);
 
-    executor = new CrossChainExecutorPolygon(fxChild);
+    executor = new MessageExecutorPolygon(fxChild);
 
     vm.makePersistent(address(executor));
   }
@@ -79,19 +91,19 @@ contract EthereumToPolygonForkTest is Test {
   }
 
   function deployAll() public {
-    deployRelayer();
+    deployDispatcher();
     deployExecutor();
     deployGreeter();
   }
 
   function setFxChildTunnel() public {
     vm.selectFork(mainnetFork);
-    relayer.setFxChildTunnel(address(executor));
+    dispatcher.setFxChildTunnel(address(executor));
   }
 
   function setFxRootTunnel() public {
     vm.selectFork(polygonFork);
-    executor.setFxRootTunnel(address(relayer));
+    executor.setFxRootTunnel(address(dispatcher));
   }
 
   function setAll() public {
@@ -101,24 +113,24 @@ contract EthereumToPolygonForkTest is Test {
 
   /* ============ Tests ============ */
 
-  function testRelayer() public {
-    deployRelayer();
+  function testDispatcher() public {
+    deployDispatcher();
     deployExecutor();
     setFxChildTunnel();
 
-    assertEq(address(relayer.checkpointManager()), checkpointManager);
-    assertEq(address(relayer.fxRoot()), fxRoot);
+    assertEq(address(dispatcher.checkpointManager()), checkpointManager);
+    assertEq(address(dispatcher.fxRoot()), fxRoot);
 
-    assertEq(relayer.fxChildTunnel(), address(executor));
+    assertEq(dispatcher.fxChildTunnel(), address(executor));
   }
 
   function testExecutor() public {
     deployExecutor();
-    deployRelayer();
+    deployDispatcher();
     setFxRootTunnel();
 
     assertEq(executor.fxChild(), fxChild);
-    assertEq(executor.fxRootTunnel(), address(relayer));
+    assertEq(executor.fxRootTunnel(), address(dispatcher));
   }
 
   function testGreeter() public {
@@ -137,15 +149,15 @@ contract EthereumToPolygonForkTest is Test {
     CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
     _calls[0] = CallLib.Call({
-      target: address(greeter),
+      to: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
-    vm.expectEmit(true, true, true, true, address(relayer));
+    vm.expectEmit(true, true, true, true, address(dispatcher));
 
-    emit RelayedCalls(nonce, address(this), _calls, 200000);
+    emit RelayedCalls(nonce, address(this), _calls, toChainId);
 
-    uint256 _nonce = relayer.relayCalls(_calls, 200000);
+    uint256 _nonce = dispatcher.dispatchMessages(_calls);
 
     assertEq(_nonce, nonce);
   }
@@ -158,13 +170,13 @@ contract EthereumToPolygonForkTest is Test {
     CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
     _calls[0] = CallLib.Call({
-      target: address(greeter),
+      to: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
-    vm.expectRevert(bytes("Relayer/fxChildTunnel-not-set"));
+    vm.expectRevert(bytes("Dispatcher/fxChildTunnel-not-set"));
 
-    relayer.relayCalls(_calls, 200000);
+    dispatcher.dispatchMessages(_calls);
   }
 
   function testExecuteCalls() public {
@@ -178,24 +190,28 @@ contract EthereumToPolygonForkTest is Test {
     CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
     _calls[0] = CallLib.Call({
-      target: address(greeter),
+      to: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.startPrank(fxChild);
 
     vm.expectEmit(true, true, true, true, address(greeter));
-    emit SetGreeting(l1Greeting, nonce, address(this), address(executor));
+    emit SetGreeting(l1Greeting, nonce, address(this), fromChainId, address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
-    emit ExecutedCalls(relayer, nonce);
+    emit ExecutedCalls(fromChainId, dispatcher, nonce);
 
-    executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
+    executor.processMessageFromRoot(
+      1,
+      address(dispatcher),
+      abi.encode(_calls, nonce, address(this), fromChainId)
+    );
 
     assertEq(greeter.greet(), l1Greeting);
   }
 
-  function testExecuteCallsTargetNotZeroAddress() public {
+  function testExecuteCallsToNotZeroAddress() public {
     deployAll();
     setAll();
 
@@ -206,14 +222,18 @@ contract EthereumToPolygonForkTest is Test {
     CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
     _calls[0] = CallLib.Call({
-      target: address(0),
+      to: address(0),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.startPrank(fxChild);
 
-    vm.expectRevert(bytes("CallLib/no-contract-at-target"));
-    executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
+    vm.expectRevert(bytes("CallLib/no-contract-at-to"));
+    executor.processMessageFromRoot(
+      1,
+      address(dispatcher),
+      abi.encode(_calls, nonce, address(this), fromChainId)
+    );
   }
 
   function testCallFailure() public {
@@ -225,7 +245,7 @@ contract EthereumToPolygonForkTest is Test {
     CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
     _calls[0] = CallLib.Call({
-      target: address(this),
+      to: address(this),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
@@ -233,13 +253,18 @@ contract EthereumToPolygonForkTest is Test {
 
     vm.expectRevert(
       abi.encodeWithSelector(
-        CrossChainExecutorPolygon.ExecuteCallsFailed.selector,
-        address(relayer),
+        MessageExecutorPolygon.ExecuteCallsFailed.selector,
+        fromChainId,
+        address(dispatcher),
         1
       )
     );
 
-    executor.processMessageFromRoot(1, address(relayer), abi.encode(nonce, address(this), _calls));
+    executor.processMessageFromRoot(
+      1,
+      address(dispatcher),
+      abi.encode(_calls, nonce, address(this), fromChainId)
+    );
   }
 
   function testSetGreetingError() public {

@@ -11,7 +11,7 @@ import { ARBITRUM_CHAIN_ID, MAINNET_CHAIN_ID } from '../../../Constants';
 import { getContractAddress } from '../../../helpers/getContract';
 import { getChainName } from '../../../helpers/getChain';
 import { action, error as errorLog, info, success } from '../../../helpers/log';
-import { CrossChainRelayerArbitrum, CrossChainExecutorArbitrum, Greeter } from '../../../types';
+import { MessageDispatcherArbitrum, MessageExecutorArbitrum, Greeter } from '../../../types';
 import GreeterArtifact from '../../../out/Greeter.sol/Greeter.json';
 
 const killHardhatNode = async (port: number, chainId: number) => {
@@ -23,8 +23,8 @@ const killHardhatNode = async (port: number, chainId: number) => {
     });
 };
 
-export const relayCalls = task(
-  'fork:relay-calls',
+export const dispatchMessages = task(
+  'fork:dispatch-message',
   'Relay calls from Ethereum to Arbitrum',
 ).setAction(async (taskArguments, hre: HardhatRuntimeEnvironment) => {
   action('Relay calls from Ethereum to Arbitrum...');
@@ -44,12 +44,12 @@ export const relayCalls = task(
 
   info(`Caller is: ${deployer}`);
 
-  const crossChainRelayerArbitrum = (await getContract(
-    'CrossChainRelayerArbitrum',
-  )) as CrossChainRelayerArbitrum;
+  const messageDispatcherArbitrum = (await getContract(
+    'MessageDispatcherArbitrum',
+  )) as MessageDispatcherArbitrum;
 
-  const crossChainExecutorAddress = await getContractAddress(
-    'CrossChainExecutorArbitrum',
+  const messageExecutorAddress = await getContractAddress(
+    'MessageExecutorArbitrum',
     ARBITRUM_CHAIN_ID,
   );
 
@@ -63,12 +63,12 @@ export const relayCalls = task(
 
   const calls = [
     {
-      target: greeterAddress,
+      to: greeterAddress,
       data: callData,
     },
   ];
 
-  const nextNonce = (await crossChainRelayerArbitrum.nonce()).add(1);
+  const nextNonce = (await messageDispatcherArbitrum.nonce()).add(1);
 
   const executeCallsData = new Interface([
     'function executeCalls(uint256,address,(address,bytes)[])',
@@ -85,8 +85,8 @@ export const relayCalls = task(
    */
   const { deposit, gasLimit, maxSubmissionCost } = await l1ToL2MessageGasEstimate.estimateAll(
     {
-      from: crossChainRelayerArbitrum.address,
-      to: crossChainExecutorAddress,
+      from: messageDispatcherArbitrum.address,
+      to: messageExecutorAddress,
       l2CallValue: BigNumber.from(0),
       excessFeeRefundAddress: deployer,
       callValueRefundAddress: deployer,
@@ -98,21 +98,21 @@ export const relayCalls = task(
 
   info(`Current retryable base submission price is: ${maxSubmissionCost.toString()}`);
 
-  const relayCallsTransaction = await crossChainRelayerArbitrum.relayCalls(calls, gasLimit);
-  const relayCallsTransactionReceipt = await relayCallsTransaction.wait();
+  const dispatchMessagesTransaction = await messageDispatcherArbitrum.dispatchMessages(calls);
+  const dispatchMessagesTransactionReceipt = await dispatchMessagesTransaction.wait();
 
   const relayedCallsEventInterface = new Interface([
-    'event RelayedCalls(uint256 indexed nonce,address indexed sender, (address target,bytes data)[], uint256 gasLimit)',
+    'event RelayedCalls(uint256 indexed nonce, address indexed from, (address to,bytes data)[], uint256 toChainId)',
   ]);
 
   const relayedCallsEventLogs = relayedCallsEventInterface.parseLog(
-    relayCallsTransactionReceipt.logs[0],
+    dispatchMessagesTransactionReceipt.logs[0],
   );
 
-  const [relayCallsNonce] = relayedCallsEventLogs.args;
+  const [dispatchMessagesNonce] = relayedCallsEventLogs.args;
 
   success('Successfully relayed calls from Ethereum to Arbitrum!');
-  info(`Nonce: ${relayCallsNonce}`);
+  info(`Nonce: ${dispatchMessagesNonce}`);
 
   action('Process calls from Ethereum to Arbitrum...');
 
@@ -122,8 +122,8 @@ export const relayCalls = task(
 
   info(`Sending greeting to L2 with ${deposit.toString()} callValue for L2 fees:`);
 
-  const processCallsTransaction = await crossChainRelayerArbitrum.processCalls(
-    relayCallsNonce,
+  const processCallsTransaction = await messageDispatcherArbitrum.processCalls(
+    dispatchMessagesNonce,
     calls,
     deployer,
     deployer,
@@ -138,14 +138,14 @@ export const relayCalls = task(
   const processCallsTransactionReceipt = await processCallsTransaction.wait();
 
   const processedCallsEventInterface = new Interface([
-    'event ProcessedCalls(uint256 indexed nonce, address indexed sender, uint256 indexed ticketId)',
+    'event ProcessedCalls(uint256 indexed nonce, address indexed from, uint256 indexed ticketId)',
   ]);
 
   const processedCallsEventLogs = processedCallsEventInterface.parseLog(
     processCallsTransactionReceipt.logs[2],
   );
 
-  const [nonce, sender, ticketId] = processedCallsEventLogs.args;
+  const [nonce, from, ticketId] = processedCallsEventLogs.args;
 
   const receipt = await l1Provider.getTransactionReceipt(processCallsTransaction.hash);
   const l1Receipt = new L1TransactionReceipt(receipt);
@@ -155,7 +155,7 @@ export const relayCalls = task(
   )[0];
 
   success('Successfully processed calls from Ethereum to Arbitrum!');
-  info(`Sender: ${sender}`);
+  info(`Sender: ${from}`);
   info(`Nonce: ${nonce.toString()}`);
   info(`TicketId: ${ticketId.toString()}`);
   info(`RetryableCreationId: ${retryableCreationId}`);
@@ -182,8 +182,8 @@ export const executeCalls = task(
 
   info(`Caller is: ${deployer}`);
 
-  const crossChainRelayerArbitrumAddress = await getContractAddress(
-    'CrossChainRelayerArbitrum',
+  const messageDispatcherArbitrumAddress = await getContractAddress(
+    'MessageDispatcherArbitrum',
     MAINNET_CHAIN_ID,
   );
 
@@ -199,23 +199,23 @@ export const executeCalls = task(
 
   const calls = [
     {
-      target: greeterAddress,
+      to: greeterAddress,
       data: callData,
     },
   ];
 
-  const crossChainExecutorArbitrum = (await getContract(
-    'CrossChainExecutorArbitrum',
-  )) as CrossChainExecutorArbitrum;
+  const messageExecutorArbitrum = (await getContract(
+    'MessageExecutorArbitrum',
+  )) as MessageExecutorArbitrum;
 
   info(`Greeting before: ${await greeter.callStatic.greeting()}`);
 
   await processL1ToL2Tx(
-    crossChainRelayerArbitrumAddress,
+    messageDispatcherArbitrumAddress,
     async (signer: SignerWithAddress) =>
-      await crossChainExecutorArbitrum
+      await messageExecutorArbitrum
         .connect(signer)
-        .executeCalls(BigNumber.from(1), deployer, calls),
+        .executeCalls(calls, BigNumber.from(1), deployer, MAINNET_CHAIN_ID),
     hre,
   );
 

@@ -10,8 +10,9 @@ contract Greeter is ExecutorAware {
   event SetGreeting(
     string greeting,
     uint256 nonce, // nonce of the message that was executed
-    address l1Sender, // _msgSender() is the address who called `relayCalls` on the origin chain
-    address l2Sender // CrossChainExecutor contract
+    address from, // _msgSender() is the address who called `dispatchMessages` on the origin chain
+    uint256 fromChainId, // ID of the chain that relayed the calls
+    address l2Sender // MessageExecutor contract
   );
 
   constructor(address _executor, string memory _greeting) ExecutorAware(_executor) {
@@ -26,6 +27,6 @@ contract Greeter is ExecutorAware {
     require(isTrustedExecutor(msg.sender), "Greeter/sender-not-executor");
 
     greeting = _greeting;
-    emit SetGreeting(_greeting, _nonce(), _msgSender(), msg.sender);
+    emit SetGreeting(_greeting, _nonce(), _msgSender(), _fromChainId(), msg.sender);
   }
 }

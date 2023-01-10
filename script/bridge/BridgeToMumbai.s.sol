@@ -6,23 +6,21 @@ import "forge-std/Script.sol";
 
 import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
-import { ICrossChainRelayer } from "../../src/interfaces/ICrossChainRelayer.sol";
-import { CrossChainRelayerPolygon } from "../../src/ethereum-polygon/EthereumToPolygonRelayer.sol";
+import { IMessageDispatcher } from "../../src/interfaces/IMessageDispatcher.sol";
+import { MessageDispatcherPolygon } from "../../src/ethereum-polygon/EthereumToPolygonDispatcher.sol";
 import "../../src/libraries/CallLib.sol";
 
 contract BridgeToMumbai is DeployedContracts {
   function bridgeToMumbai() public {
-    CrossChainRelayerPolygon _crossChainRelayer = _getCrossChainRelayerPolygon();
+    MessageDispatcherPolygon _messageDispatcher = _getMessageDispatcherPolygon();
     address _greeter = address(_getGreeterPolygon());
 
-    CallLib.Call[] memory _calls = new CallLib.Call[](1);
-
-    _calls[0] = CallLib.Call({
-      target: _greeter,
+    CallLib.Call memory _call = CallLib.Call({
+      to: _greeter,
       data: abi.encodeWithSignature("setGreeting(string)", "Hello from L1")
     });
 
-    _crossChainRelayer.relayCalls(_calls, 1000000);
+    _messageDispatcher.dispatchMessage(_call);
   }
 
   function run() public {

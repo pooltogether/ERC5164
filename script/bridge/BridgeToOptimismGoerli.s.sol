@@ -7,23 +7,21 @@ import "forge-std/Script.sol";
 import { ICrossDomainMessenger as IOptimismBridge } from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
-import { ICrossChainRelayer } from "../../src/interfaces/ICrossChainRelayer.sol";
-import { CrossChainRelayerOptimism } from "../../src/ethereum-optimism/EthereumToOptimismRelayer.sol";
+import { IMessageDispatcher } from "../../src/interfaces/IMessageDispatcher.sol";
+import { MessageDispatcherOptimism } from "../../src/ethereum-optimism/EthereumToOptimismDispatcher.sol";
 import "../../src/libraries/CallLib.sol";
 
 contract BridgeToOptimismGoerli is DeployedContracts {
   function bridgeToOptimism() public {
-    CrossChainRelayerOptimism _crossChainRelayer = _getCrossChainRelayerOptimism();
+    MessageDispatcherOptimism _messageDispatcher = _getMessageDispatcherOptimism();
     address _greeter = address(_getGreeterOptimism());
 
-    CallLib.Call[] memory _calls = new CallLib.Call[](1);
-
-    _calls[0] = CallLib.Call({
-      target: _greeter,
+    CallLib.Call memory _call = CallLib.Call({
+      to: _greeter,
       data: abi.encodeWithSignature("setGreeting(string)", "Hello from L1")
     });
 
-    _crossChainRelayer.relayCalls(_calls, 1000000);
+    _messageDispatcher.dispatchMessage(_call);
   }
 
   function run() public {

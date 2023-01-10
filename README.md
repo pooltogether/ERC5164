@@ -10,28 +10,58 @@ Feedback and PR are welcome!
 
 To use ERC-5164 to send messages your contract code will need to:
 
-- On the sending chain, send a batch of calls to the CrossChainRelayer `relayCalls` function
-- Listen for calls from the corresponding CrossChainExecutor(s) on the receiving chain.
+- On the sending chain, send a batch of calls to the MessageDispatcher `dispatchMessages` function
+- Listen for calls from the corresponding MessageExecutor(s) on the receiving chain.
 
 _The listener will need to be able to unpack the original sender address (it's appended to calldata). We recommend inheriting from the included [`ExecutorAware.sol`](./src/abstract/ExecutorAware.sol) contract._
 
 **Note**
 
-For most bridges, you only have to call `relayCalls` to have messages executed by the CrossChainExecutor. However, Arbitrum requires an EOA to process the relay. We will review this below.
+For most bridges, you only have to call `dispatchMessages` to have messages executed by the MessageExecutor. However, Arbitrum requires an EOA to process the relay. We will review this below.
 
 ## How it works
 
-1. A smart contract on the sending chain calls `relayCalls` on the CrossChainRelayer; it is passed an array of Call structs.
-2. The corresponding CrossChainExecutor(s) on the receiving chain will execute the batch of Call structs. The address of the original caller on the sending chain is appended to the call data.
-3. Any smart contract can receive calls from a CrossChainExecutor, but they should use the original caller address for authentication.
+1. A smart contract on the sending chain calls `dispatchMessages` on the MessageDispatcher; it is passed an array of Call structs.
+2. The corresponding MessageExecutor(s) on the receiving chain will execute the batch of Call structs. The address of the original caller on the sending chain is appended to the call data.
+3. Any smart contract can receive calls from a MessageExecutor, but they should use the original caller address for authentication.
 
 **Note: this specification does not require messages to be executed in order**
 
 ## Relaying
 
-### Relay calls
+To relay a message from Ethereum to the L2 of your choice, you have to interact with the [MessageDispatcher](./src/interfaces/IMessageDispatcher.sol) contract and call one of the two following functions.
 
-To relay a message from Ethereum to the L2 of your choice, you have to interact with the [CrossChainRelayer](./src/interfaces/ICrossChainRelayer.sol) contract and call the `relayCalls` function:
+### Relay call
+
+```solidity
+/**
+ * @notice Relay the call to the receiving chain.
+ * @dev Must increment a `nonce` so that the batch of calls can be uniquely identified.
+ * @dev Must emit the `RelayedCalls` event when successfully called.
+ * @param call Call being relayed
+ * @param toChainId ID of the chain receiving the relayed call
+ * @return uint256 Nonce to uniquely identify the call
+ */
+function dispatchMessage(CallLib.Call calldata call, uint256 toChainId) external returns (uint256);
+
+```
+
+`call` is a call that you want to be executed on L2:
+
+```solidity
+/**
+ * @notice Call data structure
+ * @param to Address that will be called on the receiving chain
+ * @param data Data that will be sent to the `to` address
+ */
+struct Call {
+  address to;
+  bytes data;
+}
+
+```
+
+### Relay calls
 
 ```solidity
 /**
@@ -40,47 +70,30 @@ To relay a message from Ethereum to the L2 of your choice, you have to interact 
  * @dev Must emit the `RelayedCalls` event when successfully called.
  * @dev May require payment. Some bridges may require payment in the native currency, so the function is payable.
  * @param calls Array of calls being relayed
- * @param gasLimit Maximum amount of gas required for the `calls` to be executed
- * @return uint256 Nonce to uniquely idenfity the batch of calls
+ * @param toChainId ID of the chain receiving the relayed `calls`
+ * @return uint256 Nonce to uniquely identify the batch of calls
  */
-function relayCalls(CallLib.Call[] calldata calls, uint256 gasLimit)
+function dispatchMessages(CallLib.Call[] calldata calls, uint256 toChainId)
   external
   payable
   returns (uint256);
 
 ```
 
-`calls` is an array of calls that you want to be executed on L2:
-
-```solidity
-/**
- * @notice Call data structure
- * @param target Address that will be called on the receiving chain
- * @param data Data that will be sent to the `target` address
- */
-struct Call {
-  address target;
-  bytes data;
-}
-
-```
-
-`gasLimit` is the maximum amount of gas that will be needed to execute these calls.
-
 #### Example
 
 ```solidity
-CrossChainRelayerOptimism _crossChainRelayer = 0xB577c479D6D7eC677dB6c349e6E23B7bfE303295;
+MessageDispatcherOptimism _messageDispatcher = 0xB577c479D6D7eC677dB6c349e6E23B7bfE303295;
 address _greeter = 0xd55052D3617f8ebd5DeEb7F0AC2D6f20d185Bc9d;
 
 CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
-_calls[0] = CallLib.Call({
-  target: _greeter,
+_calls[0] = CallLib.Call(  struct Call {{
+  to: _greeter,
   data: abi.encodeWithSignature("setGreeting(string)", "Hello from L1")
 });
 
-_crossChainRelayer.relayCalls(_calls, 1000000);
+_messageDispatcher.dispatchMessages(_calls, 1000000);
 ```
 
 Code:
@@ -90,10 +103,10 @@ Code:
 
 ### Arbitrum Relay
 
-Arbitrum requires an EOA to submit a bridge transaction. The Ethereum to Arbitrum ERC-5164 CrossChainRelayer `relayCalls` implementation is therefore split into two actions:
+Arbitrum requires an EOA to submit a bridge transaction. The Ethereum to Arbitrum ERC-5164 MessageDispatcher `dispatchMessages` implementation is therefore split into two actions:
 
-1. Calls to CrossChainRelayer `relayCalls` are fingerprinted and stored along with their nonce.
-2. Anyone may call CrossChainRelayer `processCalls` to send a previously fingerprinted relayed call.
+1. Calls to MessageDispatcher `dispatchMessages` are fingerprinted and stored along with their nonce.
+2. Anyone may call MessageDispatcher `processCalls` to send a previously fingerprinted relayed call.
 
 The `processCalls` function requires the same transaction parameters as the Arbitrum bridge. The [Arbitrum SDK](https://github.com/offchainlabs/arbitrum-sdk) is needed to properly estimate the gas required to execute the message on L2.
 
@@ -103,7 +116,7 @@ The `processCalls` function requires the same transaction parameters as the Arbi
  * @dev The transaction hash must match the one stored in the `relayed` mapping.
  * @param nonce Nonce of the batch of calls to process
  * @param calls Array of calls being processed
- * @param sender Address who relayed the `calls`
+ * @param from Address who relayed the `calls`
  * @param gasLimit Maximum amount of gas required for the `calls` to be executed
  * @param maxSubmissionCost Max gas deducted from user's L2 balance to cover base submission fee
  * @param gasPriceBid Gas price bid for L2 execution
@@ -112,7 +125,7 @@ The `processCalls` function requires the same transaction parameters as the Arbi
 function processCalls(
   uint256 nonce,
   CallLib.Call[] calldata calls,
-  address sender,
+  address from,
   uint256 gasLimit,
   uint256 maxSubmissionCost,
   uint256 gasPriceBid
@@ -129,9 +142,9 @@ const callData = new Interface(['function setGreeting(string)']).encodeFunctionD
   [greeting],
 );
 
-const calls: ICrossChainRelayer.CallStruct[] = [
+const calls: IMessageDispatcher.CallStruct[] = [
   {
-    target: greeterAddress,
+    to: greeterAddress,
     data: callData,
   },
 ];
@@ -139,20 +152,20 @@ const calls: ICrossChainRelayer.CallStruct[] = [
 ...
 
 const maxGas = await l1ToL2MessageGasEstimate.estimateRetryableTicketGasLimit({
-  from: crossChainRelayerArbitrumAddress,
-  to: crossChainExecutorAddress,
+  from: messageDispatcherArbitrumAddress,
+  to: messageExecutorAddress,
   l2CallValue: BigNumber.from(0),
   excessFeeRefundAddress: deployer,
   callValueRefundAddress: deployer,
   data: executeCallsData,
 });
 
-await crossChainRelayerArbitrum.relayCalls(calls, maxGas);
+await messageDispatcherArbitrum.dispatchMessages(calls);
 
 ...
 
-await crossChainRelayerArbitrum.processCalls(
-  relayCallsNonce,
+await messageDispatcherArbitrum.processCalls(
+  dispatchMessagesNonce,
   calls,
   deployer,
   maxGas,
@@ -170,13 +183,13 @@ Code: [script/bridge/BridgeToArbitrumGoerli.ts](script/bridge/BridgeToArbitrumGo
 
 #### Execute calls
 
-Once the message has been bridged it will be executed by the [CrossChainExecutor](./src/interfaces/ICrossChainExecutor.sol) contract.
+Once the message has been bridged it will be executed by the [MessageExecutor](./src/interfaces/IMessageExecutor.sol) contract.
 
 #### Authenticate calls
 
-To ensure that the calls originate from the CrossChainExecutor contract, your contracts can inherit from the [ExecutorAware](./src/abstract/ExecutorAware.sol) abstract contract.
+To ensure that the calls originate from the MessageExecutor contract, your contracts can inherit from the [ExecutorAware](./src/abstract/ExecutorAware.sol) abstract contract.
 
-It makes use of [EIP-2771](https://eips.ethereum.org/EIPS/eip-2771) to authenticate the call forwarder (i.e. the CrossChainExecutor) and has helper functions to extract from the calldata the original sender and the nonce of the relayed call.
+It makes use of [EIP-2771](https://eips.ethereum.org/EIPS/eip-2771) to authenticate the call forwarder (i.e. the MessageExecutor) and has helper functions to extract from the calldata the original sender and the nonce of the relayed call.
 
 ```solidity
 /**
@@ -203,27 +216,27 @@ function _nonce() internal pure returns (uint256 _callDataNonce);
 
 ### Ethereum Goerli -> Arbitrum Goerli
 
-| Network         | Contract                                                                               | Address                                                                                                                      |
-| --------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Ethereum Goerli | [EthereumToArbitrumRelayer.sol](./src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol) | [0x961f05163dBB383EF39323D04e04aE5b7cc5A7b2](https://goerli.etherscan.io/address/0x961f05163dBB383EF39323D04e04aE5b7cc5A7b2) |
-| Arbitrum Goerli | [EthereumToArbitrumExecutor](./src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol)   | [0x9c53fb1D0AE3b7EDd6da970Fa3dC70e8d2092723](https://goerli.arbiscan.io/address/0x9c53fb1D0AE3b7EDd6da970Fa3dC70e8d2092723)  |
-| Arbitrum Goerli | [Greeter](./test/contracts/Greeter.sol)                                                | [0xcCD175Fe1f7389A06C40765eaf33180295216460](https://goerli.arbiscan.io/address/0xcCD175Fe1f7389A06C40765eaf33180295216460)  |
+| Network         | Contract                                                                                     | Address                                                                                                                      |
+| --------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Ethereum Goerli | [EthereumToArbitrumDispatcher.sol](./src/ethereum-arbitrum/EthereumToArbitrumDispatcher.sol) | [0x961f05163dBB383EF39323D04e04aE5b7cc5A7b2](https://goerli.etherscan.io/address/0x961f05163dBB383EF39323D04e04aE5b7cc5A7b2) |
+| Arbitrum Goerli | [EthereumToArbitrumExecutor](./src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol)         | [0x9c53fb1D0AE3b7EDd6da970Fa3dC70e8d2092723](https://goerli.arbiscan.io/address/0x9c53fb1D0AE3b7EDd6da970Fa3dC70e8d2092723)  |
+| Arbitrum Goerli | [Greeter](./test/contracts/Greeter.sol)                                                      | [0xcCD175Fe1f7389A06C40765eaf33180295216460](https://goerli.arbiscan.io/address/0xcCD175Fe1f7389A06C40765eaf33180295216460)  |
 
 ### Ethereum Goerli -> Optimism Goerli
 
-| Network         | Contract                                                                               | Address                                                                                                                               |
-| --------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Ethereum Goerli | [EthereumToOptimismRelayer.sol](./src/ethereum-optimism/EthereumToOptimismRelayer.sol) | [0xB577c479D6D7eC677dB6c349e6E23B7bfE303295](https://goerli.etherscan.io/address/0xB577c479D6D7eC677dB6c349e6E23B7bfE303295)          |
-| Optimism Goerli | [EthereumToOptimismExecutor](./src/ethereum-optimism/EthereumToOptimismExecutor.sol)   | [0x7A4c111CEBfA573f785BFa4ED144f70b1ab519a0](https://goerli-optimism.etherscan.io/address/0x7A4c111CEBfA573f785BFa4ED144f70b1ab519a0) |
-| Optimism Goerli | [Greeter](./test/contracts/Greeter.sol)                                                | [0xd55052D3617f8ebd5DeEb7F0AC2D6f20d185Bc9d](https://goerli-optimism.etherscan.io/address/0xd55052D3617f8ebd5DeEb7F0AC2D6f20d185Bc9d) |
+| Network         | Contract                                                                                     | Address                                                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Ethereum Goerli | [EthereumToOptimismDispatcher.sol](./src/ethereum-optimism/EthereumToOptimismDispatcher.sol) | [0xB577c479D6D7eC677dB6c349e6E23B7bfE303295](https://goerli.etherscan.io/address/0xB577c479D6D7eC677dB6c349e6E23B7bfE303295)          |
+| Optimism Goerli | [EthereumToOptimismExecutor](./src/ethereum-optimism/EthereumToOptimismExecutor.sol)         | [0x7A4c111CEBfA573f785BFa4ED144f70b1ab519a0](https://goerli-optimism.etherscan.io/address/0x7A4c111CEBfA573f785BFa4ED144f70b1ab519a0) |
+| Optimism Goerli | [Greeter](./test/contracts/Greeter.sol)                                                      | [0xd55052D3617f8ebd5DeEb7F0AC2D6f20d185Bc9d](https://goerli-optimism.etherscan.io/address/0xd55052D3617f8ebd5DeEb7F0AC2D6f20d185Bc9d) |
 
 ### Ethereum Goerli -> Polygon Mumbai
 
-| Network         | Contract                                                                          | Address                                                                                                                         |
-| --------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Ethereum Goerli | [EthereumToPolygonRelayer](./src/ethereum-polygon/EthereumToPolygonRelayer.sol)   | [0xB867e4E65eb093dC86D9E4Fd6622dDA58583B7F1](https://goerli.etherscan.io/address/0xB867e4E65eb093dC86D9E4Fd6622dDA58583B7F1)    |
-| Polygon Mumbai  | [EthereumToPolygonExecutor](./src/ethereum-polygon/EthereumToPolygonExecutor.sol) | [0x5A1Ca26f637dad188ea95A92C2b262226E2a2646](https://mumbai.polygonscan.com/address/0x5A1Ca26f637dad188ea95A92C2b262226E2a2646) |
-| Polygon Mumbai  | [Greeter](./test/contracts/Greeter.sol)                                           | [0xe0B149a4fb0a40eC13531596f824cFa523445280](https://mumbai.polygonscan.com/address/0xe0B149a4fb0a40eC13531596f824cFa523445280) |
+| Network         | Contract                                                                              | Address                                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Ethereum Goerli | [EthereumToPolygonDispatcher](./src/ethereum-polygon/EthereumToPolygonDispatcher.sol) | [0xB867e4E65eb093dC86D9E4Fd6622dDA58583B7F1](https://goerli.etherscan.io/address/0xB867e4E65eb093dC86D9E4Fd6622dDA58583B7F1)    |
+| Polygon Mumbai  | [EthereumToPolygonExecutor](./src/ethereum-polygon/EthereumToPolygonExecutor.sol)     | [0x5A1Ca26f637dad188ea95A92C2b262226E2a2646](https://mumbai.polygonscan.com/address/0x5A1Ca26f637dad188ea95A92C2b262226E2a2646) |
+| Polygon Mumbai  | [Greeter](./test/contracts/Greeter.sol)                                               | [0xe0B149a4fb0a40eC13531596f824cFa523445280](https://mumbai.polygonscan.com/address/0xe0B149a4fb0a40eC13531596f824cFa523445280) |
 
 ## Development
 
@@ -340,11 +353,11 @@ It takes about 15 minutes for the message to be bridged to Arbitrum Goerli.
 
 ##### Example transaction
 
-| Network         | Call         | Transaction hash                                                                                                                                                        |
-| --------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ethereum Goerli | relayCalls   | [0x34c62a91cf035c19393b90027b26bd4883e68e079f0814854a396b183ae03c28](https://goerli.etherscan.io/tx/0x34c62a91cf035c19393b90027b26bd4883e68e079f0814854a396b183ae03c28) |
-| Ethereum Goerli | processCalls | [0xf028e7415e2bd88c63419b9ba519913cd063651d4f6a5c5f3b4a2d3d7c6ccb04](https://goerli.etherscan.io/tx/0xf028e7415e2bd88c63419b9ba519913cd063651d4f6a5c5f3b4a2d3d7c6ccb04) |
-| Arbitrum Goerli | executeCalls | [0xcb418fb130f95035ee1cb17aa0759557b12e083bb00d9893663497fd7be8c197](https://goerli.arbiscan.io/tx/0xcb418fb130f95035ee1cb17aa0759557b12e083bb00d9893663497fd7be8c197)  |
+| Network         | Call             | Transaction hash                                                                                                                                                        |
+| --------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ethereum Goerli | dispatchMessages | [0x34c62a91cf035c19393b90027b26bd4883e68e079f0814854a396b183ae03c28](https://goerli.etherscan.io/tx/0x34c62a91cf035c19393b90027b26bd4883e68e079f0814854a396b183ae03c28) |
+| Ethereum Goerli | processCalls     | [0xf028e7415e2bd88c63419b9ba519913cd063651d4f6a5c5f3b4a2d3d7c6ccb04](https://goerli.etherscan.io/tx/0xf028e7415e2bd88c63419b9ba519913cd063651d4f6a5c5f3b4a2d3d7c6ccb04) |
+| Arbitrum Goerli | executeCalls     | [0xcb418fb130f95035ee1cb17aa0759557b12e083bb00d9893663497fd7be8c197](https://goerli.arbiscan.io/tx/0xcb418fb130f95035ee1cb17aa0759557b12e083bb00d9893663497fd7be8c197)  |
 
 #### Ethereum Goerli to Optimism Goerli
 
@@ -356,10 +369,10 @@ It takes about 5 minutes for the message to be bridged to Optimism Goerli.
 
 ##### Example transaction
 
-| Network         | Call         | Transaction hash                                                                                                                                                                 |
-| --------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ethereum Goerli | relayCalls   | [0xe3864c4fa1f77fc0ca9ff5c5185582833049a4d8cc3cf4e30a6c53f49eaad53d](https://goerli.etherscan.io/tx/0xe3864c4fa1f77fc0ca9ff5c5185582833049a4d8cc3cf4e30a6c53f49eaad53d)          |
-| Optimism Goerli | executeCalls | [0x5f73e44b9fd601b0e0031ac87ad18092a8fc621963ec8a4447062baf799d982a](https://goerli-optimism.etherscan.io/tx/0x5f73e44b9fd601b0e0031ac87ad18092a8fc621963ec8a4447062baf799d982a) |
+| Network         | Call             | Transaction hash                                                                                                                                                                 |
+| --------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ethereum Goerli | dispatchMessages | [0xe3864c4fa1f77fc0ca9ff5c5185582833049a4d8cc3cf4e30a6c53f49eaad53d](https://goerli.etherscan.io/tx/0xe3864c4fa1f77fc0ca9ff5c5185582833049a4d8cc3cf4e30a6c53f49eaad53d)          |
+| Optimism Goerli | executeCalls     | [0x5f73e44b9fd601b0e0031ac87ad18092a8fc621963ec8a4447062baf799d982a](https://goerli-optimism.etherscan.io/tx/0x5f73e44b9fd601b0e0031ac87ad18092a8fc621963ec8a4447062baf799d982a) |
 
 #### Ethereum Goerli to Polygon Mumbai
 
@@ -371,10 +384,10 @@ It takes about 30 minutes for the message to be bridged to Mumbai.
 
 ##### Example transaction
 
-| Network         | Call         | Transaction hash                                                                                                                                                           |
-| --------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ethereum Goerli | relayCalls   | [0x069e20553358d4faba80c9b699e3be6d2331608979733260469f6c5375140058](https://goerli.etherscan.io/tx/0x069e20553358d4faba80c9b699e3be6d2331608979733260469f6c5375140058)    |
-| Polygon Mumbai  | executeCalls | [0x590babab7b396ee3cae566a894f34c32daee3832d9a206ccc53576b88de49f4a](https://mumbai.polygonscan.com/tx/0x590babab7b396ee3cae566a894f34c32daee3832d9a206ccc53576b88de49f4a) |
+| Network         | Call             | Transaction hash                                                                                                                                                           |
+| --------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ethereum Goerli | dispatchMessages | [0x069e20553358d4faba80c9b699e3be6d2331608979733260469f6c5375140058](https://goerli.etherscan.io/tx/0x069e20553358d4faba80c9b699e3be6d2331608979733260469f6c5375140058)    |
+| Polygon Mumbai  | executeCalls     | [0x590babab7b396ee3cae566a894f34c32daee3832d9a206ccc53576b88de49f4a](https://mumbai.polygonscan.com/tx/0x590babab7b396ee3cae566a894f34c32daee3832d9a206ccc53576b88de49f4a) |
 
 ### Code quality
 

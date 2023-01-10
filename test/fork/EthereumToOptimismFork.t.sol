@@ -8,10 +8,10 @@ import { ICrossDomainMessenger } from "@eth-optimism/contracts/libraries/bridge/
 import { L2CrossDomainMessenger } from "@eth-optimism/contracts/L2/messaging/L2CrossDomainMessenger.sol";
 import { AddressAliasHelper } from "@eth-optimism/contracts/standards/AddressAliasHelper.sol";
 
-import { ICrossChainRelayer } from "../../src/interfaces/ICrossChainRelayer.sol";
-import { ICrossChainExecutor } from "../../src/interfaces/ICrossChainExecutor.sol";
+import { IMessageDispatcher } from "../../src/interfaces/IMessageDispatcher.sol";
+import { IMessageExecutor } from "../../src/interfaces/IMessageExecutor.sol";
 
-import "../../src/ethereum-optimism/EthereumToOptimismRelayer.sol";
+import "../../src/ethereum-optimism/EthereumToOptimismDispatcher.sol";
 import "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
 import "../../src/libraries/CallLib.sol";
 
@@ -21,8 +21,8 @@ contract EthereumToOptimismForkTest is Test {
   uint256 public mainnetFork;
   uint256 public optimismFork;
 
-  CrossChainRelayerOptimism public relayer;
-  CrossChainExecutorOptimism public executor;
+  MessageDispatcherOptimism public dispatcher;
+  MessageExecutorOptimism public executor;
   Greeter public greeter;
 
   address public proxyOVML1CrossDomainMessenger = 0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1;
@@ -32,19 +32,31 @@ contract EthereumToOptimismForkTest is Test {
   string public l2Greeting = "Hello from L2";
 
   uint256 public nonce = 1;
+  uint256 public toChainId = 10;
+  uint256 public fromChainId = 1;
 
   /* ============ Events to test ============ */
 
   event RelayedCalls(
     uint256 indexed nonce,
-    address indexed sender,
+    address indexed from,
     CallLib.Call[] calls,
-    uint256 gasLimit
+    uint256 toChainId
   );
 
-  event ExecutedCalls(ICrossChainRelayer indexed relayer, uint256 indexed nonce);
+  event ExecutedCalls(
+    uint256 indexed fromChainId,
+    IMessageDispatcher indexed dispatcher,
+    uint256 indexed nonce
+  );
 
-  event SetGreeting(string greeting, uint256 nonce, address l1Sender, address l2Sender);
+  event SetGreeting(
+    string greeting,
+    uint256 nonce,
+    address from,
+    uint256 fromChainId,
+    address l2Sender
+  );
 
   /* ============ Setup ============ */
 
@@ -53,18 +65,21 @@ contract EthereumToOptimismForkTest is Test {
     optimismFork = vm.createFork(vm.rpcUrl("optimism"));
   }
 
-  function deployRelayer() public {
+  function deployDispatcher() public {
     vm.selectFork(mainnetFork);
 
-    relayer = new CrossChainRelayerOptimism(ICrossDomainMessenger(proxyOVML1CrossDomainMessenger));
+    dispatcher = new MessageDispatcherOptimism(
+      ICrossDomainMessenger(proxyOVML1CrossDomainMessenger),
+      toChainId
+    );
 
-    vm.makePersistent(address(relayer));
+    vm.makePersistent(address(dispatcher));
   }
 
   function deployExecutor() public {
     vm.selectFork(optimismFork);
 
-    executor = new CrossChainExecutorOptimism(ICrossDomainMessenger(l2CrossDomainMessenger));
+    executor = new MessageExecutorOptimism(ICrossDomainMessenger(l2CrossDomainMessenger));
 
     vm.makePersistent(address(executor));
   }
@@ -78,44 +93,44 @@ contract EthereumToOptimismForkTest is Test {
   }
 
   function deployAll() public {
-    deployRelayer();
+    deployDispatcher();
     deployExecutor();
     deployGreeter();
   }
 
   function setExecutor() public {
     vm.selectFork(mainnetFork);
-    relayer.setExecutor(executor);
+    dispatcher.setExecutor(executor);
   }
 
-  function setRelayer() public {
+  function setDispatcher() public {
     vm.selectFork(optimismFork);
-    executor.setRelayer(relayer);
+    executor.setDispatcher(dispatcher);
   }
 
   function setAll() public {
     setExecutor();
-    setRelayer();
+    setDispatcher();
   }
 
   /* ============ Tests ============ */
 
-  function testRelayer() public {
-    deployRelayer();
+  function testDispatcher() public {
+    deployDispatcher();
     deployExecutor();
     setExecutor();
 
-    assertEq(address(relayer.crossDomainMessenger()), proxyOVML1CrossDomainMessenger);
-    assertEq(address(relayer.executor()), address(executor));
+    assertEq(address(dispatcher.crossDomainMessenger()), proxyOVML1CrossDomainMessenger);
+    assertEq(address(dispatcher.executor()), address(executor));
   }
 
   function testExecutor() public {
-    deployRelayer();
+    deployDispatcher();
     deployExecutor();
-    setRelayer();
+    setDispatcher();
 
     assertEq(address(executor.crossDomainMessenger()), l2CrossDomainMessenger);
-    assertEq(address(executor.relayer()), address(relayer));
+    assertEq(address(executor.dispatcher()), address(dispatcher));
   }
 
   function testGreeter() public {
@@ -125,7 +140,7 @@ contract EthereumToOptimismForkTest is Test {
     assertEq(greeter.greeting(), l2Greeting);
   }
 
-  /* ============ relayCalls ============ */
+  /* ============ dispatchMessages ============ */
   function testRelayCalls() public {
     deployAll();
     setAll();
@@ -135,15 +150,15 @@ contract EthereumToOptimismForkTest is Test {
     CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
     _calls[0] = CallLib.Call({
-      target: address(greeter),
+      to: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
-    vm.expectEmit(true, true, true, true, address(relayer));
+    vm.expectEmit(true, true, true, true, address(dispatcher));
 
-    emit RelayedCalls(nonce, address(this), _calls, 200000);
+    emit RelayedCalls(nonce, address(this), _calls, toChainId);
 
-    uint256 _nonce = relayer.relayCalls(_calls, 200000);
+    uint256 _nonce = dispatcher.dispatchMessages(_calls);
 
     assertEq(_nonce, nonce);
   }
@@ -156,13 +171,13 @@ contract EthereumToOptimismForkTest is Test {
     CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
     _calls[0] = CallLib.Call({
-      target: address(greeter),
+      to: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
-    vm.expectRevert(bytes("Relayer/executor-not-set"));
+    vm.expectRevert(bytes("Dispatcher/executor-not-set"));
 
-    relayer.relayCalls(_calls, 200000);
+    dispatcher.dispatchMessages(_calls);
   }
 
   /* ============ executeCalls ============ */
@@ -178,7 +193,7 @@ contract EthereumToOptimismForkTest is Test {
     CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
     _calls[0] = CallLib.Call({
-      target: address(greeter),
+      to: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
@@ -187,19 +202,20 @@ contract EthereumToOptimismForkTest is Test {
     vm.startPrank(AddressAliasHelper.applyL1ToL2Alias(proxyOVML1CrossDomainMessenger));
 
     vm.expectEmit(true, true, true, true, address(greeter));
-    emit SetGreeting(l1Greeting, nonce, address(this), address(executor));
+    emit SetGreeting(l1Greeting, nonce, address(this), fromChainId, address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
-    emit ExecutedCalls(relayer, nonce);
+    emit ExecutedCalls(fromChainId, dispatcher, nonce);
 
     l2Bridge.relayMessage(
       address(executor),
-      address(relayer),
+      address(dispatcher),
       abi.encodeWithSignature(
-        "executeCalls(uint256,address,(address,bytes)[])",
+        "executeCalls((address,bytes)[],uint256,address,uint256)",
+        _calls,
         nonce,
         address(this),
-        _calls
+        fromChainId
       ),
       l2Bridge.messageNonce() + 1
     );
@@ -216,13 +232,13 @@ contract EthereumToOptimismForkTest is Test {
     CallLib.Call[] memory _calls = new CallLib.Call[](1);
 
     _calls[0] = CallLib.Call({
-      target: address(greeter),
+      to: address(greeter),
       data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
     });
 
     vm.expectRevert(bytes("Executor/sender-unauthorized"));
 
-    executor.executeCalls(nonce, address(this), _calls);
+    executor.executeCalls(_calls, nonce, address(this), fromChainId);
   }
 
   /* ============ Setters ============ */
