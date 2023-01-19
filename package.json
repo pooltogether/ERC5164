@@ -1,10 +1,10 @@
 {
   "name": "@pooltogether/erc5164",
-  "description": "Implementation of the ERC5164 standard to communicate cross chain",
-  "version": "1.0.0",
+  "description": "EIP-5164 implementation allowing contracts to send cross-chain messages",
+  "version": "1.0.0-beta.1",
   "author": {
     "name": "PoolTogether Inc.",
-    "url": "https://github.com/pooltogether"
+    "url": "https://github.com/pooltogether/ERC5164"
   },
   "scripts": {
     "clean": "forge clean",
@@ -97,10 +97,8 @@
     "wait-on": "6.0.1"
   },
   "files": [
-    "out/**",
-    "artifacts/**",
     "src/**",
     "types/**",
-    "deployments/**"
+    "out/**"
   ]
 }
