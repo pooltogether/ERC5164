@@ -14,32 +14,15 @@ interface IMessageExecutor {
   /**
    * @notice Emitted when a message has successfully been executed.
    * @param fromChainId ID of the chain that dispatched the message
-   * @param dispatcher Address of the contract that dispatched the message on the origin chain
-   * @param messageId ID uniquely identifying the message
+   * @param messageId ID uniquely identifying the message that was executed
    */
-  event ExecutedMessage(
-    uint256 indexed fromChainId,
-    IMessageDispatcher indexed dispatcher,
-    bytes32 indexed messageId
-  );
-
-  /**
-   * @notice Emitted when messages have successfully been executed.
-   * @param fromChainId ID of the chain that dispatched the messages
-   * @param dispatcher Address of the contract that dispatched the messages on the origin chain
-   * @param messageId ID uniquely identifying the messages
-   */
-  event ExecutedMessageBatch(
-    uint256 indexed fromChainId,
-    IMessageDispatcher indexed dispatcher,
-    bytes32 indexed messageId
-  );
+  event MessageIdExecuted(uint256 indexed fromChainId, bytes32 indexed messageId);
 
   /**
    * @notice Execute message from the origin chain.
    * @dev Should authenticate that the call has been performed by the bridge transport layer.
    * @dev Must revert if the message fails.
-   * @dev Must emit the `ExecutedMessage` event once the message has been executed.
+   * @dev Must emit the `MessageIdExecuted` event once the message has been executed.
    * @param to Address that will receive `data`
    * @param data Data forwarded to address `to`
    * @param messageId ID uniquely identifying the message
@@ -58,7 +41,7 @@ interface IMessageExecutor {
    * @notice Execute a batch messages from the origin chain.
    * @dev Should authenticate that the call has been performed by the bridge transport layer.
    * @dev Must revert if one of the messages fails.
-   * @dev Must emit the `ExecutedMessageBatch` event once messages have been executed.
+   * @dev Must emit the `MessageIdExecuted` event once messages have been executed.
    * @param messages Array of messages being executed
    * @param messageId ID uniquely identifying the messages
    * @param fromChainId ID of the chain that dispatched the messages

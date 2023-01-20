@@ -43,7 +43,7 @@ contract MessageExecutorArbitrum is IMessageExecutor {
 
     MessageLib.executeMessage(_to, _data, _messageId, _fromChainId, _from, _executedMessageId);
 
-    emit ExecutedMessage(_fromChainId, _dispatcher, _messageId);
+    emit MessageIdExecuted(_fromChainId, _messageId);
   }
 
   /// @inheritdoc IMessageExecutor
@@ -61,7 +61,7 @@ contract MessageExecutorArbitrum is IMessageExecutor {
 
     MessageLib.executeMessageBatch(_messages, _messageId, _fromChainId, _from, _executedMessageId);
 
-    emit ExecutedMessageBatch(_fromChainId, _dispatcher, _messageId);
+    emit MessageIdExecuted(_fromChainId, _messageId);
   }
 
   /**

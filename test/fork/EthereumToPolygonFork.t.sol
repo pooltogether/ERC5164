@@ -48,17 +48,7 @@ contract EthereumToPolygonForkTest is Test {
     MessageLib.Message[] messages
   );
 
-  event ExecutedMessage(
-    uint256 indexed fromChainId,
-    address indexed dispatcher,
-    bytes32 indexed messageId
-  );
-
-  event ExecutedMessageBatch(
-    uint256 indexed fromChainId,
-    address indexed dispatcher,
-    bytes32 indexed messageId
-  );
+  event MessageIdExecuted(uint256 indexed fromChainId, bytes32 indexed messageId);
 
   event SetGreeting(
     string greeting,
@@ -272,7 +262,7 @@ contract EthereumToPolygonForkTest is Test {
     emit SetGreeting(l1Greeting, _expectedMessageId, fromChainId, address(this), address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
-    emit ExecutedMessage(fromChainId, address(dispatcher), _expectedMessageId);
+    emit MessageIdExecuted(fromChainId, _expectedMessageId);
 
     executor.processMessageFromRoot(
       1,
@@ -364,7 +354,7 @@ contract EthereumToPolygonForkTest is Test {
     emit SetGreeting(l1Greeting, _expectedMessageId, fromChainId, address(this), address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
-    emit ExecutedMessageBatch(fromChainId, address(dispatcher), _expectedMessageId);
+    emit MessageIdExecuted(fromChainId, _expectedMessageId);
 
     executor.processMessageFromRoot(
       1,

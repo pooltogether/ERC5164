@@ -33,17 +33,7 @@ contract MessageExecutorArbitrumUnitTest is Test {
   Greeter public greeter;
 
   /* ============ Events to test ============ */
-  event ExecutedMessage(
-    uint256 indexed fromChainId,
-    IMessageDispatcher indexed dispatcher,
-    bytes32 indexed messageId
-  );
-
-  event ExecutedMessageBatch(
-    uint256 indexed fromChainId,
-    IMessageDispatcher indexed dispatcher,
-    bytes32 indexed messageId
-  );
+  event MessageIdExecuted(uint256 indexed fromChainId, bytes32 indexed messageId);
 
   event SetGreeting(
     string greeting,
@@ -92,7 +82,7 @@ contract MessageExecutorArbitrumUnitTest is Test {
     emit SetGreeting(l1Greeting, _messageId, fromChainId, from, address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
-    emit ExecutedMessage(fromChainId, dispatcher, _messageId);
+    emit MessageIdExecuted(fromChainId, _messageId);
 
     executor.executeMessage(_message.to, _message.data, _messageId, fromChainId, from);
 
@@ -189,7 +179,7 @@ contract MessageExecutorArbitrumUnitTest is Test {
     emit SetGreeting(l1Greeting, _messageId, fromChainId, from, address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
-    emit ExecutedMessageBatch(fromChainId, dispatcher, _messageId);
+    emit MessageIdExecuted(fromChainId, _messageId);
 
     executor.executeMessageBatch(messages, _messageId, fromChainId, from);
 

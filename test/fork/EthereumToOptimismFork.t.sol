@@ -51,17 +51,7 @@ contract EthereumToOptimismForkTest is Test {
     MessageLib.Message[] messages
   );
 
-  event ExecutedMessage(
-    uint256 indexed fromChainId,
-    IMessageDispatcher indexed dispatcher,
-    bytes32 indexed messageId
-  );
-
-  event ExecutedMessageBatch(
-    uint256 indexed fromChainId,
-    IMessageDispatcher indexed dispatcher,
-    bytes32 indexed messageId
-  );
+  event MessageIdExecuted(uint256 indexed fromChainId, bytes32 indexed messageId);
 
   event SetGreeting(
     string greeting,
@@ -279,7 +269,7 @@ contract EthereumToOptimismForkTest is Test {
     emit SetGreeting(l1Greeting, _expectedMessageId, fromChainId, address(this), address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
-    emit ExecutedMessage(fromChainId, dispatcher, _expectedMessageId);
+    emit MessageIdExecuted(fromChainId, _expectedMessageId);
 
     l2Bridge.relayMessage(
       address(executor),
@@ -339,7 +329,7 @@ contract EthereumToOptimismForkTest is Test {
     emit SetGreeting(l1Greeting, _expectedMessageId, fromChainId, address(this), address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
-    emit ExecutedMessageBatch(fromChainId, dispatcher, _expectedMessageId);
+    emit MessageIdExecuted(fromChainId, _expectedMessageId);
 
     l2Bridge.relayMessage(
       address(executor),
