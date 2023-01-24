@@ -8,21 +8,20 @@ import { DeployedContracts } from "../helpers/DeployedContracts.sol";
 
 import { MessageDispatcherOptimism } from "../../src/ethereum-optimism/EthereumToOptimismDispatcher.sol";
 import { MessageExecutorOptimism } from "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
-import { Greeter } from "../../test/contracts/Greeter.sol";
 
-contract DeployMessageDispatcherToGoerli is Script {
-  address public proxyOVML1CrossDomainMessenger = 0x5086d1eEF304eb5284A0f6720f79403b4e9bE294;
+contract DeployMessageDispatcherToEthereumMainnet is Script {
+  address public proxyOVML1CrossDomainMessenger = 0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1;
 
   function run() public {
     vm.broadcast();
 
-    new MessageDispatcherOptimism(ICrossDomainMessenger(proxyOVML1CrossDomainMessenger), 420);
+    new MessageDispatcherOptimism(ICrossDomainMessenger(proxyOVML1CrossDomainMessenger), 10);
 
     vm.stopBroadcast();
   }
 }
 
-contract DeployMessageExecutorToOptimismGoerli is Script {
+contract DeployMessageExecutorToOptimism is Script {
   address public l2CrossDomainMessenger = 0x4200000000000000000000000000000000000007;
 
   function run() public {
@@ -37,8 +36,8 @@ contract DeployMessageExecutorToOptimismGoerli is Script {
 /// @dev Needs to be run after deploying MessageDispatcher and MessageExecutor
 contract SetMessageExecutor is DeployedContracts {
   function setMessageExecutor() public {
-    MessageDispatcherOptimism _messageDispatcher = _getMessageDispatcherOptimismGoerli();
-    MessageExecutorOptimism _messageExecutor = _getMessageExecutorOptimismGoerli();
+    MessageDispatcherOptimism _messageDispatcher = _getMessageDispatcherOptimism();
+    MessageExecutorOptimism _messageExecutor = _getMessageExecutorOptimism();
 
     _messageDispatcher.setExecutor(_messageExecutor);
   }
@@ -55,8 +54,8 @@ contract SetMessageExecutor is DeployedContracts {
 /// @dev Needs to be run after deploying MessageDispatcher and MessageExecutor
 contract SetMessageDispatcher is DeployedContracts {
   function setMessageDispatcher() public {
-    MessageDispatcherOptimism _messageDispatcher = _getMessageDispatcherOptimismGoerli();
-    MessageExecutorOptimism _messageExecutor = _getMessageExecutorOptimismGoerli();
+    MessageDispatcherOptimism _messageDispatcher = _getMessageDispatcherOptimism();
+    MessageExecutorOptimism _messageExecutor = _getMessageExecutorOptimism();
 
     _messageExecutor.setDispatcher(_messageDispatcher);
   }
@@ -65,21 +64,6 @@ contract SetMessageDispatcher is DeployedContracts {
     vm.broadcast();
 
     setMessageDispatcher();
-
-    vm.stopBroadcast();
-  }
-}
-
-contract DeployGreeterToOptimismGoerli is DeployedContracts {
-  function deployGreeter() public {
-    MessageExecutorOptimism _messageExecutor = _getMessageExecutorOptimismGoerli();
-    new Greeter(address(_messageExecutor), "Hello from L2");
-  }
-
-  function run() public {
-    vm.broadcast();
-
-    deployGreeter();
 
     vm.stopBroadcast();
   }

@@ -13,11 +13,11 @@ import "../../src/libraries/MessageLib.sol";
 
 contract BridgeToOptimismGoerli is DeployedContracts {
   function bridgeToOptimism() public {
-    MessageDispatcherOptimism _messageDispatcher = _getMessageDispatcherOptimism();
+    MessageDispatcherOptimism _messageDispatcher = _getMessageDispatcherOptimismGoerli();
 
     _messageDispatcher.dispatchMessage(
       420,
-      address(_getGreeterOptimism()),
+      address(_getGreeterOptimismGoerli()),
       abi.encodeWithSignature("setGreeting(string)", "Hello from L1")
     );
   }
