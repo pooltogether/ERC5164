@@ -257,7 +257,18 @@ function _msgSender() internal view returns (address payable _signer);
 
 ## Deployed Contracts
 
-### Ethereum Goerli -> Arbitrum Goerli
+### Mainnet
+
+#### Ethereum -> Optimism
+
+| Network  | Contract                                                                                     | Address                                                                                                                          |
+| -------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Ethereum | [EthereumToOptimismDispatcher.sol](./src/ethereum-arbitrum/EthereumToOptimismDispatcher.sol) | [0xa8f85bAB964D7e6bE938B54Bf4b29A247A88CD9d](https://etherscan.io/address/0xa8f85bAB964D7e6bE938B54Bf4b29A247A88CD9d)            |
+| Optimism | [EthereumToOptimismExecutor](./src/ethereum-arbitrum/EthereumToOptimismExecutor.sol)         | [0x890a87E71E731342a6d10e7628bd1F0733ce3296](https://optimistic.etherscan.io/address/0x890a87E71E731342a6d10e7628bd1F0733ce3296) |
+
+### Testnet
+
+#### Ethereum Goerli -> Arbitrum Goerli
 
 | Network         | Contract                                                                                     | Address                                                                                                                      |
 | --------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -265,7 +276,7 @@ function _msgSender() internal view returns (address payable _signer);
 | Arbitrum Goerli | [EthereumToArbitrumExecutor](./src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol)         | [0xe7Ab52219631882f778120c1f19D6086ED390bE1](https://goerli.arbiscan.io/address/0xe7Ab52219631882f778120c1f19D6086ED390bE1)  |
 | Arbitrum Goerli | [Greeter](./test/contracts/Greeter.sol)                                                      | [0xA181dE5454daa63115e4A2f626E9268Cc812FcC1](https://goerli.arbiscan.io/address/0xA181dE5454daa63115e4A2f626E9268Cc812FcC1)  |
 
-### Ethereum Goerli -> Optimism Goerli
+#### Ethereum Goerli -> Optimism Goerli
 
 | Network         | Contract                                                                                     | Address                                                                                                                               |
 | --------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -273,7 +284,7 @@ function _msgSender() internal view returns (address payable _signer);
 | Optimism Goerli | [EthereumToOptimismExecutor](./src/ethereum-optimism/EthereumToOptimismExecutor.sol)         | [0xc5165406dB791549f0D2423D1483c1EA10A3A206](https://goerli-optimism.etherscan.io/address/0xc5165406dB791549f0D2423D1483c1EA10A3A206) |
 | Optimism Goerli | [Greeter](./test/contracts/Greeter.sol)                                                      | [0x50281C11B6a18d0613F507fD2E7a1ADd712De7D8](https://goerli-optimism.etherscan.io/address/0x50281C11B6a18d0613F507fD2E7a1ADd712De7D8) |
 
-### Ethereum Goerli -> Polygon Mumbai
+#### Ethereum Goerli -> Polygon Mumbai
 
 | Network         | Contract                                                                              | Address                                                                                                                         |
 | --------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
