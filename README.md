@@ -99,7 +99,7 @@ address _greeter = 0x19c8f7B8BA7a151d6825924446A596b6084a36ae;
 _messageDispatcher.dispatchMessage(
   420,
   _greeter,
-  abi.encodeWithSignature("setGreeting(string)", "Hello from L1")
+  abi.encodeCall(Greeter.setGreeting, ("Hello from L1"))
 );
 ```
 

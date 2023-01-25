@@ -96,14 +96,7 @@ library MessageLib {
     address from
   ) internal pure returns (bytes memory) {
     return
-      abi.encodeWithSelector(
-        IMessageExecutor.executeMessage.selector,
-        to,
-        data,
-        messageId,
-        fromChainId,
-        from
-      );
+      abi.encodeCall(IMessageExecutor.executeMessage, (to, data, messageId, fromChainId, from));
   }
 
   /**
@@ -120,12 +113,9 @@ library MessageLib {
     address from
   ) internal pure returns (bytes memory) {
     return
-      abi.encodeWithSelector(
-        IMessageExecutor.executeMessageBatch.selector,
-        messages,
-        messageId,
-        fromChainId,
-        from
+      abi.encodeCall(
+        IMessageExecutor.executeMessageBatch,
+        (messages, messageId, fromChainId, from)
       );
   }
 

@@ -11,7 +11,7 @@ import "../../src/ethereum-polygon/EthereumToPolygonDispatcher.sol";
 import "../../src/ethereum-polygon/EthereumToPolygonExecutor.sol";
 import "../../src/libraries/MessageLib.sol";
 
-import "../contracts/Greeter.sol";
+import { Greeter } from "../contracts/Greeter.sol";
 
 contract EthereumToPolygonForkTest is Test {
   uint256 public mainnetFork;
@@ -150,7 +150,7 @@ contract EthereumToPolygonForkTest is Test {
     vm.selectFork(mainnetFork);
 
     address _to = address(greeter);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     bytes32 _expectedMessageId = MessageLib.computeMessageId(nonce, address(this), _to, _data);
 
@@ -167,7 +167,7 @@ contract EthereumToPolygonForkTest is Test {
     vm.selectFork(mainnetFork);
 
     address _to = address(greeter);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     vm.expectRevert(bytes("Dispatcher/fxChildTunnel-not-set"));
     dispatcher.dispatchMessage(toChainId, _to, _data);
@@ -180,7 +180,7 @@ contract EthereumToPolygonForkTest is Test {
     vm.selectFork(mainnetFork);
 
     address _to = address(greeter);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     vm.expectRevert(bytes("Dispatcher/chainId-not-supported"));
     dispatcher.dispatchMessage(10, _to, _data);
@@ -196,7 +196,7 @@ contract EthereumToPolygonForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({
       to: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     bytes32 _expectedMessageId = MessageLib.computeMessageBatchId(nonce, address(this), _messages);
@@ -216,7 +216,7 @@ contract EthereumToPolygonForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({
       to: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     vm.expectRevert(bytes("Dispatcher/fxChildTunnel-not-set"));
@@ -232,7 +232,7 @@ contract EthereumToPolygonForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({
       to: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     vm.expectRevert(bytes("Dispatcher/chainId-not-supported"));
@@ -249,7 +249,7 @@ contract EthereumToPolygonForkTest is Test {
     assertEq(greeter.greet(), l2Greeting);
 
     address _to = address(greeter);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({ to: _to, data: _data });
@@ -282,7 +282,7 @@ contract EthereumToPolygonForkTest is Test {
     assertEq(greeter.greet(), l2Greeting);
 
     address _to = address(0);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({ to: _to, data: _data });
@@ -306,7 +306,7 @@ contract EthereumToPolygonForkTest is Test {
     vm.selectFork(polygonFork);
 
     address _to = address(this);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({ to: _to, data: _data });
@@ -338,12 +338,12 @@ contract EthereumToPolygonForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](2);
     _messages[0] = MessageLib.Message({
       to: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     _messages[1] = MessageLib.Message({
       to: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     vm.startPrank(fxChild);
@@ -376,12 +376,12 @@ contract EthereumToPolygonForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](2);
     _messages[0] = MessageLib.Message({
       to: address(0),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     _messages[0] = MessageLib.Message({
       to: address(0),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     vm.startPrank(fxChild);
@@ -405,12 +405,12 @@ contract EthereumToPolygonForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](2);
     _messages[0] = MessageLib.Message({
       to: address(this),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     _messages[1] = MessageLib.Message({
       to: address(this),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     vm.startPrank(fxChild);

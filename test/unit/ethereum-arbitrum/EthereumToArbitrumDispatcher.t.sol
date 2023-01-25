@@ -71,7 +71,7 @@ contract MessageDispatcherArbitrumUnitTest is Test {
     messages.push(
       MessageLib.Message({
         to: address(greeter),
-        data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+        data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
       })
     );
   }

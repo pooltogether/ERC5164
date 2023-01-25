@@ -11,6 +11,8 @@ import { IMessageDispatcher } from "../../src/interfaces/IMessageDispatcher.sol"
 import { MessageDispatcherOptimism } from "../../src/ethereum-optimism/EthereumToOptimismDispatcher.sol";
 import "../../src/libraries/MessageLib.sol";
 
+import { Greeter } from "../../test/contracts/Greeter.sol";
+
 contract BridgeToOptimismGoerli is DeployedContracts {
   function bridgeToOptimism() public {
     MessageDispatcherOptimism _messageDispatcher = _getMessageDispatcherOptimismGoerli();
@@ -18,7 +20,7 @@ contract BridgeToOptimismGoerli is DeployedContracts {
     _messageDispatcher.dispatchMessage(
       420,
       address(_getGreeterOptimismGoerli()),
-      abi.encodeWithSignature("setGreeting(string)", "Hello from L1")
+      abi.encodeCall(Greeter.setGreeting, ("Hello from L1"))
     );
   }
 

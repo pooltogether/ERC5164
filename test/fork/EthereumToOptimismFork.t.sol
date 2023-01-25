@@ -15,7 +15,7 @@ import "../../src/ethereum-optimism/EthereumToOptimismDispatcher.sol";
 import "../../src/ethereum-optimism/EthereumToOptimismExecutor.sol";
 import "../../src/libraries/MessageLib.sol";
 
-import "../contracts/Greeter.sol";
+import { Greeter } from "../contracts/Greeter.sol";
 
 contract EthereumToOptimismForkTest is Test {
   uint256 public mainnetFork;
@@ -153,7 +153,7 @@ contract EthereumToOptimismForkTest is Test {
     vm.selectFork(mainnetFork);
 
     address _to = address(greeter);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     bytes32 _expectedMessageId = MessageLib.computeMessageId(nonce, address(this), _to, _data);
 
@@ -171,7 +171,7 @@ contract EthereumToOptimismForkTest is Test {
     vm.selectFork(mainnetFork);
 
     address _to = address(greeter);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     vm.expectRevert(bytes("Dispatcher/chainId-not-supported"));
 
@@ -184,7 +184,7 @@ contract EthereumToOptimismForkTest is Test {
     vm.selectFork(mainnetFork);
 
     address _to = address(greeter);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     vm.expectRevert(bytes("Dispatcher/executor-not-set"));
 
@@ -201,7 +201,7 @@ contract EthereumToOptimismForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({
       to: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     bytes32 _expectedMessageId = MessageLib.computeMessageBatchId(nonce, address(this), _messages);
@@ -222,7 +222,7 @@ contract EthereumToOptimismForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({
       to: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, l1Greeting)
     });
 
     vm.expectRevert(bytes("Dispatcher/chainId-not-supported"));
@@ -238,7 +238,7 @@ contract EthereumToOptimismForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({
       to: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     vm.expectRevert(bytes("Dispatcher/executor-not-set"));
@@ -261,7 +261,7 @@ contract EthereumToOptimismForkTest is Test {
     vm.startPrank(AddressAliasHelper.applyL1ToL2Alias(proxyOVML1CrossDomainMessenger));
 
     address _to = address(greeter);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     bytes32 _expectedMessageId = MessageLib.computeMessageId(nonce, address(this), _to, _data);
 
@@ -274,13 +274,9 @@ contract EthereumToOptimismForkTest is Test {
     l2Bridge.relayMessage(
       address(executor),
       address(dispatcher),
-      abi.encodeWithSignature(
-        "executeMessage(address,bytes,bytes32,uint256,address)",
-        _to,
-        _data,
-        _expectedMessageId,
-        fromChainId,
-        address(this)
+      abi.encodeCall(
+        IMessageExecutor.executeMessage,
+        (_to, _data, _expectedMessageId, fromChainId, address(this))
       ),
       l2Bridge.messageNonce() + 1
     );
@@ -295,7 +291,7 @@ contract EthereumToOptimismForkTest is Test {
     vm.selectFork(optimismFork);
 
     address _to = address(greeter);
-    bytes memory _data = abi.encodeWithSignature("setGreeting(string)", l1Greeting);
+    bytes memory _data = abi.encodeCall(Greeter.setGreeting, (l1Greeting));
 
     vm.expectRevert(bytes("Executor/sender-unauthorized"));
 
@@ -316,7 +312,7 @@ contract EthereumToOptimismForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({
       to: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     L2CrossDomainMessenger l2Bridge = L2CrossDomainMessenger(l2CrossDomainMessenger);
@@ -334,12 +330,9 @@ contract EthereumToOptimismForkTest is Test {
     l2Bridge.relayMessage(
       address(executor),
       address(dispatcher),
-      abi.encodeWithSignature(
-        "executeMessageBatch((address,bytes)[],bytes32,uint256,address)",
-        _messages,
-        _expectedMessageId,
-        fromChainId,
-        address(this)
+      abi.encodeCall(
+        IMessageExecutor.executeMessageBatch,
+        (_messages, _expectedMessageId, fromChainId, address(this))
       ),
       l2Bridge.messageNonce() + 1
     );
@@ -356,7 +349,7 @@ contract EthereumToOptimismForkTest is Test {
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({
       to: address(greeter),
-      data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
+      data: abi.encodeCall(Greeter.setGreeting, (l1Greeting))
     });
 
     vm.expectRevert(bytes("Executor/sender-unauthorized"));

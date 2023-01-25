@@ -10,6 +10,8 @@ import { IMessageDispatcher } from "../../src/interfaces/IMessageDispatcher.sol"
 import { MessageDispatcherPolygon } from "../../src/ethereum-polygon/EthereumToPolygonDispatcher.sol";
 import "../../src/libraries/MessageLib.sol";
 
+import { Greeter } from "../../test/contracts/Greeter.sol";
+
 contract BridgeToMumbai is DeployedContracts {
   function bridgeToMumbai() public {
     MessageDispatcherPolygon _messageDispatcher = _getMessageDispatcherPolygon();
@@ -17,7 +19,7 @@ contract BridgeToMumbai is DeployedContracts {
     _messageDispatcher.dispatchMessage(
       80001,
       address(_getGreeterPolygon()),
-      abi.encodeWithSignature("setGreeting(string)", "Hello from L1")
+      abi.encodeCall(Greeter.setGreeting, ("Hello from L1"))
     );
   }
 

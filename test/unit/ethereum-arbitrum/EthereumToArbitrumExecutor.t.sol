@@ -52,10 +52,7 @@ contract MessageExecutorArbitrumUnitTest is Test {
 
   function pushMessages(address _to) public {
     messages.push(
-      MessageLib.Message({
-        to: _to,
-        data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
-      })
+      MessageLib.Message({ to: _to, data: abi.encodeCall(Greeter.setGreeting, (l1Greeting)) })
     );
   }
 
