@@ -14,7 +14,7 @@ const applyAlias = (address: string) =>
 
 export const processL1ToL2Tx = async (
   from: string,
-  call: (signer: SignerWithAddress) => Promise<ContractTransaction>,
+  message: (signer: SignerWithAddress) => Promise<ContractTransaction>,
   hre: HardhatRuntimeEnvironment,
 ) => {
   const {
@@ -37,5 +37,5 @@ export const processL1ToL2Tx = async (
       }),
     )
     .then(() => getSigner(fromAliased))
-    .then(async (signer) => await call(signer));
+    .then(async (signer) => await message(signer));
 };

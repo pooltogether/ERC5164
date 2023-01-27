@@ -7,138 +7,246 @@ import "forge-std/Test.sol";
 import { AddressAliasHelper } from "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 import { IInbox } from "@arbitrum/nitro-contracts/src/bridge/IInbox.sol";
 
-import { ICrossChainRelayer } from "../../../src/interfaces/ICrossChainRelayer.sol";
-import { CrossChainExecutorArbitrum } from "../../../src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol";
-import { CrossChainRelayerArbitrum } from "../../../src/ethereum-arbitrum/EthereumToArbitrumRelayer.sol";
-import "../../../src/libraries/CallLib.sol";
+import { IMessageDispatcher } from "../../../src/interfaces/IMessageDispatcher.sol";
+import { MessageExecutorArbitrum } from "../../../src/ethereum-arbitrum/EthereumToArbitrumExecutor.sol";
+import { MessageDispatcherArbitrum } from "../../../src/ethereum-arbitrum/EthereumToArbitrumDispatcher.sol";
+import "../../../src/libraries/MessageLib.sol";
 
 import { Greeter } from "../../contracts/Greeter.sol";
 
-contract CrossChainExecutorArbitrumUnitTest is Test {
-  CrossChainRelayerArbitrum public relayer =
-    CrossChainRelayerArbitrum(0x77E395E2bfCE67C718C8Ab812c86328EaE356f07);
+contract MessageExecutorArbitrumUnitTest is Test {
+  MessageDispatcherArbitrum public dispatcher =
+    MessageDispatcherArbitrum(0x77E395E2bfCE67C718C8Ab812c86328EaE356f07);
 
-  address public relayerAlias = AddressAliasHelper.applyL1ToL2Alias(address(relayer));
+  address public dispatcherAlias = AddressAliasHelper.applyL1ToL2Alias(address(dispatcher));
 
-  address public sender = 0xa3a935315931A09A4e9B8A865517Cc18923497Ad;
+  address public from = 0xa3a935315931A09A4e9B8A865517Cc18923497Ad;
   address public attacker = 0xdBdDa361Db11Adf8A51dab8a511a8ee89128E89A;
 
   uint256 public nonce = 1;
+  uint256 public fromChainId = 1;
 
   string public l1Greeting = "Hello from L1";
 
-  CallLib.Call[] public calls;
-  CrossChainExecutorArbitrum public executor;
+  MessageLib.Message[] public messages;
+  MessageExecutorArbitrum public executor;
   Greeter public greeter;
 
   /* ============ Events to test ============ */
+  event MessageIdExecuted(uint256 indexed fromChainId, bytes32 indexed messageId);
 
-  event ExecutedCalls(ICrossChainRelayer indexed relayer, uint256 indexed nonce);
-
-  event SetGreeting(string greeting, uint256 nonce, address l1Sender, address l2Sender);
+  event SetGreeting(
+    string greeting,
+    bytes32 messageId,
+    uint256 fromChainId,
+    address from,
+    address l2Sender
+  );
 
   /* ============ Setup ============ */
 
   function setUp() public {
-    executor = new CrossChainExecutorArbitrum();
+    executor = new MessageExecutorArbitrum();
     greeter = new Greeter(address(executor), "Hello from L2");
   }
 
-  function pushCalls(address _target) public {
-    calls.push(
-      CallLib.Call({
-        target: _target,
-        data: abi.encodeWithSignature("setGreeting(string)", l1Greeting)
-      })
+  function pushMessages(address _to) public {
+    messages.push(
+      MessageLib.Message({ to: _to, data: abi.encodeCall(Greeter.setGreeting, (l1Greeting)) })
     );
   }
 
-  function setRelayer() public {
-    executor.setRelayer(relayer);
+  function setDispatcher() public {
+    executor.setDispatcher(dispatcher);
   }
 
-  /* ============ executeCalls ============ */
+  /* ============ ExecuteMessage ============ */
+  function testExecuteMessage() public {
+    setDispatcher();
+    pushMessages(address(greeter));
 
-  function testExecuteCalls() public {
-    setRelayer();
-    pushCalls(address(greeter));
+    vm.startPrank(dispatcherAlias);
 
-    vm.startPrank(relayerAlias);
+    MessageLib.Message memory _message = messages[0];
+    bytes32 _messageId = MessageLib.computeMessageId(
+      nonce,
+      address(this),
+      _message.to,
+      _message.data
+    );
 
     vm.expectEmit(true, true, true, true, address(greeter));
-    emit SetGreeting(l1Greeting, nonce, sender, address(executor));
+    emit SetGreeting(l1Greeting, _messageId, fromChainId, from, address(executor));
 
     vm.expectEmit(true, true, true, true, address(executor));
-    emit CallLib.CallSuccess(1, 0, bytes(""));
+    emit MessageIdExecuted(fromChainId, _messageId);
 
-    vm.expectEmit(true, true, true, true, address(executor));
-    emit ExecutedCalls(relayer, nonce);
+    executor.executeMessage(_message.to, _message.data, _messageId, fromChainId, from);
 
-    executor.executeCalls(nonce, sender, calls);
-
-    assertTrue(executor.executed(nonce));
+    assertTrue(executor.executed(_messageId));
   }
 
-  function testExecuteCallsAlreadyExecuted() public {
-    setRelayer();
-    pushCalls(address(greeter));
+  function testExecuteMessageIdAlreadyExecuted() public {
+    setDispatcher();
+    pushMessages(address(greeter));
 
-    vm.startPrank(relayerAlias);
-    executor.executeCalls(nonce, sender, calls);
-
-    vm.expectRevert(abi.encodeWithSelector(CallLib.CallsAlreadyExecuted.selector, nonce));
-    executor.executeCalls(nonce, sender, calls);
-  }
-
-  function testExecuteCallsFailed() public {
-    setRelayer();
-    pushCalls(address(this));
-
-    vm.startPrank(relayerAlias);
-
-    vm.expectEmit(true, true, true, true, address(executor));
-    emit CallLib.CallFailure(1, 0, bytes(""));
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        CrossChainExecutorArbitrum.ExecuteCallsFailed.selector,
-        address(relayer),
-        nonce
-      )
+    MessageLib.Message memory _message = messages[0];
+    bytes32 _messageId = MessageLib.computeMessageId(
+      nonce,
+      address(this),
+      _message.to,
+      _message.data
     );
 
-    executor.executeCalls(nonce, sender, calls);
+    vm.startPrank(dispatcherAlias);
+    executor.executeMessage(_message.to, _message.data, _messageId, fromChainId, from);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(MessageLib.MessageIdAlreadyExecuted.selector, _messageId)
+    );
+
+    executor.executeMessage(_message.to, _message.data, _messageId, fromChainId, from);
   }
 
-  function testExecuteCallsUnauthorized() public {
-    setRelayer();
-    pushCalls(address(greeter));
+  function testExecuteMessageFailure() public {
+    setDispatcher();
+    pushMessages(address(this));
+
+    vm.startPrank(dispatcherAlias);
+
+    MessageLib.Message memory _message = messages[0];
+    bytes32 _messageId = MessageLib.computeMessageId(
+      nonce,
+      address(this),
+      _message.to,
+      _message.data
+    );
+
+    vm.expectRevert(
+      abi.encodeWithSelector(MessageLib.MessageFailure.selector, _messageId, bytes(""))
+    );
+
+    executor.executeMessage(_message.to, _message.data, _messageId, fromChainId, from);
+  }
+
+  function testExecuteMessageUnauthorized() public {
+    setDispatcher();
+    pushMessages(address(greeter));
+
+    MessageLib.Message memory _message = messages[0];
+    bytes32 _messageId = MessageLib.computeMessageId(
+      nonce,
+      address(this),
+      _message.to,
+      _message.data
+    );
 
     vm.expectRevert(bytes("Executor/sender-unauthorized"));
-    executor.executeCalls(nonce, sender, calls);
+    executor.executeMessage(_message.to, _message.data, _messageId, fromChainId, from);
   }
 
-  function testExecuteCallsTargetNotZeroAddress() public {
-    setRelayer();
-    pushCalls(address(0));
+  function testExecuteMessageToNotZeroAddress() public {
+    setDispatcher();
+    pushMessages(address(0));
 
-    vm.startPrank(relayerAlias);
+    vm.startPrank(dispatcherAlias);
 
-    vm.expectRevert(bytes("CallLib/no-contract-at-target"));
-    executor.executeCalls(nonce, sender, calls);
+    MessageLib.Message memory _message = messages[0];
+    bytes32 _messageId = MessageLib.computeMessageId(
+      nonce,
+      address(this),
+      _message.to,
+      _message.data
+    );
+
+    vm.expectRevert(bytes("MessageLib/no-contract-at-to"));
+    executor.executeMessage(_message.to, _message.data, _messageId, fromChainId, from);
+  }
+
+  /* ============ ExecuteMessageBatch ============ */
+  function testExecuteMessageBatch() public {
+    setDispatcher();
+    pushMessages(address(greeter));
+
+    vm.startPrank(dispatcherAlias);
+
+    bytes32 _messageId = MessageLib.computeMessageBatchId(nonce, msg.sender, messages);
+
+    vm.expectEmit(true, true, true, true, address(greeter));
+    emit SetGreeting(l1Greeting, _messageId, fromChainId, from, address(executor));
+
+    vm.expectEmit(true, true, true, true, address(executor));
+    emit MessageIdExecuted(fromChainId, _messageId);
+
+    executor.executeMessageBatch(messages, _messageId, fromChainId, from);
+
+    assertTrue(executor.executed(_messageId));
+  }
+
+  function testExecuteMessageBatchIdAlreadyExecuted() public {
+    setDispatcher();
+    pushMessages(address(greeter));
+
+    bytes32 _messageId = MessageLib.computeMessageBatchId(nonce, msg.sender, messages);
+
+    vm.startPrank(dispatcherAlias);
+    executor.executeMessageBatch(messages, _messageId, fromChainId, from);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(MessageLib.MessageIdAlreadyExecuted.selector, _messageId)
+    );
+
+    executor.executeMessageBatch(messages, _messageId, fromChainId, from);
+  }
+
+  function testExecuteMessageBatchFailure() public {
+    setDispatcher();
+    pushMessages(address(this));
+
+    vm.startPrank(dispatcherAlias);
+
+    bytes32 _messageId = MessageLib.computeMessageBatchId(nonce, msg.sender, messages);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(MessageLib.MessageBatchFailure.selector, _messageId, 0, bytes(""))
+    );
+
+    executor.executeMessageBatch(messages, _messageId, fromChainId, from);
+  }
+
+  function testExecuteMessageBatchUnauthorized() public {
+    setDispatcher();
+    pushMessages(address(greeter));
+
+    bytes32 _messageId = MessageLib.computeMessageBatchId(nonce, msg.sender, messages);
+
+    vm.expectRevert(bytes("Executor/sender-unauthorized"));
+    executor.executeMessageBatch(messages, _messageId, fromChainId, from);
+  }
+
+  function testExecuteMessageBatchToNotZeroAddress() public {
+    setDispatcher();
+    pushMessages(address(0));
+
+    vm.startPrank(dispatcherAlias);
+
+    bytes32 _messageId = MessageLib.computeMessageBatchId(nonce, msg.sender, messages);
+
+    vm.expectRevert(bytes("MessageLib/no-contract-at-to"));
+    executor.executeMessageBatch(messages, _messageId, fromChainId, from);
   }
 
   /* ============ Setters ============ */
 
-  function testSetRelayer() public {
-    setRelayer();
-    assertEq(address(relayer), address(executor.relayer()));
+  function testSetDispatcher() public {
+    setDispatcher();
+    assertEq(address(dispatcher), address(executor.dispatcher()));
   }
 
-  function testSetRelayerFail() public {
-    setRelayer();
+  function testSetDispatcherFail() public {
+    setDispatcher();
 
-    vm.expectRevert(bytes("Executor/relayer-already-set"));
-    executor.setRelayer(CrossChainRelayerArbitrum(address(0)));
+    vm.expectRevert(bytes("Executor/dispatcher-already-set"));
+    executor.setDispatcher(MessageDispatcherArbitrum(address(0)));
   }
 }

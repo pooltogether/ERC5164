@@ -4,45 +4,36 @@ pragma solidity 0.8.16;
 
 import { FxBaseChildTunnel } from "@maticnetwork/fx-portal/contracts/tunnel/FxBaseChildTunnel.sol";
 
-import "../libraries/CallLib.sol";
+import "../libraries/MessageLib.sol";
 
 /**
- * @title CrossChainExecutorPolygon contract
- * @notice The CrossChainExecutorPolygon contract executes calls from the Ethereum chain.
- *         These calls are sent by the `CrossChainRelayerPolygon` contract which lives on the Ethereum chain.
+ * @title MessageExecutorPolygon contract
+ * @notice The MessageExecutorPolygon contract executes messages from the Ethereum chain.
+ *         These messages are sent by the `MessageDispatcherPolygon` contract which lives on the Ethereum chain.
  */
-contract CrossChainExecutorPolygon is FxBaseChildTunnel {
-  /* ============ Custom Errors ============ */
-
-  /**
-   * @notice Emitted when a batch of calls fails to execute.
-   * @param relayer Address of the contract that relayed the calls on the origin chain
-   * @param nonce Nonce to uniquely identify the batch of calls that failed to execute
-   */
-  error ExecuteCallsFailed(address relayer, uint256 nonce);
-
+contract MessageExecutorPolygon is FxBaseChildTunnel {
   /* ============ Events ============ */
 
   /**
-   * @notice Emitted when calls have successfully been executed.
-   * @param relayer Address of the contract that relayed the calls
-   * @param nonce Nonce to uniquely identify the batch of calls that were executed
+   * @notice Emitted when a message has successfully been executed.
+   * @param fromChainId ID of the chain that dispatched the message
+   * @param messageId ID uniquely identifying the message that was executed
    */
-  event ExecutedCalls(address indexed relayer, uint256 indexed nonce);
+  event MessageIdExecuted(uint256 indexed fromChainId, bytes32 indexed messageId);
 
   /* ============ Variables ============ */
 
   /**
-   * @notice Nonce to uniquely identify the batch of calls that were executed.
-   *         nonce => boolean
-   * @dev Ensure that batch of calls cannot be replayed once they have been executed.
+   * @notice ID uniquely identifying the messages that were executed.
+   *         messageId => boolean
+   * @dev Ensure that messages cannot be replayed once they have been executed.
    */
-  mapping(uint256 => bool) public executed;
+  mapping(bytes32 => bool) public executed;
 
   /* ============ Constructor ============ */
 
   /**
-   * @notice CrossChainExecutorPolygon constructor.
+   * @notice MessageExecutorPolygon constructor.
    * @param _fxChild Address of the FxChild contract on the Polygon chain
    */
   constructor(address _fxChild) FxBaseChildTunnel(_fxChild) {}
@@ -55,20 +46,38 @@ contract CrossChainExecutorPolygon is FxBaseChildTunnel {
     address _sender,
     bytes memory _data
   ) internal override validateSender(_sender) {
-    (uint256 _nonce, address _callsSender, CallLib.Call[] memory _calls) = abi.decode(
-      _data,
-      (uint256, address, CallLib.Call[])
-    );
+    (
+      MessageLib.Message[] memory _messages,
+      bytes32 _messageId,
+      uint256 _fromChainId,
+      address _from
+    ) = abi.decode(_data, (MessageLib.Message[], bytes32, uint256, address));
 
-    bool _executedNonce = executed[_nonce];
-    executed[_nonce] = true;
+    bool _executedMessageId = executed[_messageId];
+    executed[_messageId] = true;
 
-    bool _callsExecuted = CallLib.executeCalls(_nonce, _callsSender, _calls, _executedNonce);
+    if (_messages.length == 1) {
+      MessageLib.Message memory _message = _messages[0];
+      MessageLib.executeMessage(
+        _message.to,
+        _message.data,
+        _messageId,
+        _fromChainId,
+        _from,
+        _executedMessageId
+      );
 
-    if (!_callsExecuted) {
-      revert ExecuteCallsFailed(_sender, _nonce);
+      emit MessageIdExecuted(_fromChainId, _messageId);
+    } else {
+      MessageLib.executeMessageBatch(
+        _messages,
+        _messageId,
+        _fromChainId,
+        _from,
+        _executedMessageId
+      );
+
+      emit MessageIdExecuted(_fromChainId, _messageId);
     }
-
-    emit ExecutedCalls(_sender, _nonce);
   }
 }
