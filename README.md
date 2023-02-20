@@ -263,8 +263,8 @@ function _msgSender() internal view returns (address payable _signer);
 
 | Network  | Contract                                                                                     | Address                                                                                                                          |
 | -------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Ethereum | [EthereumToOptimismDispatcher.sol](./src/ethereum-arbitrum/EthereumToOptimismDispatcher.sol) | [0xa8f85bAB964D7e6bE938B54Bf4b29A247A88CD9d](https://etherscan.io/address/0xa8f85bAB964D7e6bE938B54Bf4b29A247A88CD9d)            |
-| Optimism | [EthereumToOptimismExecutor](./src/ethereum-arbitrum/EthereumToOptimismExecutor.sol)         | [0x890a87E71E731342a6d10e7628bd1F0733ce3296](https://optimistic.etherscan.io/address/0x890a87E71E731342a6d10e7628bd1F0733ce3296) |
+| Ethereum | [EthereumToOptimismDispatcher.sol](./src/ethereum-optimism/EthereumToOptimismDispatcher.sol) | [0xa8f85bAB964D7e6bE938B54Bf4b29A247A88CD9d](https://etherscan.io/address/0xa8f85bAB964D7e6bE938B54Bf4b29A247A88CD9d)            |
+| Optimism | [EthereumToOptimismExecutor](./src/ethereum-optimism/EthereumToOptimismExecutor.sol)         | [0x890a87E71E731342a6d10e7628bd1F0733ce3296](https://optimistic.etherscan.io/address/0x890a87E71E731342a6d10e7628bd1F0733ce3296) |
 
 ### Testnet
 
