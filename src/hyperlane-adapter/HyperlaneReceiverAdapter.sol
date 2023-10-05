@@ -7,9 +7,9 @@ import { IMessageRecipient } from "./interfaces/IMessageRecipient.sol";
 import { IInterchainSecurityModule, ISpecifiesInterchainSecurityModule } from "./interfaces/IInterchainSecurityModule.sol";
 import { TypeCasts } from "./libraries/TypeCasts.sol";
 import { Errors } from "./libraries/Errors.sol";
-import { IMessageDispatcher } from "../interfaces/IMessageDispatcher.sol";
-import { IMessageExecutor } from "../interfaces/IMessageExecutor.sol";
-import "../libraries/MessageLib.sol";
+import { IMessageDispatcher } from "./interfaces/IMessageDispatcher.sol";
+import { IMessageExecutor } from "./interfaces/IMessageExecutor.sol";
+import "./libraries/MessageLib.sol";
 
 /**
  * @title HyperlaneReceiverAdapter implementation.
