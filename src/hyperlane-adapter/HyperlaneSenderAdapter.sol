@@ -6,9 +6,9 @@ import { IMailbox } from "./interfaces/IMailbox.sol";
 import { IInterchainGasPaymaster } from "./interfaces/IInterchainGasPaymaster.sol";
 import { TypeCasts } from "./libraries/TypeCasts.sol";
 import { Errors } from "./libraries/Errors.sol";
-import { IMessageDispatcher, ISingleMessageDispatcher } from "./interfaces/ISingleMessageDispatcher.sol";
-import { IBatchedMessageDispatcher } from "./interfaces/IBatchedMessageDispatcher.sol";
-import { IMessageExecutor } from "./interfaces/IMessageExecutor.sol";
+import { IMessageDispatcher, ISingleMessageDispatcher } from "../interfaces/ISingleMessageDispatcher.sol";
+import { IBatchedMessageDispatcher } from "../interfaces/IBatchedMessageDispatcher.sol";
+import { IMessageExecutor } from "../interfaces/IMessageExecutor.sol";
 import "../libraries/MessageLib.sol";
 
 contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDispatcher, Ownable {
