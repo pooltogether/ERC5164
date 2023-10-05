@@ -7,8 +7,8 @@ import { IMessageRecipient } from "./interfaces/IMessageRecipient.sol";
 import { IInterchainSecurityModule, ISpecifiesInterchainSecurityModule } from "./interfaces/IInterchainSecurityModule.sol";
 import { TypeCasts } from "./libraries/TypeCasts.sol";
 import { Errors } from "./libraries/Errors.sol";
-import { IMessageDispatcher } from "../interfaces/IMessageDispatcher.sol";
-import { IMessageExecutor } from "../interfaces/IMessageExecutor.sol";
+import { IMessageDispatcher } from "./interfaces/IMessageDispatcher.sol";
+import { IMessageExecutor } from "./interfaces/IMessageExecutor.sol";
 import "../libraries/MessageLib.sol";
 
 /**
@@ -43,6 +43,19 @@ contract HyperlaneReceiverAdapter is
    * @param module The new ISM for this adapter/recipient.
    */
   event IsmSet(address indexed module);
+
+  /**
+   * @notice Emitted when a message has successfully been executed.
+   * @param fromChainId ID of the chain that dispatched the message
+   * @param messageId ID uniquely identifying the message that was executed
+   */
+  event MessageIdExecuted(uint256 indexed fromChainId, bytes32 indexed messageId);
+
+  /**
+   * @notice Emitted when a messageId has already been executed.
+   * @param messageId ID uniquely identifying the message or message batch that were re-executed
+   */
+  error MessageIdAlreadyExecuted(bytes32 messageId);
 
   /**
    * @notice Emitted when a sender adapter for a source chain is updated.
@@ -99,7 +112,7 @@ contract HyperlaneReceiverAdapter is
   }
 
   function executeMessageBatch(
-    MessageLib.Message[] calldata _messages,
+    MessageLib.Message[] memory _messages,
     bytes32 _messageId,
     uint256 _fromChainId,
     address _from,
@@ -144,7 +157,8 @@ contract HyperlaneReceiverAdapter is
       revert Errors.NoMessagesSent(srcChainId);
     }
     if (_messages.length == 1) {
-      executeMessage(destReceiver, data, msgId, srcChainId, srcSender, _executedMessageId);
+      MessageLib.Message memory _message = _messages[0];
+      executeMessage(_message.to, _message.data, msgId, srcChainId, srcSender, _executedMessageId);
     } else {
       executeMessageBatch(_messages, msgId, srcChainId, srcSender, _executedMessageId);
     }
@@ -163,11 +177,9 @@ contract HyperlaneReceiverAdapter is
     }
   }
 
-  function getSenderAdapter(uint256 _srcChainId)
-    public
-    view
-    returns (IMessageDispatcher _senderAdapter)
-  {
+  function getSenderAdapter(
+    uint256 _srcChainId
+  ) public view returns (IMessageDispatcher _senderAdapter) {
     _senderAdapter = senderAdapters[_srcChainId];
   }
 }

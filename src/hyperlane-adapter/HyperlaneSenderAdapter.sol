@@ -6,12 +6,12 @@ import { IMailbox } from "./interfaces/IMailbox.sol";
 import { IInterchainGasPaymaster } from "./interfaces/IInterchainGasPaymaster.sol";
 import { TypeCasts } from "./libraries/TypeCasts.sol";
 import { Errors } from "./libraries/Errors.sol";
-import { IMessageDispatcher, ISingleMessageDispatcher } from "../interfaces/ISingleMessageDispatcher.sol";
-import { IBatchedMessageDispatcher } from "../interfaces/IBatchedMessageDispatcher.sol";
-import { IMessageExecutor } from "../interfaces/IMessageExecutor.sol";
+import { IMessageDispatcher, ISingleMessageDispatcher } from "./interfaces/ISingleMessageDispatcher.sol";
+import { IBatchedMessageDispatcher } from "./interfaces/IBatchedMessageDispatcher.sol";
+import { IMessageExecutor } from "./interfaces/IMessageExecutor.sol";
 import "../libraries/MessageLib.sol";
 
-contract HyperlaneSenderAdapter is ISingleMessage, IBatchedMessageDispatcher, Ownable {
+contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDispatcher, Ownable {
   /// @notice `Mailbox` contract reference.
   IMailbox public immutable mailbox;
 
@@ -138,9 +138,10 @@ contract HyperlaneSenderAdapter is ISingleMessage, IBatchedMessageDispatcher, Ow
     return msgId;
   }
 
-  function dispatchMessageBatch(uint256 _toChainId, MessageLib.Message[] calldata _messages)
-    returns (bytes32)
-  {
+  function dispatchMessageBatch(
+    uint256 _toChainId,
+    MessageLib.Message[] calldata _messages
+  ) external payable returns (bytes32) {
     IMessageExecutor adapter = _getMessageExecutorAddress(_toChainId);
     _checkAdapter(_toChainId, adapter);
     uint32 dstDomainId = _getDestinationDomain(_toChainId);
@@ -200,8 +201,10 @@ contract HyperlaneSenderAdapter is ISingleMessage, IBatchedMessageDispatcher, Ow
     require(_executor == executor, "Dispatcher/executor-mis-match");
   }
 
-  function getMessageExecutorAddress(uint256 _toChainId) external view returns (IMessageExecutor) {
-    return _getMessageExecutorAddress(_toChainId);
+  function getMessageExecutorAddress(
+    uint256 _toChainId
+  ) external view returns (address _executorAddress) {
+    _executorAddress = address(_getMessageExecutorAddress(_toChainId));
   }
 
   /**
@@ -258,11 +261,9 @@ contract HyperlaneSenderAdapter is ISingleMessage, IBatchedMessageDispatcher, Ow
    * @param _toChainId ID of the chain with which MessageDispatcher is communicating
    * @return receiverAdapter MessageExecutor contract address
    */
-  function _getMessageExecutorAddress(uint256 _toChainId)
-    internal
-    view
-    returns (IMessageExecutor receiverAdapter)
-  {
+  function _getMessageExecutorAddress(
+    uint256 _toChainId
+  ) internal view returns (IMessageExecutor receiverAdapter) {
     _checkToChainId(_toChainId);
     receiverAdapter = receiverAdapters[_toChainId];
   }
@@ -276,5 +277,17 @@ contract HyperlaneSenderAdapter is ISingleMessage, IBatchedMessageDispatcher, Ow
 
   function getDestinationDomain(uint256 _dstChainId) public view returns (uint32 _destDomainId) {
     _destDomainId = _getDestinationDomain(_dstChainId);
+  }
+
+  /**
+   * @notice Helper to increment nonce.
+   * @return uint256 Incremented nonce
+   */
+  function _incrementNonce() internal returns (uint256) {
+    unchecked {
+      nonce++;
+    }
+
+    return nonce;
   }
 }
