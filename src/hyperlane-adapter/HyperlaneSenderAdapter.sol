@@ -97,7 +97,7 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
     uint256 _toChainId,
     address _to,
     bytes calldata _data
-  ) external payable returns (bytes32) {
+  ) external payable override returns (bytes32) {
     IMessageExecutor adapter = _getMessageExecutorAddress(_toChainId);
     _checkAdapter(_toChainId, adapter);
     uint32 dstDomainId = _getDestinationDomain(_toChainId);
@@ -141,7 +141,7 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
   function dispatchMessageBatch(
     uint256 _toChainId,
     MessageLib.Message[] calldata _messages
-  ) external payable returns (bytes32) {
+  ) external payable override returns (bytes32) {
     IMessageExecutor adapter = _getMessageExecutorAddress(_toChainId);
     _checkAdapter(_toChainId, adapter);
     uint32 dstDomainId = _getDestinationDomain(_toChainId);
