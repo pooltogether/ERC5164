@@ -41,6 +41,12 @@ library Errors {
   error MismatchChainsAdaptersLength(uint256 chainIdsLength, uint256 adaptersLength);
 
   /**
+   * @notice Emitted when the origin chain is not the same chain that sent the message
+   * @dev chainId != origin
+   */
+  error UnauthorizedOrigin(uint32 chainId);
+
+  /**
    * @notice Emitted when the length of the chain ids and domain ids arrays doesn't match.
    * @dev chainIds.length != domainIds.length.
    * @param chainIdsLength Length of chain ids array.

@@ -6,16 +6,17 @@ import { IMailbox } from "./interfaces/IMailbox.sol";
 import { IMessageRecipient } from "./interfaces/IMessageRecipient.sol";
 import { IInterchainSecurityModule, ISpecifiesInterchainSecurityModule } from "./interfaces/IInterchainSecurityModule.sol";
 import { TypeCasts } from "./libraries/TypeCasts.sol";
+import { EncodeDecodeUtil } from "./libraries/EncodeDecodeUtil.sol";
 import { Errors } from "./libraries/Errors.sol";
-import { IMessageDispatcher } from "./interfaces/IMessageDispatcher.sol";
-import { IMessageExecutor } from "./interfaces/IMessageExecutor.sol";
-import "./libraries/MessageLib.sol";
+import { IMessageDispatcher } from "../interfaces/IMessageDispatcher.sol";
+import { IMessageExecutor } from "../interfaces/IMessageExecutor.sol";
+import "../libraries/MessageLib.sol";
 
 /**
  * @title HyperlaneReceiverAdapter implementation.
  * @notice `IBridgeReceiverAdapter` implementation that uses Hyperlane as the bridge.
  */
-contract HyperlaneReceiverAdapter is
+contract HyperlaneReceiverAdapterV2 is
   IMessageRecipient,
   ISpecifiesInterchainSecurityModule,
   Ownable
@@ -130,8 +131,7 @@ contract HyperlaneReceiverAdapter is
    * @param _body Body of the message.
    */
   function handle(
-    uint32,
-    /* _origin*/
+    uint32 _origin,
     bytes32 _sender,
     bytes memory _body
   ) external onlyMailbox {
@@ -142,20 +142,27 @@ contract HyperlaneReceiverAdapter is
       bytes32 msgId,
       uint256 srcChainId,
       address srcSender
-    ) = abi.decode(_body, (MessageLib.Message[], bytes32, uint256, address));
+    ) = EncodeDecodeUtil.decode(_body);
+
+    if (_origin != srcChainId) {
+      revert Errors.UnauthorizedOrigin(_origin);
+    }
 
     if (IMessageDispatcher(adapter) != senderAdapters[srcChainId]) {
       revert Errors.UnauthorizedAdapter(srcChainId, adapter);
     }
+
+    if (_messages.length < 1) {
+      revert Errors.NoMessagesSent(srcChainId);
+    }
+
     if (executedMessages[msgId]) {
       revert MessageIdAlreadyExecuted(msgId);
     } else {
       _executedMessageId = executedMessages[msgId];
       executedMessages[msgId] = true;
     }
-    if (_messages.length < 1) {
-      revert Errors.NoMessagesSent(srcChainId);
-    }
+
     if (_messages.length == 1) {
       MessageLib.Message memory _message = _messages[0];
       executeMessage(_message.to, _message.data, msgId, srcChainId, srcSender, _executedMessageId);
@@ -177,9 +184,11 @@ contract HyperlaneReceiverAdapter is
     }
   }
 
-  function getSenderAdapter(
-    uint256 _srcChainId
-  ) public view returns (IMessageDispatcher _senderAdapter) {
+  function getSenderAdapter(uint256 _srcChainId)
+    public
+    view
+    returns (IMessageDispatcher _senderAdapter)
+  {
     _senderAdapter = senderAdapters[_srcChainId];
   }
 }

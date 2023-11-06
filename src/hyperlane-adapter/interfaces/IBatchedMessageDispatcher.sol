@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import "./IMessageDispatcher.sol";
+import "../../interfaces/IMessageDispatcher.sol";
 
 /**
  * @title ERC-5164: Cross-Chain Execution Standard, optional BatchMessageDispatcher extension
@@ -17,8 +17,8 @@ interface IBatchedMessageDispatcher is IMessageDispatcher {
    * @param messages Array of Message dispatched
    * @return bytes32 ID uniquely identifying the `messages`
    */
-  function dispatchMessageBatch(
-    uint256 toChainId,
-    MessageLib.Message[] calldata messages
-  ) external payable returns (bytes32);
+  function dispatchMessageBatch(uint256 toChainId, MessageLib.Message[] calldata messages)
+    external
+    payable
+    returns (bytes32);
 }

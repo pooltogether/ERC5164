@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import "./IMessageDispatcher.sol";
+import "../../interfaces/IMessageDispatcher.sol";
 
 /**
  * @title ERC-5164: Cross-Chain Execution Standard, optional SingleMessageDispatcher extension

@@ -7,11 +7,12 @@ import { IInterchainGasPaymaster } from "./interfaces/IInterchainGasPaymaster.so
 import { TypeCasts } from "./libraries/TypeCasts.sol";
 import { Errors } from "./libraries/Errors.sol";
 import { IMessageDispatcher, ISingleMessageDispatcher } from "./interfaces/ISingleMessageDispatcher.sol";
+import { EncodeDecodeUtil } from "./libraries/EncodeDecodeUtil.sol";
 import { IBatchedMessageDispatcher } from "./interfaces/IBatchedMessageDispatcher.sol";
-import { IMessageExecutor } from "./interfaces/IMessageExecutor.sol";
-import "./libraries/MessageLib.sol";
+import { IMessageExecutor } from "../interfaces/IMessageExecutor.sol";
+import "../libraries/MessageLib.sol";
 
-contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDispatcher, Ownable {
+contract HyperlaneSenderAdapterV2 is ISingleMessageDispatcher, IBatchedMessageDispatcher, Ownable {
   /// @notice `Mailbox` contract reference.
   IMailbox public immutable mailbox;
 
@@ -19,6 +20,8 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
   IInterchainGasPaymaster public igp;
 
   uint256 public nonce;
+
+  uint256 public immutable gasAmount;
 
   /**
    * @notice Receiver adapter address for each destination chain.
@@ -58,10 +61,18 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
    * @notice HyperlaneSenderAdapter constructor.
    * @param _mailbox Address of the Hyperlane `Mailbox` contract.
    */
-  constructor(address _mailbox, address _igp) {
+  constructor(
+    address _mailbox,
+    address _igp,
+    uint256 _gasAmount
+  ) {
     if (_mailbox == address(0)) {
       revert Errors.InvalidMailboxZeroAddress();
     }
+
+    // See https://docs.hyperlane.xyz/docs/build-with-hyperlane/guides/paying-for-interchain-gas
+    // Set gasAmount to the default (500,000) if _gasAmount is 0
+    gasAmount = (_gasAmount == 0) ? 500000 : _gasAmount;
     mailbox = IMailbox(_mailbox);
     _setIgp(_igp);
   }
@@ -75,12 +86,10 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
     bytes calldata /* data*/
   ) external view returns (uint256) {
     uint32 dstDomainId = _getDestinationDomain(toChainId);
-    // destination gasAmount is hardcoded to 500k similar to Wormhole implementation
     // See https://docs.hyperlane.xyz/docs/build-with-hyperlane/guides/paying-for-interchain-gas
-    try igp.quoteGasPayment(dstDomainId, 500000) returns (uint256 gasQuote) {
+    try igp.quoteGasPayment(dstDomainId, gasAmount) returns (uint256 gasQuote) {
       return gasQuote;
     } catch {
-      // Default to zero, MultiMessageSender.estimateTotalMessageFee doesn't expect this function to revert
       return 0;
     }
   }
@@ -112,7 +121,7 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
     MessageLib.Message[] memory _messages = new MessageLib.Message[](1);
     _messages[0] = MessageLib.Message({ to: _to, data: _data });
 
-    bytes memory payload = abi.encode(_messages, msgId, block.chainid, msg.sender);
+    bytes memory payload = EncodeDecodeUtil.encode(_messages, msgId, block.chainid, msg.sender);
 
     bytes32 hyperlaneMsgId = IMailbox(mailbox).dispatch(
       dstDomainId,
@@ -122,26 +131,20 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
     );
 
     // try to make gas payment, ignore failures
-    // destination gasAmount is hardcoded to 500k similar to Wormhole implementation
-    // refundAddress is set from MMS caller state variable
     try
-      igp.payForGas{ value: msg.value }(
-        hyperlaneMsgId,
-        dstDomainId,
-        500000,
-        //address(this)
-        msg.sender
-      )
+      igp.payForGas{ value: msg.value }(hyperlaneMsgId, dstDomainId, gasAmount, msg.sender)
     {} catch {}
 
     emit MessageDispatched(msgId, msg.sender, _toChainId, _to, _data);
     return msgId;
   }
 
-  function dispatchMessageBatch(
-    uint256 _toChainId,
-    MessageLib.Message[] calldata _messages
-  ) external payable override returns (bytes32) {
+  function dispatchMessageBatch(uint256 _toChainId, MessageLib.Message[] calldata _messages)
+    external
+    payable
+    override
+    returns (bytes32)
+  {
     IMessageExecutor adapter = _getMessageExecutorAddress(_toChainId);
     _checkAdapter(_toChainId, adapter);
     uint32 dstDomainId = _getDestinationDomain(_toChainId);
@@ -152,7 +155,7 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
 
     uint256 _nonce = _incrementNonce();
     bytes32 msgId = MessageLib.computeMessageBatchId(_nonce, msg.sender, _messages);
-    bytes memory payload = abi.encode(_messages, msgId, block.chainid, msg.sender);
+    bytes memory payload = EncodeDecodeUtil.encode(_messages, msgId, block.chainid, msg.sender);
 
     bytes32 hyperlaneMsgId = IMailbox(mailbox).dispatch(
       dstDomainId,
@@ -162,16 +165,8 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
     );
 
     // try to make gas payment, ignore failures
-    // destination gasAmount is hardcoded to 500k similar to Wormhole implementation
-    // refundAddress is set from MMS caller state variable
     try
-      igp.payForGas{ value: msg.value }(
-        hyperlaneMsgId,
-        dstDomainId,
-        500000,
-        //address(this)
-        msg.sender
-      )
+      igp.payForGas{ value: msg.value }(hyperlaneMsgId, dstDomainId, gasAmount, msg.sender)
     {} catch {}
 
     emit MessageBatchDispatched(msgId, msg.sender, _toChainId, _messages);
@@ -201,9 +196,11 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
     require(_executor == executor, "Dispatcher/executor-mis-match");
   }
 
-  function getMessageExecutorAddress(
-    uint256 _toChainId
-  ) external view returns (address _executorAddress) {
+  function getMessageExecutorAddress(uint256 _toChainId)
+    external
+    view
+    returns (address _executorAddress)
+  {
     _executorAddress = address(_getMessageExecutorAddress(_toChainId));
   }
 
@@ -261,9 +258,11 @@ contract HyperlaneSenderAdapter is ISingleMessageDispatcher, IBatchedMessageDisp
    * @param _toChainId ID of the chain with which MessageDispatcher is communicating
    * @return receiverAdapter MessageExecutor contract address
    */
-  function _getMessageExecutorAddress(
-    uint256 _toChainId
-  ) internal view returns (IMessageExecutor receiverAdapter) {
+  function _getMessageExecutorAddress(uint256 _toChainId)
+    internal
+    view
+    returns (IMessageExecutor receiverAdapter)
+  {
     _checkToChainId(_toChainId);
     receiverAdapter = receiverAdapters[_toChainId];
   }
