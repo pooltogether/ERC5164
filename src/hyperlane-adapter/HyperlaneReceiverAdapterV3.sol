@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity 0.8.16;
-
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IMailbox } from "./interfaces/IMailbox.sol";
 import { IMessageRecipient } from "./interfaces/IMessageRecipient.sol";
@@ -16,13 +15,20 @@ import "../libraries/MessageLib.sol";
  * @title HyperlaneReceiverAdapter implementation.
  * @notice `IBridgeReceiverAdapter` implementation that uses Hyperlane as the bridge.
  */
-contract HyperlaneReceiverAdapterV2 is
+contract HyperlaneReceiverAdapterV3 is
+  IMessageExecutor,
   IMessageRecipient,
   ISpecifiesInterchainSecurityModule,
   Ownable
 {
   /// @notice `Mailbox` contract reference.
   IMailbox public immutable mailbox;
+
+  /// @notice last message sender address
+  bytes32 public lastSender;
+
+  /// @notice last message received
+  bytes public lastMessage;
 
   /// @notice `ISM` contract reference.
   IInterchainSecurityModule public ism;
@@ -45,12 +51,15 @@ contract HyperlaneReceiverAdapterV2 is
    */
   event IsmSet(address indexed module);
 
-  /**
-   * @notice Emitted when a message has successfully been executed.
-   * @param fromChainId ID of the chain that dispatched the message
-   * @param messageId ID uniquely identifying the message that was executed
-   */
-  event MessageIdExecuted(uint256 indexed fromChainId, bytes32 indexed messageId);
+  // /**
+  //  * @notice Emitted when a message has successfully been executed.
+  //  * @param fromChainId ID of the chain that dispatched the message
+  //  * @param messageId ID uniquely identifying the message that was executed
+  //  */
+  // event MessageIdExecuted(
+  //     uint256 indexed fromChainId,
+  //     bytes32 indexed messageId
+  // );
 
   /**
    * @notice Emitted when a messageId has already been executed.
@@ -70,7 +79,7 @@ contract HyperlaneReceiverAdapterV2 is
    * @notice HyperlaneReceiverAdapter constructor.
    * @param _mailbox Address of the Hyperlane `Mailbox` contract.
    */
-  constructor(address _mailbox) {
+  constructor(address _mailbox, address initialOwner) Ownable(initialOwner) {
     if (_mailbox == address(0)) {
       revert Errors.InvalidMailboxZeroAddress();
     }
@@ -99,31 +108,6 @@ contract HyperlaneReceiverAdapterV2 is
     emit IsmSet(_ism);
   }
 
-  function executeMessage(
-    address _to,
-    bytes memory _message,
-    bytes32 _messageId,
-    uint256 _fromChainId,
-    address _from,
-    bool _executedMessageId
-  ) internal {
-    MessageLib.executeMessage(_to, _message, _messageId, _fromChainId, _from, _executedMessageId);
-
-    emit MessageIdExecuted(_fromChainId, _messageId);
-  }
-
-  function executeMessageBatch(
-    MessageLib.Message[] memory _messages,
-    bytes32 _messageId,
-    uint256 _fromChainId,
-    address _from,
-    bool _executedMessageId
-  ) internal {
-    MessageLib.executeMessageBatch(_messages, _messageId, _fromChainId, _from, _executedMessageId);
-
-    emit MessageIdExecuted(_fromChainId, _messageId);
-  }
-
   /**
    * @notice Called by Hyperlane `Mailbox` contract on destination chain to receive cross-chain messages.
    * @dev _origin Source chain domain identifier (not currently used).
@@ -134,9 +118,9 @@ contract HyperlaneReceiverAdapterV2 is
     uint32 _origin,
     bytes32 _sender,
     bytes memory _body
-  ) external onlyMailbox {
+  ) external payable onlyMailbox {
     address adapter = TypeCasts.bytes32ToAddress(_sender);
-    bool _executedMessageId;
+    //bool _executedMessageId;
     (
       MessageLib.Message[] memory _messages,
       bytes32 msgId,
@@ -158,17 +142,42 @@ contract HyperlaneReceiverAdapterV2 is
 
     if (executedMessages[msgId]) {
       revert MessageIdAlreadyExecuted(msgId);
-    } else {
-      _executedMessageId = executedMessages[msgId];
-      executedMessages[msgId] = true;
     }
+    //  else {
+    //     executedMessages[msgId] = true;
+    //     _executedMessageId = executedMessages[msgId];
+    // }
 
     if (_messages.length == 1) {
       MessageLib.Message memory _message = _messages[0];
-      executeMessage(_message.to, _message.data, msgId, srcChainId, srcSender, _executedMessageId);
+      executeMessage(_message.to, _message.data, msgId, srcChainId, srcSender);
     } else {
-      executeMessageBatch(_messages, msgId, srcChainId, srcSender, _executedMessageId);
+      executeMessageBatch(
+        _messages,
+        msgId,
+        srcChainId,
+        srcSender
+        // _executedMessageId
+      );
     }
+
+    lastSender = _sender;
+    lastMessage = _body;
+  }
+
+  function executeMessage(
+    address _to,
+    bytes memory _message,
+    bytes32 _messageId,
+    uint256 _fromChainId,
+    address _from
+  ) public override onlyMailbox {
+    bool _executedMessageId = executedMessages[_messageId];
+    executedMessages[_messageId] = true;
+
+    MessageLib.executeMessage(_to, _message, _messageId, _fromChainId, _from, _executedMessageId);
+
+    emit MessageIdExecuted(_fromChainId, _messageId);
   }
 
   function updateSenderAdapter(
@@ -182,6 +191,25 @@ contract HyperlaneReceiverAdapterV2 is
       senderAdapters[_srcChainIds[i]] = _senderAdapters[i];
       emit SenderAdapterUpdated(_srcChainIds[i], _senderAdapters[i]);
     }
+  }
+
+  function executeMessageBatch(
+    MessageLib.Message[] memory _messages,
+    bytes32 _messageId,
+    uint256 _fromChainId,
+    address _from // bool _executedMessageId
+  ) public override {
+    if (msg.sender != address(this)) {
+      {
+        revert("Only this contract can call");
+      }
+    }
+    executedMessages[_messageId] = true;
+    bool _executedMessageId = executedMessages[_messageId];
+
+    MessageLib.executeMessageBatch(_messages, _messageId, _fromChainId, _from, _executedMessageId);
+
+    emit MessageIdExecuted(_fromChainId, _messageId);
   }
 
   function getSenderAdapter(uint256 _srcChainId)

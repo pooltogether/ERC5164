@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity 0.8.16;
-
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IMailbox } from "./interfaces/IMailbox.sol";
 import { IInterchainGasPaymaster } from "./interfaces/IInterchainGasPaymaster.sol";
@@ -12,7 +11,7 @@ import { IBatchedMessageDispatcher } from "./interfaces/IBatchedMessageDispatche
 import { IMessageExecutor } from "../interfaces/IMessageExecutor.sol";
 import "../libraries/MessageLib.sol";
 
-contract HyperlaneSenderAdapterV2 is ISingleMessageDispatcher, IBatchedMessageDispatcher, Ownable {
+contract HyperlaneSenderAdapterV3 is ISingleMessageDispatcher, IBatchedMessageDispatcher, Ownable {
   /// @notice `Mailbox` contract reference.
   IMailbox public immutable mailbox;
 
@@ -22,6 +21,8 @@ contract HyperlaneSenderAdapterV2 is ISingleMessageDispatcher, IBatchedMessageDi
   uint256 public nonce;
 
   uint256 public immutable gasAmount;
+
+  uint256 private constant DEFAULT_GAS_AMOUNT = 500000;
 
   /**
    * @notice Receiver adapter address for each destination chain.
@@ -64,8 +65,9 @@ contract HyperlaneSenderAdapterV2 is ISingleMessageDispatcher, IBatchedMessageDi
   constructor(
     address _mailbox,
     address _igp,
-    uint256 _gasAmount
-  ) {
+    uint256 _gasAmount,
+    address initialOwner
+  ) Ownable(initialOwner) {
     if (_mailbox == address(0)) {
       revert Errors.InvalidMailboxZeroAddress();
     }
@@ -73,6 +75,7 @@ contract HyperlaneSenderAdapterV2 is ISingleMessageDispatcher, IBatchedMessageDi
     // See https://docs.hyperlane.xyz/docs/build-with-hyperlane/guides/paying-for-interchain-gas
     // Set gasAmount to the default (500,000) if _gasAmount is 0
     gasAmount = (_gasAmount == 0) ? 500000 : _gasAmount;
+    //gasAmount = _gasAmount ?? DEFAULT_GAS_AMOUNT;
     mailbox = IMailbox(_mailbox);
     _setIgp(_igp);
   }
@@ -81,9 +84,9 @@ contract HyperlaneSenderAdapterV2 is ISingleMessageDispatcher, IBatchedMessageDi
   /// @dev unused parameters are added as comments for legibility.
   function getMessageFee(
     uint256 toChainId,
-    address,
+    address to,
     /* to*/
-    bytes calldata /* data*/
+    bytes calldata data
   ) external view returns (uint256) {
     uint32 dstDomainId = _getDestinationDomain(toChainId);
     // See https://docs.hyperlane.xyz/docs/build-with-hyperlane/guides/paying-for-interchain-gas
@@ -96,7 +99,7 @@ contract HyperlaneSenderAdapterV2 is ISingleMessageDispatcher, IBatchedMessageDi
 
   /**
    * @notice Sets the IGP for this adapter.
-   * @dev See _setIgp.
+   * @dev See _setIgp
    */
   function setIgp(address _igp) external onlyOwner {
     _setIgp(_igp);
@@ -123,17 +126,19 @@ contract HyperlaneSenderAdapterV2 is ISingleMessageDispatcher, IBatchedMessageDi
 
     bytes memory payload = EncodeDecodeUtil.encode(_messages, msgId, block.chainid, msg.sender);
 
-    bytes32 hyperlaneMsgId = IMailbox(mailbox).dispatch(
+    bytes32 bytes32Address = TypeCasts.addressToBytes32(address(adapter));
+    uint256 quote = mailbox.quoteDispatch(dstDomainId, bytes32Address, payload);
+    mailbox.dispatch{ value: quote }(
       dstDomainId,
-      TypeCasts.addressToBytes32(address(adapter)), //receiver adapter is the reciever
+      bytes32Address, //receiver adapter is the reciever
       // Include the source chain id so that the receiver doesn't have to maintain a srcDomainId => srcChainId mapping
       payload
     );
 
-    // try to make gas payment, ignore failures
-    try
-      igp.payForGas{ value: msg.value }(hyperlaneMsgId, dstDomainId, gasAmount, msg.sender)
-    {} catch {}
+    // // try to make gas payment, ignore failures
+    // try
+    //   igp.payForGas{ value: msg.value }(hyperlaneMsgId, dstDomainId, gasAmount, msg.sender)
+    // {} catch {}
 
     emit MessageDispatched(msgId, msg.sender, _toChainId, _to, _data);
     return msgId;
@@ -157,17 +162,19 @@ contract HyperlaneSenderAdapterV2 is ISingleMessageDispatcher, IBatchedMessageDi
     bytes32 msgId = MessageLib.computeMessageBatchId(_nonce, msg.sender, _messages);
     bytes memory payload = EncodeDecodeUtil.encode(_messages, msgId, block.chainid, msg.sender);
 
-    bytes32 hyperlaneMsgId = IMailbox(mailbox).dispatch(
+    bytes32 bytes32Address = TypeCasts.addressToBytes32(address(adapter));
+    uint256 quote = mailbox.quoteDispatch(dstDomainId, bytes32Address, payload);
+    mailbox.dispatch{ value: quote }(
       dstDomainId,
-      TypeCasts.addressToBytes32(address(adapter)), //receiver adapter is the reciever
+      bytes32Address, //receiver adapter is the reciever
       // Include the source chain id so that the receiver doesn't have to maintain a srcDomainId => srcChainId mapping
       payload
     );
 
     // try to make gas payment, ignore failures
-    try
-      igp.payForGas{ value: msg.value }(hyperlaneMsgId, dstDomainId, gasAmount, msg.sender)
-    {} catch {}
+    // try
+    //   igp.payForGas{ value: msg.value }(hyperlaneMsgId, dstDomainId, gasAmount, msg.sender)
+    // {} catch {}
 
     emit MessageBatchDispatched(msgId, msg.sender, _toChainId, _messages);
     return msgId;
