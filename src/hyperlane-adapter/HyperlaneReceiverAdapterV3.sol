@@ -199,8 +199,9 @@ contract HyperlaneReceiverAdapterV3 is
     uint256 _fromChainId,
     address _from // bool _executedMessageId
   ) public override onlyMailbox {
-    executedMessages[_messageId] = true;
+
     bool _executedMessageId = executedMessages[_messageId];
+    executedMessages[_messageId] = true;
 
     MessageLib.executeMessageBatch(_messages, _messageId, _fromChainId, _from, _executedMessageId);
 
