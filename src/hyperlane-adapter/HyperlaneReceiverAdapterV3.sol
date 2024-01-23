@@ -198,12 +198,7 @@ contract HyperlaneReceiverAdapterV3 is
     bytes32 _messageId,
     uint256 _fromChainId,
     address _from // bool _executedMessageId
-  ) public override {
-    if (msg.sender != address(this)) {
-      {
-        revert("Only this contract can call");
-      }
-    }
+  ) public override onlyMailbox {
     executedMessages[_messageId] = true;
     bool _executedMessageId = executedMessages[_messageId];
 
@@ -212,11 +207,9 @@ contract HyperlaneReceiverAdapterV3 is
     emit MessageIdExecuted(_fromChainId, _messageId);
   }
 
-  function getSenderAdapter(uint256 _srcChainId)
-    public
-    view
-    returns (IMessageDispatcher _senderAdapter)
-  {
+  function getSenderAdapter(
+    uint256 _srcChainId
+  ) public view returns (IMessageDispatcher _senderAdapter) {
     _senderAdapter = senderAdapters[_srcChainId];
   }
 }
