@@ -107,5 +107,8 @@
     "src/**",
     "types/**",
     "out/**"
-  ]
+  ],
+  "dependencies": {
+    "@hyperlane-xyz/core": "^3.6.0"
+  }
 }
