@@ -65,9 +65,8 @@ contract HyperlaneSenderAdapterV3 is ISingleMessageDispatcher, IBatchedMessageDi
   constructor(
     address _mailbox,
     address _igp,
-    uint256 _gasAmount,
-    address initialOwner
-  ) Ownable(initialOwner) {
+    uint256 _gasAmount
+  ) {
     if (_mailbox == address(0)) {
       revert Errors.InvalidMailboxZeroAddress();
     }
@@ -105,6 +104,12 @@ contract HyperlaneSenderAdapterV3 is ISingleMessageDispatcher, IBatchedMessageDi
     _setIgp(_igp);
   }
 
+  /**
+   * @notice Emitted when a domain identifier for a destination chain is updated.
+   * @param toChainId Destination chain identifier.
+   * @param _to recipient address.
+   * @param _data data to be sent to the recipient address.
+   */
   function dispatchMessage(
     uint256 _toChainId,
     address _to,
@@ -144,12 +149,10 @@ contract HyperlaneSenderAdapterV3 is ISingleMessageDispatcher, IBatchedMessageDi
     return msgId;
   }
 
-  function dispatchMessageBatch(uint256 _toChainId, MessageLib.Message[] calldata _messages)
-    external
-    payable
-    override
-    returns (bytes32)
-  {
+  function dispatchMessageBatch(
+    uint256 _toChainId,
+    MessageLib.Message[] calldata _messages
+  ) external payable override returns (bytes32) {
     IMessageExecutor adapter = _getMessageExecutorAddress(_toChainId);
     _checkAdapter(_toChainId, adapter);
     uint32 dstDomainId = _getDestinationDomain(_toChainId);
@@ -203,11 +206,9 @@ contract HyperlaneSenderAdapterV3 is ISingleMessageDispatcher, IBatchedMessageDi
     require(_executor == executor, "Dispatcher/executor-mis-match");
   }
 
-  function getMessageExecutorAddress(uint256 _toChainId)
-    external
-    view
-    returns (address _executorAddress)
-  {
+  function getMessageExecutorAddress(
+    uint256 _toChainId
+  ) external view returns (address _executorAddress) {
     _executorAddress = address(_getMessageExecutorAddress(_toChainId));
   }
 
@@ -265,11 +266,9 @@ contract HyperlaneSenderAdapterV3 is ISingleMessageDispatcher, IBatchedMessageDi
    * @param _toChainId ID of the chain with which MessageDispatcher is communicating
    * @return receiverAdapter MessageExecutor contract address
    */
-  function _getMessageExecutorAddress(uint256 _toChainId)
-    internal
-    view
-    returns (IMessageExecutor receiverAdapter)
-  {
+  function _getMessageExecutorAddress(
+    uint256 _toChainId
+  ) internal view returns (IMessageExecutor receiverAdapter) {
     _checkToChainId(_toChainId);
     receiverAdapter = receiverAdapters[_toChainId];
   }

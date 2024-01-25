@@ -51,16 +51,6 @@ contract HyperlaneReceiverAdapterV3 is
    */
   event IsmSet(address indexed module);
 
-  // /**
-  //  * @notice Emitted when a message has successfully been executed.
-  //  * @param fromChainId ID of the chain that dispatched the message
-  //  * @param messageId ID uniquely identifying the message that was executed
-  //  */
-  // event MessageIdExecuted(
-  //     uint256 indexed fromChainId,
-  //     bytes32 indexed messageId
-  // );
-
   /**
    * @notice Emitted when a messageId has already been executed.
    * @param messageId ID uniquely identifying the message or message batch that were re-executed
@@ -143,10 +133,6 @@ contract HyperlaneReceiverAdapterV3 is
     if (executedMessages[msgId]) {
       revert MessageIdAlreadyExecuted(msgId);
     }
-    //  else {
-    //     executedMessages[msgId] = true;
-    //     _executedMessageId = executedMessages[msgId];
-    // }
 
     if (_messages.length == 1) {
       MessageLib.Message memory _message = _messages[0];
