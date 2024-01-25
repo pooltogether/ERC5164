@@ -69,7 +69,7 @@ contract HyperlaneReceiverAdapterV3 is
    * @notice HyperlaneReceiverAdapter constructor.
    * @param _mailbox Address of the Hyperlane `Mailbox` contract.
    */
-  constructor(address _mailbox, address initialOwner) Ownable(initialOwner) {
+  constructor(address _mailbox) {
     if (_mailbox == address(0)) {
       revert Errors.InvalidMailboxZeroAddress();
     }
